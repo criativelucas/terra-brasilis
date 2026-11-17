@@ -7,16 +7,26 @@ const BEATS={inf:'cav',cav:'ati',ati:'inf'},strong=t=>BEATS[t]?UT[BEATS[t]][0]:'
 const ELITE=TH.ELITE||{};
 const elTxt=e=>e[2].rng?'+1 alcance':e[2].mov?'+1 movimento':e[2].dmg?`+${Math.round(e[2].dmg*100-100)}% dano`:`+${Math.round(e[2].def*100-100)}% defesa`;
 const stOf=u=>u.side?B.to:B.from, nmOf=u=>u.el?u.el[0]:UT[u.type][0]; // stOf: estado cujo general comanda a unidade
-const mvOf=u=>Math.max(1,UT[u.type][1]+(u.el?.[2].mov||0)+(gs(stOf(u))[1]>80?1:0)-(B.wx=='dry'&&u.type=='inf'?1:0)+(B.chg==B.round&&u.side==B.ps?2:0));
-const rgOf=u=>Math.max(1,UT[u.type][2]+(u.el?.[2].rng||0)-(B.wx=='rain'&&UT[u.type][2]>1?1:0));
+const mvOf=u=>Math.max(1,UT[u.type][1]+(u.el?.[2].mov||0)+(gs(stOf(u))[1]>80?1:0)-(B.wx=='dry'&&u.type=='inf'?1:0)+(B.chg==B.round&&u.side==B.ps?2:0)+(pwOn(u.side,'atk')?2:0));
+const rgOf=u=>Math.max(1,UT[u.type][2]+(u.el?.[2].rng||0)-(B.wx=='rain'&&UT[u.type][2]>1?1:0)+(B.T[u.y]?.[u.x]=='h'&&UT[u.type][2]>1?1:0)); // morro baixo: atirador e canhão alcançam mais
 const inR=(a,t)=>dist(a,t)<=rgOf(a)&&(a.type!='art'||dist(a,t)>1);
 const dist=(a,b)=>Math.abs(a.x-b.x)+Math.abs(a.y-b.y), alive=s=>B.units.filter(u=>u.side==s&&u.hp>0);
 const total=s=>alive(s).reduce((a,u)=>a+u.hp,0), ld=s=>B.units.find(u=>u.side==s&&u.ld).hp>0;
-const bOver=()=>!ld(0)||!ld(1)||B.round>MAXR; // comandante caiu = exército debanda
+const bOver=()=>!ld(0)||!ld(1)||B.round>MAXR||!!B.taken; // B.taken: praça tomada no cerco // comandante caiu = exército debanda
 const cover=t=>'fv'.includes(B.T[t.y][t.x]);
 const est=(a,t,back)=>a.hp*.5*UT[a.type][3]*(back?.5:1)*(BEATS[a.type]==t.type?1.5:1)*(a.side?1:1+trait(B.from,'atk'))*(a.side==B.ps?1+.1*hq.tech[a.type]:1)
   /(t.side?1+defOf(B.to):1)/(cover(t)?1.3:1)/(t.el?.[2].def||1)*(a.el?.[2].dmg||1)*(1+(gs(stOf(a))[0]-40)/400)*(1+.08*a.lv)
-  *(B.rl[a.side]==B.round?1.4:1)*(B.amb==B.round&&a.side==B.ps&&cover(a)?1.4:1)*(a.side!=B.ps?1+.1*Math.min(3,turn/8|0):1); // elite, general, nível do regimento, brado, treino da IA
-const TN={g:'Campo aberto',r:'Estrada',w:'Água',b:'Ponte',f:'Mata: +30% defesa',m:'Morro',v:'Vila: +30% defesa'};
+  *(B.rl[a.side]==B.round?1.4:1)*(B.amb==B.round&&a.side==B.ps&&cover(a)?1.4:1)*(a.side!=B.ps?1+.1*Math.min(3,turn/8|0):1)*(pwOn(a.side,'atk')?1.3:1)/(pwOn(t.side,'def')?1.3:1)/(B.T[t.y]?.[t.x]=='h'?1.2:1); // elite, general, nível do regimento, brado, treino da IA
+const TN={g:'Campo aberto',r:'Estrada',w:'Água',b:'Ponte: pode ser queimada',f:'Mata: +30% defesa',m:'Serra: bloqueia',v:'Vila: +30% defesa, cura 2 por rodada',
+  h:'Morro baixo: custa 2 passos, +20% defesa, tiro +1',a:'Vau: custa 2 passos',W:'Muralha',D:'Portão',P:'Praça: o atacante vence se ficar nela'};
+const pass=(px_,py)=>{const t=B.T[py][px_];return!'mwW'.includes(t)&&!(t=='D'&&B.gate?.hp>0)}; // casa transitável
+const pwOn=(sd,k)=>!!B.pw?.[sd]&&B.pw[sd].k==k&&B.round<=B.pw[sd].until; // poder do líder ativo
+const POW={atk:['Carga','+2 de movimento e +30% de dano por 2 rodadas'],def:['Resistência','+3 de vida e +30% de defesa por 2 rodadas'],
+  gold:['Reorganizar','todas as unidades agem de novo'],rec:['Reforços','2 regimentos novos entram no campo']};
+const KIND={campo:['Batalha campal','Campo aberto: derrube o comandante inimigo.'],
+  cerco:['Cerco','Muralha com portão. A artilharia arromba o portão mais rápido; atiradores e canhões atiram por cima do muro.'],
+  travessia:['Travessia','Um rio corta o campo: pontes e um vau lento. Uma unidade ao lado de uma ponte pode queimá-la.'],
+  emboscada:['Emboscada','Mata fechada: você só enxerga inimigos a até 3 casas das suas unidades.']};
+const seen=u=>B.kind!='emboscada'||u.side==B.ps||B.units.some(v=>v.side==B.ps&&v.hp>0&&dist(u,v)<=3); // neblina da emboscada
 const bCell=e=>{const r=cv.getBoundingClientRect();return[Math.floor(((e.clientX-r.left)*cv.width/r.width-OX)/CS),Math.floor(((e.clientY-r.top)*cv.height/r.height-OY)/CS)]};
 

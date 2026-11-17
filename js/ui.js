@@ -10,8 +10,8 @@ function ui(){
   if(B){const s=B.selU,dis=B.busy?'disabled':'',pf=B.ps?B.was:B.af,weak=t=>UT[Object.keys(BEATS).find(k=>BEATS[k]==t)]?.[0]||'ninguém em especial',
       ic=t=>`<img src="${icon(t,pf,true,false)}" alt="${UT[t][0]}" title="${UT[t][0]}">`;
     $('panel').innerHTML=`<h2>${B.ps?'Defesa':'Batalha'} de ${S[B.to][1]}</h2>
-      <div class="chips"><span>Rodada ${Math.min(B.round,MAXR)}/${MAXR}</span><span>${B.bio.nome}</span>${B.wx=='rain'?'<span>Chuva: tiro −1 de alcance</span>':B.wx=='dry'?'<span>Seca: infantaria anda −1</span>':''}</div>
-      <p><b>Objetivo:</b> ${B.ps?'manter seu comandante (retrato dourado) vivo até a última rodada, ou derrubar o invasor.':'derrubar o comandante inimigo (retrato dourado) antes da última rodada.'}</p>
+      <div class="chips"><span>${KIND[B.kind][0]}</span><span>Rodada ${Math.min(B.round,MAXR)}/${MAXR}</span><span>${B.bio.nome}</span>${B.gate?`<span>Portão ${B.gate.hp}/${B.gate.max}</span>`:''}${pwOn(B.ps,B.pw[B.ps]?.k)?`<span>${POW[B.pw[B.ps].k][0]} ativo</span>`:''}${B.wx=='rain'?'<span>Chuva: tiro −1 de alcance</span>':B.wx=='dry'?'<span>Seca: infantaria anda −1</span>':''}</div>
+      <p class="c">${KIND[B.kind][1]}</p><p><b>Objetivo:</b> ${B.kind=='cerco'?(B.ps?'segurar o portão e a praça (bandeira) até a última rodada, sem perder o comandante.':'arrombar o portão e terminar uma rodada com uma unidade na praça (bandeira), ou derrubar o comandante.'):B.ps?'manter seu comandante (retrato dourado) vivo até a última rodada, ou derrubar o invasor.':'derrubar o comandante inimigo (retrato dourado) antes da última rodada.'}</p>
       ${s?`<div class="ucard"><img src="${icon(s.type,pf,true,s.ld)}" alt=""><div><b>${nmOf(s)}${s.ld?' · Comandante':''}${s.lv?` · Nível ${s.lv}`:''}</b>
           <div class="chips"><span>♥ ${s.hp}/${s.max}</span><span>Anda ${mvOf(s)}</span><span>Alcance ${rgOf(s)}</span></div>
           <p>${s.el?`<b>${gl('elite','Elite')}:</b> ${elTxt(s.el)}<br>`:''}Forte contra ${strong(s.type)}<br>Fraca contra ${weak(s.type)}</p></div></div>
@@ -23,9 +23,11 @@ function ui(){
         :'<p><i>Escolha uma unidade sua, ou clique num inimigo para ver até onde ele vai.</i></p>'}
       <div class="ulist">${B.units.map((u,k)=>u.side==B.ps&&u.hp>0?`<button data-u="${k}" class="${u.done?'done ':''}${u==s?'cur':''}" title="${nmOf(u)}${u.done?' (já agiu)':''}"><img src="${icon(u.type,pf,true,u.ld)}" alt="${nmOf(u)}">♥${u.hp}</button>`:'').join('')}</div>
       <div class="tri">${ic('inf')}▶${ic('cav')}▶${ic('ati')}▶${ic('inf')}</div>
-      <p class="c">${gl('tri','A seta aponta quem leva +50% de dano.')}<br>Mata e vila: +30% de defesa. Morro e água bloqueiam.</p>
+      <p class="c">${gl('tri','A seta aponta quem leva +50% de dano.')}<br>Mata e vila: +30% de defesa. Vila cura 2 por rodada e rende 2 ouro. Morro baixo: +20% defesa, tiro +1. Serra e água bloqueiam.</p>
       ${B.aim?'<p class="warn"><b>Ataque de fogo:</b> clique numa unidade inimiga no campo.</p>':''}${B.amb==B.round?'<p><b>Emboscada</b> ativa nesta rodada.</p>':''}${B.chg==B.round?'<p><b>Toque de carga</b> ativo: +2 casas.</p>':''}
       <button data-a="brally" ${B.rl[B.ps]||B.busy?'disabled':''}>${B.rl[B.ps]?'Brado já usado':'Brado do comandante: +40% de dano nesta rodada'}</button>${gl('brado','O que é o brado?')}${B.rl[1-B.ps]?'<p><i>O inimigo já usou o brado.</i></p>':''}
+      <button data-a="bpow" ${B.pw[B.ps]||B.busy?'disabled':''}>${B.pw[B.ps]?'Poder do líder já usado':`★ Poder de ${S[pf][4]} · ${POW[S[pf][5]][0]}: ${POW[S[pf][5]][1]}`}</button>${B.pw[1-B.ps]?`<p><i>O inimigo usou ${POW[B.pw[1-B.ps].k][0]}.</i></p>`:''}
+      ${s&&!s.done&&!B.busy&&bridgeNear(s)?'<button data-a="bburn">Queimar a ponte ao lado (gasta a ação)</button>':''}${s&&gateFor(s)?'<p><i>Clique no portão para golpeá-lo.</i></p>':''}
       <div class="row"><button data-a="bwait" ${s&&!B.busy?'':'disabled'}>Esperar</button><button data-a="bundo" ${B.undo&&!B.busy?'':'disabled'}>Desfazer</button></div>
       <div class="row"><button data-a="bend" class="end" ${dis}>Encerrar rodada ▶</button><button data-a="bauto" ${dis}>Automático</button></div>`;
     return}
@@ -93,6 +95,8 @@ const onPanel=e=>{const b=e.target.closest('button');if(!b||cam||aiShow)return;c
   if(a=='bend')return bEnd();
   if(a=='bauto')return bEnd(true);
   if(a=='brally'){B.rl[B.ps]=B.round;sfx.win()}
+  if(a=='bpow'&&!B.pw[B.ps]&&!B.busy)usePower(B.ps);
+  if(a=='bburn'&&B.selU){const br=bridgeNear(B.selU);if(br)burnBridge(B.selU,br);B.selU=B.undo=null}
   if(a=='bwait'&&B.selU){B.selU.done=true;B.selU=B.undo=null}
   if(a=='bundo'&&B.undo){const{u,x:ux,y:uy}=B.undo;u.x=ux;u.y=uy;u.moved=u.done=false;B.selU=u;B.undo=null}
   if(a=='start'){me=sel;say(`${S[me][4]} ergue a bandeira em ${S[me][1]}`);scr()}

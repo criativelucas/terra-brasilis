@@ -188,6 +188,7 @@ const onScr=e=>{const k=e.target.closest('button')?.dataset.s;if(!k)return;sfx.s
   else if(k=='diff'){CFG.diff=(CFG.diff+1)%3;saveCfg();showSetup()}
   else if(k=='go'){reset(scnI);startAs(pickI);sel=me;regionCheck(true);say(`${SCN[scnI].y}: ${S[me][4]} ergue a bandeira em ${S[me][1]}`);scr();tutStart();ui()}
   else if(k=='close')scr();
+  else if(k=='bfree'){if(bCap!=null&&gold[me]>=10){gold[me]-=10;pact[bCap]=Math.max(pact[bCap]||0,turn+4);note(`${S[bCap][4]} libertado: pacto até o turno ${turn+4}`)}bCap=null;scr();ui()}
   else if(k.startsWith('sv-')){try{localStorage.setItem(SLOT(k.slice(3)),JSON.stringify({...snap(),nome:$('svname').value.trim()||`Turno ${turn}`,quando:Date.now()}));note('Partida salva')}catch{note('Não foi possível salvar: armazenamento do navegador cheio ou bloqueado')}showSaves('close')}
   else if(k.startsWith('ld-')){const d=localStorage.getItem(SLOT(k.slice(3)));if(d){localStorage.setItem(SAVE,d);if(load()){regionCheck(true);scr();note('Partida carregada');ui()}}}
   else if(k.startsWith('cs-')){followCouncil(+k.slice(3));showCouncil();ui()}

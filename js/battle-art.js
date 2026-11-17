@@ -1,14 +1,17 @@
 // batalha tática: geração do campo, terrenos e sprites
-function genMap(b){ // g grama, r estrada, w água, b ponte, f mata, m morro, v vila
+function genMap(b,kind){ // g grama, r estrada, w água, b ponte, a vau, f mata, m serra, h morro baixo, v vila, W muralha, D portão, P praça
   const T=Array.from({length:GH},()=>Array(GW).fill('g')),rnd=n=>Math.random()*n|0;
   let y=GH>>1; // a estrada liga os dois lados e nunca é coberta: garante passagem
   for(let c=0;c<GW;c++){T[y][c]='r';if(c>1&&c<GW-2&&Math.random()<.35){y=Math.max(1,Math.min(GH-2,y+(rnd(2)?1:-1)));T[y][c]='r'}}
-  if(b.river){let c=6+rnd(4);const wet=(yy,cc)=>T[yy][cc]=T[yy][cc]=='r'||T[yy][cc]=='b'?'b':'w';
+  if(kind=='travessia'||b.river&&kind!='cerco'){let c=6+rnd(4);const wet=(yy,cc)=>T[yy][cc]=T[yy][cc]=='r'||T[yy][cc]=='b'?'b':'w';
     for(let yy=0;yy<GH;yy++){wet(yy,c);if(yy<GH-1&&Math.random()<.4){c=Math.max(5,Math.min(10,c+(rnd(2)?1:-1)));wet(yy,c)}}
     const ws=[];T.forEach((row,yy)=>row.forEach((t,cc)=>{if(t=='w'&&row[cc-1]=='g'&&row[cc+1]=='g')ws.push([cc,yy])}));
-    if(ws.length){const[cc,yy]=ws[rnd(ws.length)];T[yy][cc]='b'}}
-  const put=(ch,n)=>{for(let k=0,tries=0;k<n&&tries<500;tries++){const c=2+rnd(GW-4),yy=rnd(GH);if(T[yy][c]=='g'){T[yy][c]=ch;k++}}};
-  put('m',b.m*1.3|0);put('f',b.f*1.3|0);put('v',3);return T}
+    const pick=()=>ws.splice(rnd(ws.length),1)[0];if(ws.length){const[cc,yy]=pick();T[yy][cc]='b'}if(kind=='travessia'&&ws.length){const[cc,yy]=pick();T[yy][cc]='a'}}
+  const wc=GW-5,lim=kind=='cerco'?wc-3:GW-4;
+  if(kind=='cerco'){let gy=-1;for(let yy=0;yy<GH;yy++){if(T[yy][wc]=='r'&&gy<0){gy=yy;T[yy][wc]='D'}else T[yy][wc]='W'} // muralha com um portão na estrada
+    T[gy][wc+2]='P'}
+  const put=(ch,n)=>{for(let k=0,tries=0;k<n&&tries<500;tries++){const c=2+rnd(lim),yy=rnd(GH);if(T[yy][c]=='g'){T[yy][c]=ch;k++}}};
+  put('m',b.m*(kind=='emboscada'?.6:1.3)|0);put('f',b.f*1.3+(kind=='emboscada'?40:0)|0);put('h',kind=='emboscada'?2:4);put('v',3);return T}
 function tree(q,st,a,b,h){ // q aceita meia unidade: dá para desenhar detalhes finos
   if(st=='cactus'){const G='#3f8f4f',Gd='#2a6a38',Gl='#7fcf7f'; // mandacaru: braços em candelabro, costelas claras, flor no topo
     q(a+2,b+9,4,.5,'rgba(0,0,0,.25)');q(a+3,b+1,2,8,G);q(a+3,b+1,.5,8,Gl);q(a+4.5,b+1,.5,8,Gd);
@@ -31,7 +34,7 @@ function tree(q,st,a,b,h){ // q aceita meia unidade: dá para desenhar detalhes 
   for(let k=0;k<4;k++){const v=hash(h+k,a*3+b|0);q(a+1+v%5,b+1+(v>>4)%4,.5,.5,k%2?l:d)}} // folhas soltas
 function tile(g,T,c,y,b){
   const t=T[y][c],h=hash(c,y),X=c*CS,Y=y*CS,U=CS/18,q=(a,bb,w,hh,col)=>{g.fillStyle=col;g.fillRect(Math.round(X+a*U),Math.round(Y+bb*U),Math.max(1,Math.round(w*U)),Math.max(1,Math.round(hh*U)))};
-  const at=(dx,dy)=>T[y+dy]?.[c+dx],road=v=>v=='r'||v=='b',wet=v=>v=='w'||v=='b';
+  const at=(dx,dy)=>T[y+dy]?.[c+dx],road=v=>v=='r'||v=='b',wet=v=>v=='w'||v=='b'||v=='a';
   // grama: xadrez suave, luz no alto da casa, tufos em 3 tons, pedrinhas e flores
   q(0,0,18,18,b.g[(c+y)%2]);q(0,0,18,2,'rgba(255,255,255,.05)');q(0,16,18,2,'rgba(0,0,0,.05)');
   for(let k=0;k<7;k++){const v=hash(c*7+k,y*13+k),tx=v%16,ty=(v>>>4)%16;q(tx,ty+1,1,.5,b.gd);q(tx+.5,ty,.5,1,b.gl);q(tx+1,ty+.5,.5,.5,b.gd)}
@@ -48,6 +51,11 @@ function tile(g,T,c,y,b){
     const dry=v=>v&&!wet(v),sand='#e3cf94',foam='#e6f4fb';
     if(dry(at(0,-1))){q(0,0,18,1,sand);q(0,1,18,.5,foam)}if(dry(at(0,1))){q(0,17,18,1,sand);q(0,16.5,18,.5,foam)}
     if(dry(at(-1,0))){q(0,0,1,18,sand);q(1,0,.5,18,foam)}if(dry(at(1,0))){q(17,0,1,18,sand);q(16.5,0,.5,18,foam)}}
+  if(t=='a'){q(0,0,18,18,'rgba(170,225,255,.35)');[[3,4],[9,8],[13,3],[5,12],[12,13]].forEach(([a,c2])=>{q(a,c2,2.5,2,'#8d877b');q(a,c2,2.5,.5,'#c9c4b8')})} // vau: raso, com pedras
+  if(t=='h'){q(2,13,15,2,'rgba(0,0,0,.18)');q(2,8,14,6,b.gd);q(4,5,10,4,b.gd);q(3,8,12,5,b.gl);q(5,5.5,8,3,b.gl);q(6,5.5,4,1,'rgba(255,255,255,.35)');q(11,8,3,5,'rgba(0,0,0,.12)')} // morro baixo
+  if(t=='W'||t=='D'){q(0,0,18,18,'#8a8070');for(let r=0;r<18;r+=4.5)for(let k=(r/4.5%2)*3-3;k<18;k+=6){q(Math.max(0,k),r,5.5,4,'#a89c88');q(Math.max(0,k),r,5.5,.5,'#c9bea8')} // muralha de pedra
+    q(0,0,18,1.5,'#6a6050');q(15,0,3,18,'rgba(0,0,0,.2)');if(t=='D'){q(4,2,10,16,'#3a2413');q(5,3,8,15,'#22140c')}}
+  if(t=='P'){q(1,1,16,16,'#b8ab90');for(let r=1;r<17;r+=3)for(let k=1+(r%2)*1.5;k<17;k+=3){q(k,r,2.5,2.5,'#cfc3a6');q(k,r,2.5,.5,'#e6dcc2')}q(1,1,16,16,'rgba(255,220,120,.08)')} // praça de pedra
   if(t=='b'){q(0,4,18,10,'rgba(0,0,0,.25)'); // ponte: tábuas com luz, corrimão e postes
     q(0,3,18,11,'#9a6a36');for(let k=0;k<18;k+=3){q(k,3,.5,11,'#6b4524');q(k+.5,3,2,.5,'#c99a5c')}
     q(0,2,18,1,'#5a3a1c');q(0,2,18,.5,'#8a5a2b');q(0,14,18,1,'#5a3a1c');
@@ -66,12 +74,17 @@ function tile(g,T,c,y,b){
     q(11,11,5,4,'#efe2c0');q(15,11,1,4,'#cdbd95');q(10,9,7,2,'#2a9db0');q(10,9,7,.5,'#52c8d6');q(10,10.5,7,.5,'#1f7385');q(13,13,1,2,'#5a3a1c');
     q(1,15,.5,2,'#8a5a2b');q(4,15,.5,2,'#8a5a2b');q(1,15.5,3.5,.5,'#8a5a2b')}}
 // sprites 52x48 (base em blocos de 2 px e detalhes de 1 px) com contorno; quadros: 0-1 parado, 2-3 andando, 4 golpe; cacheados por tipo, facção e pele
+const rgb2hsl=(r,g,b)=>{r/=255;g/=255;b/=255;const M=Math.max(r,g,b),m=Math.min(r,g,b),l=(M+m)/2,d=M-m;if(!d)return[0,0,l];
+  return[(M==r?(g-b)/d+(g<b?6:0):M==g?(b-r)/d+2:(r-g)/d+4)/6,d/(1-Math.abs(2*l-1)),l]};
+const hsl2rgb=(h,s,l)=>{const a=s*Math.min(l,1-l),f=n=>{const k=(n+h*12)%12;return 255*(l-a*Math.max(-1,Math.min(k-3,9-k,1)))};return[f(0),f(8),f(4)]};
 const SPR=new Map,CUSTOM={units:{}}; // CUSTOM: folhas de sprite carregadas de assets/sprites.json (js/assets.js)
 function sprite(u,f,mine,fr){
   const key=[u.type,f,mine,u.ld,u.sk,fr].join();if(SPR.has(key))return SPR.get(key);
   const cu=CUSTOM.units[u.ld?'ld':u.type]||CUSTOM.units[u.type];
-  if(cu){const fw=cu.im.width/cu.frames,[c,g]=mk(fw,cu.im.height);g.drawImage(cu.im,(fr%cu.frames)*fw,0,fw,cu.im.height,0,0,fw,cu.im.height);
-    g.fillStyle=`hsl(${hue(f)},${mine?78:52}%,48%)`;g.fillRect(0,cu.im.height-2,fw,2);SPR.set(key,c);return c} // faixa na cor da facção
+  if(cu){const n=cu.frames,i=n>=4?[0,0,1,2,3][fr]:fr%n,fw=cu.im.width/n,ih=cu.im.height,[c,g]=mk(fw,ih);g.drawImage(cu.im,i*fw,0,fw,ih,0,0,fw,ih); // folha de 4: parado, passo A, passo B, golpe
+    const d=g.getImageData(0,0,fw,ih),p=d.data,H=hue(f)/360,Sa=mine?.78:.52;
+    for(let k=0;k<p.length;k+=4){if(!p[k+3])continue;const[hh,ss,ll]=rgb2hsl(p[k],p[k+1],p[k+2]);if(hh>.53&&hh<.74&&ss>.3){const q=hsl2rgb(H,Sa*Math.min(1,ss+.2),ll);p[k]=q[0];p[k+1]=q[1];p[k+2]=q[2]}}
+    g.putImageData(d,0,0);SPR.set(key,c);return c}
   const[t,g]=mk(52,48),h=hue(f),s=mine?78:52,C=`hsl(${h},${s}%,48%)`,Cd=`hsl(${h},${s}%,30%)`,Cl=`hsl(${h},${s}%,70%)`,
     [sk,skd]=SK[u.sk],O='#1a1020',mt='#dfe5ea',mtd='#8a94a0',wd='#8a5a2b',lt='#4a2c17',bk='#22140c',gold='#e0b030',red='#b3312a',wh='#ece6d6',b=fr==1||fr==3?1:0,st=fr==2?1:fr==3?-1:0,atk=fr==4;
   const r=(a,bb,w,hh,c)=>{g.fillStyle=c;g.fillRect((a+1)*2,(bb+1)*2,w*2,hh*2)}, // desenho base em blocos de 2 px
