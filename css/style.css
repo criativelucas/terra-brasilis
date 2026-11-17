@@ -145,3 +145,20 @@ aside{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
 /* texto grande */
 body.big{font-size:24px}body.big button{font-size:12px}body.big .chips span{font-size:22px}body.big aside h2,body.big #card h2{font-size:14px}
 body.big #roster button,body.big .ulist button,body.big .tabs button{font-size:12px}body.big .opt{font-size:12px}
+/* cartas de estratégia e conselho */
+#hand{max-width:1166px;display:flex;flex-direction:column;gap:6px}
+.hhead{display:flex;flex-wrap:wrap;gap:10px;align-items:baseline}.hhead b{font:12px var(--display);color:var(--foam)}.hhead span{color:#bfae84}
+.cards{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 8px}
+.card{position:relative;flex:0 0 132px;min-height:176px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 8px 8px;text-align:center;
+  background:linear-gradient(#2c3f86,#1a2456);color:#f1e3a8;border:3px solid #e0b030;box-shadow:3px 3px 0 #000;font:inherit;line-height:1}
+.card.bat{background:linear-gradient(#8c2f1f,#4a1610)}
+.card img{width:48px;height:48px}.card b{font:10px var(--display);color:#fff}.card small{font-size:15px;color:#e8dcb8}
+.card .cc{position:absolute;top:-6px;left:-6px;width:26px;height:26px;display:grid;place-items:center;background:#52c8d6;color:#0b1a3a;border:3px solid #0b1a3a;font:11px var(--display)}
+.card.on{outline:3px solid #fff;transform:translateY(-6px)}
+.card:hover:not(:disabled){transform:translateY(-6px)}
+#councilBtn.new{background:var(--red);box-shadow:0 0 0 2px #ffd23f}
+@media (prefers-reduced-motion:no-preference){#councilBtn.new{animation:pulse2 1.4s steps(4) infinite}}
+@keyframes pulse2{50%{box-shadow:0 0 0 4px #ffd23f}}
+.ucard small{display:block;font-size:15px}
+select{font:inherit;background:#fffaf0;border:2px solid var(--paper-edge);padding:2px;min-width:0;max-width:180px}
+p.warn{background:#f3b0a6;border:2px solid var(--red);padding:4px}

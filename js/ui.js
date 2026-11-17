@@ -24,6 +24,7 @@ function ui(){
       <div class="ulist">${B.units.map((u,k)=>u.side==B.ps&&u.hp>0?`<button data-u="${k}" class="${u.done?'done ':''}${u==s?'cur':''}" title="${nmOf(u)}${u.done?' (já agiu)':''}"><img src="${icon(u.type,pf,true,u.ld)}" alt="${nmOf(u)}">♥${u.hp}</button>`:'').join('')}</div>
       <div class="tri">${ic('inf')}▶${ic('cav')}▶${ic('ati')}▶${ic('inf')}</div>
       <p class="c">${gl('tri','A seta aponta quem leva +50% de dano.')}<br>Mata e vila: +30% de defesa. Morro e água bloqueiam.</p>
+      ${B.aim?'<p class="warn"><b>Ataque de fogo:</b> clique numa unidade inimiga no campo.</p>':''}${B.amb==B.round?'<p><b>Emboscada</b> ativa nesta rodada.</p>':''}${B.chg==B.round?'<p><b>Toque de carga</b> ativo: +2 casas.</p>':''}
       <button data-a="brally" ${B.rl[B.ps]||B.busy?'disabled':''}>${B.rl[B.ps]?'Brado já usado':'Brado do comandante: +40% de dano nesta rodada'}</button>${gl('brado','O que é o brado?')}${B.rl[1-B.ps]?'<p><i>O inimigo já usou o brado.</i></p>':''}
       <div class="row"><button data-a="bwait" ${s&&!B.busy?'':'disabled'}>Esperar</button><button data-a="bundo" ${B.undo&&!B.busy?'':'disabled'}>Desfazer</button></div>
       <div class="row"><button data-a="bend" class="end" ${dis}>Encerrar rodada ▶</button><button data-a="bauto" ${dis}>Automático</button></div>`;
@@ -53,20 +54,33 @@ function ui(){
   if(me>=0&&!over){const idle=owner.reduce((a,o,j)=>a+(o==me&&!moved.has(j)&&troops[j]>1),0),armed=endArm>Date.now();
     act+=`<div class="row"><button data-a="next" ${idle?'':'disabled'} title="Próximo ${TW1} que ainda pode marchar (N)">▶ Próximo (${idle})</button><button data-a="undo" ${undoS.length?'':'disabled'} title="Desfazer (Z)">↶ Desfazer</button><button data-a="hq" title="Quartel-General (Q)">⌂ Quartel</button></div>
       <button data-a="end" class="end${armed?' danger':''}">${armed?`Encerrar mesmo assim? ${idle} ${idle>1?TW:TW1} ainda pode${idle>1?'m':''} marchar`:'Fim do turno ▶'}</button>`}
+  if(aim)h=`<div class="summ"><b>${CARDS[aim][0]}</b><p>${CARDS[aim][4]}</p><p><i>Clique num ${TW1} válido (destacado no mapa). Esc cancela.</i></p><button data-a="aimx">Cancelar carta</button></div>`+h;
   $('panel').innerHTML=h;$('act').innerHTML=act;$('act').hidden=!act;
-  $('bar').innerHTML=me<0?`<span>${TH.nome} · ${TH.ano}</span>`:`<span>Turno ${turn} · ${TOD[turn%4][1]} ${TOD[turn%4][0]}</span><span>◉ Ouro ${cnt('gold',gold[me])} (+${income(me)})</span>${SCN[scn].sub?.[me]?`<span>${gl('sub','Corte +'+SCN[scn].sub[me])}</span>`:''}<span>⚑ ${TW[0].toUpperCase()+TW.slice(1)} ${cnt('terr',owner.filter(o=>o==me).length)}/${N}</span>`;
+  $('bar').innerHTML=me<0?`<span>${TH.nome} · ${TH.ano}</span>`:`<span>Turno ${turn} · ${TOD[turn%4][1]} ${TOD[turn%4][0]}</span><span>◉ Ouro ${cnt('gold',gold[me])} (+${income(me)})</span><span title="Comando: gasto para jogar cartas; volta todo turno">✦ Comando ${cmd}/${cmdMax()}</span>${SCN[scn].sub?.[me]?`<span>${gl('sub','Corte +'+SCN[scn].sub[me])}</span>`:''}<span>⚑ ${TW[0].toUpperCase()+TW.slice(1)} ${cnt('terr',owner.filter(o=>o==me).length)}/${N}</span>`;
   $('log').innerHTML=logs.slice(0,2).map(l=>`<div>› ${esc(l)}</div>`).join('')+(logs.length?`<button data-a="log">📜 Crônica completa (${logs.length})</button>`:'');
   $('roster').innerHTML=S.map((s,i)=>{const n=owner.filter(o=>o==i).length;
     return`<button data-i="${i}" class="${i==me?'me ':''}${i==sel?'sel ':''}${n?'':'dead'}" title="${s[4]} (${s[1]})">${img(i,s[4])}<span>${s[0]} ${n}</span></button>`}).join('');
   if(marching&&sel>=0){const n=+($('n')?.value||troops[sel]-1);oddsC={};adj[sel].forEach(j=>{if(owner[j]!=me)oddsC[j]=odds(sel,j,n)})}else oddsC={};
-  draw();save();
+  handUI();draw();save();
   if(over&&!endShown){endShown=true;showEnd()}}
-let tab='army',undoS=[],summ=null,endArm=0; // tab: aba do painel; undoS: pilha para desfazer; summ: resumo do turno; endArm: confirmação do fim do turno
+function handUI(){ // mão de cartas: abaixo do mapa; cartas de mapa no mapa, cartas de batalha na batalha
+  const el=$('hand');el.hidden=me<0||!!HQ||!!over;if(el.hidden)return;
+  const cn=councilNow();$('councilBtn').classList.toggle('new',!!cn&&!cn.done);
+  el.innerHTML=`<div class="hhead"><b>Cartas de estratégia</b><span>✦ Comando ${cmd}/${cmdMax()}</span><span>${hand.length}/6 na mão · +1 por turno</span></div><div class="cards">`+
+    (hand.length?hand.map((id,k)=>{const c=CARDS[id],bat=c[1]=='batalha',ok=B?bat&&!B.busy&&cmd>=c[2]:!bat&&!aiShow&&cmd>=c[2]&&(c[3]!='none'||cardOk(id,-1));
+      return`<button class="card ${bat?'bat':'map'}${aim==id||B?.aim==id?' on':''}" data-card="${k}" ${ok?'':'disabled'} title="${esc(c[4])}">
+        <span class="cc">${c[2]}</span><img src="${cardArt(id)}" alt=""><b>${c[0]}</b><small>${bat?'Batalha':'Mapa'} · ${esc(c[4])}</small></button>`}).join(''):'<p><i>Sem cartas. Você recebe uma por turno; o conselho e o Correio a cavalo dão mais.</i></p>')+'</div>'}
+$('hand').addEventListener('click',e=>{const b=e.target.closest('[data-card]');if(!b||b.disabled||cam||aiShow)return;const id=hand[+b.dataset.card],c=CARDS[id];sfx.sel();
+  if(B){if(c[3]=='foe'){B.aim=id;note('Escolha a unidade inimiga para incendiar');return ui()}playBattleCard(id);return ui()}
+  if(c[3]=='none'){playCard(id);regionCheck();return ui()}
+  aim=aim==id?null:id;marching=false;rKey='';ui()});
+let aim=null,tab='army',undoS=[],summ=null,endArm=0; // tab: aba do painel; undoS: pilha para desfazer; summ: resumo do turno; endArm: confirmação do fim do turno
 const pushU=()=>{undoS.push(JSON.stringify({troops,g:gold[me],fort,port,moved:[...moved],sel}));if(undoS.length>12)undoS.shift()};
 function undo(){const d=JSON.parse(undoS.pop());troops=d.troops;gold[me]=d.g;fort=d.fort;port=d.port;moved=new Set(d.moved);sel=d.sel;linkPorts();note('Ação desfeita')}
 $('panel').addEventListener('input',e=>{if(e.target.id=='n'){$('nv').textContent=e.target.value;if(marching){oddsC={};adj[sel].forEach(j=>{if(owner[j]!=me)oddsC[j]=odds(sel,j,+e.target.value)})}}});
 const onPanel=e=>{const b=e.target.closest('button');if(!b||cam||aiShow)return;const a=b.dataset.a;sfx.sel();
   if(a=='tab'){tab=b.dataset.t;return ui()}
+  if(a=='aimx'){aim=null;rKey='';return ui()}
   if(a=='summx'){summ=null;return ui()}
   if(a=='log')return showLog();
   if(a=='undo'&&undoS.length){undo();return ui()}
@@ -89,8 +103,9 @@ const onPanel=e=>{const b=e.target.closest('button');if(!b||cam||aiShow)return;c
   if(a=='march'){marching=!marching;if(marching)tutEv('march')}
   if(a=='end'){const idle=owner.reduce((s,o,j)=>s+(o==me&&!moved.has(j)&&troops[j]>1),0);
     if(idle&&CFG.confirm&&!(endArm>Date.now())){endArm=Date.now()+4000;setTimeout(()=>{if(!(endArm>Date.now()))ui()},4100);return ui()} // segundo clique confirma
-    endArm=0;tutEv('end');undoS=[];marching=false;const own0=owner.map(o=>o==me);endTurn();ui();
+    endArm=0;tutEv('end');undoS=[];marching=false;aim=null;const own0=owner.map(o=>o==me);endTurn();ui();
     return playAI(()=>{const done=()=>{summ={turn,inc:income(me),lost:owner.map((o,j)=>own0[j]&&o!=me?j:-1).filter(j=>j>=0),atk:evts.filter(e=>e.was==me).length,danger:owner.reduce((s,o,j)=>s+danger(j),0)}; // resumo do turno
+      if(CFG.deleg){const c=councilNow(),k=c.list.findIndex(o=>gold[me]>=o.custo);if(k>=0)followCouncil(k)} // conselho delegado
       ui();if(evtDue){evtDue=false;showEvent()}};if(raids.length){nextRaid();summ=null}else done()})}
   if(a=='new'){reset();return showSetup()}
   ui()};
@@ -99,6 +114,7 @@ $('roster').addEventListener('click',e=>{const b=e.target.closest('button');if(!
   if(me<0){pickI=sel;return showSetup()} // antes da campanha, a galeria escolhe o líder
   ui()});
 cv.addEventListener('click',e=>{if(cam||aiShow)return;if(HQ){const k=hqSpot(e);return k&&enterRoom(k)}if(B)return bClick(e);const i=pick(e);if(i<0)return;sfx.sel();
+  if(aim){if(cardOk(aim,i)){pushU();undoS=[];playCard(aim,i);regionCheck()}else note('Esse '+TW1+' não serve para esta carta');aim=null;rKey='';return ui()}
   if(marching&&adj[sel].includes(i)){if(owner[i]==me)pushU();else undoS=[];act(i)}else{if(sel!=i)tab='army';sel=i;marching=false}
   ui()});
 cv.addEventListener('mousemove',e=>{const tip=$('tip');if(!owner)return;if(HQ){tip.hidden=true;HQ.hov=hqSpot(e);return}if(B){tip.hidden=true;B.hov=bCell(e);return}const i=pick(e);

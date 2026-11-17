@@ -164,13 +164,17 @@ function closeHQ(){HQ=null;document.body.classList.remove('hq');$('room').hidden
 function openHQ(){if(me<0||B||over||cam||aiShow)return;HQ={hov:null,zoom:null,t0:Date.now()};document.body.classList.add('hq');renderHQ();ui();let lf=0;(function loop(t){if(!HQ)return;requestAnimationFrame(loop);if(document.hidden||t-lf<1000/[15,40,60][CFG.q]-2)return;lf=t;drawHQ()})(1e9)}
 const enterRoom=k=>{if(!HQ||HQ.zoom)return;if(k=='cam')return showCampaign();if(k=='gate')return closeHQ();
   const h=HQ;HQ.zoom={room:k,start:Date.now(),dir:1};sfx.move();setTimeout(()=>HQ===h&&showRoom(k),340)};
+$('room').addEventListener('change',e=>{const el=e.target;if(el.dataset.post==null)return;const i=+el.dataset.post; // nomear ou dispensar general
+  for(const k in posts)if(posts[k]==i)posts[k]=-1;if(el.value){const prev=posts[el.value];posts[el.value]=i;note(`${S[i][4]} assume ${POSTS[el.value][0]}${prev>=0&&prev!=i?' no lugar de '+S[prev][4]:''}`)}
+  save();showRoom('gen');ui()});
 function showRoom(k){
   const g=gold[me],own=owner.map((o,i)=>o==me?i:-1).filter(i=>i>=0),line=(t,btn)=>`<div class="rk"><span style="flex:1">${t}</span>${btn}</div>`;let h='';
   if(k=='war')h=`<h2>Sala de Guerra</h2><p class="c">${gl('doc','Doutrinas')} valem pelo resto da partida.</p>`+
     DOC.map(([id,n,d,c])=>line(`<b>${n}</b><br>${d}`,`<button data-s="hq-doc-${id}" ${hq.doc[id]||g<c?'disabled':''}>${hq.doc[id]?'Adotada':c+' ouro'}</button>`)).join('');
-  if(k=='gen')h=`<h2>Salão dos Generais</h2><p class="c">Cada general comanda as tropas do seu ${TW1}, no ataque e na defesa. Conquiste o ${TW1} para ganhar o general. Barras: liderança, astúcia, política.</p>`+
+  if(k=='gen')h=`<h2>Salão dos Generais</h2><p class="c">Cada general comanda as tropas do seu ${TW1}, no ataque e na defesa. Conquiste o ${TW1} para ganhar o general. Barras: liderança, astúcia, política.</p><p class="c"><b>Cargos:</b> Comércio dá ouro pela política; Guerra dá tropas na fronteira pela liderança; Estratégia dá +1 de Comando e, com astúcia 60+, uma carta a mais; Diplomacia barateia pactos e alianças pela metade.</p>`+
     own.map(i=>{const v=hash(i+3,7);return`<div class="rk">${img(i,S[i][4])}<span style="flex:1"><b>${S[i][4]}</b> · ${S[i][0]}<br>${S[i][7]}: ${traitTxt(i)}<br>Comando: +${(gs(i)[0]-40)/4|0}% dano${gs(i)[1]>80?', +1 movimento':''}${gs(i)[2]>70?', +1 ouro':''}</span>
-      <div class="st" title="Liderança, astúcia, política"><i style="width:${40+v%60}%"></i><i style="width:${40+(v>>6)%60}%"></i><i style="width:${40+(v>>12)%60}%"></i></div></div>`}).join('');
+      <div class="st" title="Liderança, astúcia, política"><i style="width:${40+v%60}%"></i><i style="width:${40+(v>>6)%60}%"></i><i style="width:${40+(v>>12)%60}%"></i></div></div>
+      <label class="opt" for="post${i}"><span>Cargo de ${S[i][4].split(' ')[0]}</span><select id="post${i}" data-post="${i}"><option value="">Nenhum</option>${Object.entries(POSTS).map(([k,[n,at]])=>`<option value="${k}" ${posts[k]==i?'selected':''}>${n} (${at})</option>`).join('')}</select></label>`}).join('');
   if(k=='bar')h=`<h2>Quartel</h2><p class="c">Treino aumenta o dano das suas unidades em batalha.</p>`+Object.keys(UT).map(t=>{const lv=hq.tech[t],c=6+4*lv;
     return`<div class="ucard"><img src="${icon(t,me,true,false)}" alt=""><div><b>${UT[t][0]} · nível ${lv}</b>
       <div class="chips"><span>Anda ${UT[t][1]}</span><span>Alcance ${UT[t][2]}</span><span>Dano +${lv*10}%</span></div><p>Forte contra ${strong(t)}</p>

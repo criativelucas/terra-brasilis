@@ -30,10 +30,10 @@ function zoomTo(from,to,then){const c=cam={from,to,start:Date.now(),dur:1100};sf
   setTimeout(()=>{if(cam===c){cam=null;then()}},c.dur)} // o fim vem por timer: rAF pausa em aba de fundo e travaria o jogo
 function render(){ // terreno em cache: só redesenha quando algo do mapa muda
   const hot0=fx&&Date.now()<fx.until?fx.s:-1,el=intro?Date.now()-intro:1e9,stepI=el<1500?el/60|0:-1,
-    key=[owner.join(),hov,sel,blink,marching,CFG.cb,CFG.calm,hot0>=0?(Date.now()/90|0)%2:'',stepI].join('|');
+    key=[owner.join(),hov,sel,blink,marching,aim,CFG.cb,CFG.calm,hot0>=0?(Date.now()/90|0)%2:'',stepI].join('|');
   if(key==rKey)return;rKey=key;if(stepI<0)intro=null;
   fg.clearRect(0,0,SW,SH);
-  const tgt=marching?adj[sel]:[],hot=fx&&Date.now()<fx.until?fx.s:-1;
+  const tgt=marching?adj[sel]:aim?S.map((_,j)=>j).filter(j=>cardOk(aim,j)):[],hot=fx&&Date.now()<fx.until?fx.s:-1;
   for(let cy=0;cy<H;cy++)for(let cx=0;cx<W;cx++){
     const s=cell[cy*W+cx];if(s<0||revealAt[s]>el)continue;
     const h=hash(cx,cy),f=owner[s],X=cx*C,Y=cy*C;const edge=(dx,dy)=>{const t=cell[(cy+dy)*W+cx+dx];return t==null||t<0||owner[t]!=f};

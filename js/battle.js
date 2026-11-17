@@ -120,9 +120,17 @@ function bFinish(){tutEv('bdone');
   else{say(won?`Você conquistou ${S[to][1]} de ${S[was][4]}`:a?`Recuo em ${S[to][1]}`:`Derrota em ${S[to][1]}`);moved.add(from).add(to)}
   sel=to;B=null;check();onFight(af,was,to,won);
   ps?nextRaid():ui()}
+function playBattleCard(id,t){const c=CARDS[id];cmd-=c[2];hand.splice(hand.indexOf(id),1);banner(c[0].toUpperCase(),'#52c8d6');sfx.win(); // cartas de batalha
+  if(id=='embosc')B.amb=B.round;
+  if(id=='carga')B.chg=B.round;
+  if(id=='reforco')alive(B.ps).forEach(u=>{u.hp+=2;u.max=Math.max(u.max,u.hp);B.pops.push({x:u.x,y:u.y,txt:'+2',until:Date.now()+900})});
+  if(id=='fogo'){const d=Math.max(1,Math.round(t.hp*.4));t.hp-=d;t.flash=Date.now()+300;B.pops.push({x:t.x,y:t.y,txt:'-'+d,until:Date.now()+900});
+    for(let k=0;k<3;k++)puff(OX+t.x*CS+CS/2,OY+t.y*CS+CS/2,'rgba(255,'+(90+k*60)+',30,A)',8,90);sfx.hit();if(t.hp<=0)t.dead=Date.now()+200;
+    if(bOver()){B.busy=true;setTimeout(()=>B&&bFinish(),900)}}}
 function bClick(e){
   if(B.busy||clashLeft()||B.lock>Date.now())return;
   const[gx,gy]=bCell(e),b0=B;let R;
+  if(B.aim){const u=B.units.find(v=>v.hp>0&&v.side!=B.ps&&v.x==gx&&v.y==gy);if(u)playBattleCard(B.aim,u);else note('Ataque de fogo cancelado: clique numa unidade inimiga');B.aim=null;return ui()}
   const u=B.units.find(v=>v.hp>0&&v.x==gx&&v.y==gy),s=B.selU;
   if(u&&u.side==B.ps){B.selU=u.done?null:u;B.peek=null;sfx.sel()}
   else if(s&&u&&inR(s,u)){hit(s,u);B.selU=B.undo=null}

@@ -45,6 +45,22 @@ const mkFace=(bare,mood='n')=>([sk,hs,hc,bd,hat,cl,ex],i)=>{ // mood: n neutro, 
 const face=L.map(mkFace(false));L.forEach(mkFace(true));
 const FACE={blink:L.map(mkFace(false,'blink')),smile:L.map(mkFace(false,'smile')),angry:L.map(mkFace(false,'angry'))},mood={}; // mood: facção -> {m, until}
 const faceOf=f=>{const m=mood[f];return m&&m.until>Date.now()?FACE[m.m][f]:face[f]};
+// ícones das cartas: 12x12, um caractere por cor (ver legenda em ICK)
+const ICK={k:'#22140c',w:'#f6ecc4',y:'#ffd23f',o:'#e0862a',r:'#b3312a',g:'#3fae48',d:'#1f6a2c',b:'#8a5a2b',s:'#9a9488',c:'#52c8d6',m:'#dfe5ea'};
+const ICONS={horse:['............','.......kk...','......kbbk..','.....kbbbbk.','..kkkbbbkkk.','.kbbbbbbk...','.kbbbbbbk...','.kbkkkkbk...','.kk....kk...','.kk....kk...','............','............'],
+  coin:['............','...kkkkkk...','..kyyyyyyk..','.kyykkkyyyk.','.kyykyyyyyk.','.kyykkkyyyk.','.kyyyyykyyk.','.kyykkkyyyk.','..kyyyyyyk..','...kkkkkk...','............','............'],
+  flag:['.k..........','.krrrrrrk...','.krrrrrrrk..','.krryyrrrk..','.krrrrrrrk..','.krrrrrrk...','.k..........','.k..........','.k..........','.k..........','kkk.........','............'],
+  wall:['............','.kk.kk.kk...','.ss.ss.ss...','.ssssssss...','.skssksssk..','.ssssssss...','.sssksssks..','.ssssssss...','.skssskss...','.ssssssss...','kkkkkkkkkk..','............'],
+  bomb:['.......y.o..','......o.....','.....kk.....','...kkkkkk...','..kkkkkkkk..','.kkmkkkkkkk.','.kkmkkkkkkk.','.kkkkkkkkkk.','..kkkkkkkk..','...kkkkkk...','............','............'],
+  scroll:['............','.bbbbbbbbbb.','.bwwwwwwwwb.','..wkkkkkkw..','..wwwwwwww..','..wkkkkkw...','..wwwwwwww..','..wkkkkkkw..','.bwwwwwwwwb.','.bbbbbbbbbb.','............','............'],
+  dove:['............','.......ww...','......wwkw..','.....wwwwwy.','..wwwwwwww..','.wwwwwwwww..','..wwwwwww...','...ww.......','..ww........','............','....g.g.....','.....gg.....'],
+  letter:['............','............','.kkkkkkkkkk.','.kwwwwwwwwk.','.kkwwwwwwkk.','.kwkwwwwkwk.','.kwwkrrkwwk.','.kwwwrrwwwk.','.kwwwwwwwwk.','.kkkkkkkkkk.','............','............'],
+  tree:['.....gg.....','....gggg....','...gggdgg...','..ggdggggg..','..gggggdgg..','.gggdgggggg.','..ggggggdg..','....dbbd....','.....bb.....','.....bb.....','...bbbbbb...','............'],
+  fire:['......y.....','.....yo.....','.....oy..y..','....oyyo.o..','...ooyyoo...','..oryyyyro..','..oryyyyro..','..rroyyorr..','...rrooorr..','....rrrr....','..bbbbbbbb..','............'],
+  plus:['............','....gggg....','....gwwg....','....gwwg....','.ggggwwgggg.','.gwwwwwwwwg.','.gwwwwwwwwg.','.ggggwwgggg.','....gwwg....','....gwwg....','....gggg....','............'],
+  horn:['............','..........y.','.........yy.','........yyy.','..k....yyyy.','.kyyyyyyyyy.','.kyyyyyyyyy.','..k....yyyy.','........yyy.','.........yy.','..........y.','............']};
+const CART={};const cardArt=id=>{if(CART[id])return CART[id];const m=ICONS[CARDS[id][5]],[c,g]=mk(12,12);
+  m.forEach((row,y)=>[...row].forEach((ch,x_)=>{if(ch!='.'){g.fillStyle=ICK[ch];g.fillRect(x_,y,1,1)}}));return CART[id]=c.toDataURL()};
 const img=(f,alt='')=>`<img class="pt" data-f="${f}" src="${faceOf(f)}" alt="${alt}">`;
 setInterval(()=>{const ims=[...document.querySelectorAll('img.pt')].filter(e=>e.offsetParent);if(!ims.length)return; // alguém pisca de vez em quando
   const el=ims[Math.random()*ims.length|0],f=+el.dataset.f;el.src=FACE.blink[f];setTimeout(()=>el.src=faceOf(f),150)},1300);

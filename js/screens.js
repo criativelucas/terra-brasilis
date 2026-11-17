@@ -44,7 +44,7 @@ $('menu').addEventListener('input',e=>{if(e.target.id=='mus'){CFG.mus=+e.target.
 
 // ---------- salvar ----------
 const SAVE='tb-save'+(TKEY=='brasil'?'':'-'+TKEY),saveOf=k=>{try{return JSON.parse(localStorage.getItem('tb-save'+(k=='brasil'?'':'-'+k)))}catch{return null}};
-const snap=()=>({scn,owner,troops,gold,me,turn,logs,fort,stats,hq,xp,port,pact,ally,trib,angry,betray,moved:[...moved]});
+const snap=()=>({hand,cmd,posts,boost,scn,owner,troops,gold,me,turn,logs,fort,stats,hq,xp,port,pact,ally,trib,angry,betray,moved:[...moved]});
 function save(){if(me<0||B||raids.length)return;try{over?localStorage.removeItem(SAVE):localStorage.setItem(SAVE,JSON.stringify(snap()))}catch{}}
 // salvamentos com nome: 3 espaços por modo de jogo, além do salvamento automático
 const SLOT=k=>SAVE+'-slot'+k,slotOf=k=>{try{return JSON.parse(localStorage.getItem(SLOT(k)))}catch{return null}};
@@ -61,9 +61,29 @@ function showArmy(){const own=owner.map((o,i)=>o==me?i:-1).filter(i=>i>=0).sort(
     own.map(i=>`<button class="arow" data-s="go-${i}"><span>${danger(i)?'⚠ ':''}<b>${S[i][1]}</b></span><span>⚔ ${troops[i]}${fort[i]?' · forte '+fort[i]:''}${port[i]?' · ⚓':''}</span>
       <span>${danger(i)?'em perigo':moved.has(i)?'já marchou':troops[i]>1?'pode marchar':'guarnição mínima'}</span></button>`).join('')+
     '<button data-s="close" class="end">Voltar ao mapa</button>')}
+// conselho (como o "Seek Advice" de Samurai Warriors Empires): a cada turno, até 3 generais propõem uma ação; você segue uma
+let council=null;
+function makeCouncil(){const own=owner.map((o,i)=>o==me?i:-1).filter(i=>i>=0).sort((a,b)=>hash(a,turn)%97-hash(b,turn)%97).slice(0,3),
+    picks=own.map(i=>{const[l,a,p]=gs(i);return[i,l>=a&&l>=p?'l':a>=p?'a':'p']}); // cada general propõe pelo seu atributo mais forte
+  for(const t of['l','a','p'])if(picks.length<3&&!picks.some(q=>q[1]==t))picks.push([me,t]); // com poucos generais, o próprio líder completa as três propostas
+  return{turn,done:false,list:picks.map(([i,top])=>{const v=hash(i,turn)%2;const[l,a,p]=gs(i);
+    const O={l:[['Treino de milícia',`+${3+(l/25|0)} tropas em ${S[i][1]}`,0,()=>troops[i]+=3+(l/25|0)],['Exercícios de campanha',`+2 de experiência nos regimentos de ${S[i][1]}`,4,()=>xp[i]=xp[i].map(x_=>x_+2)]],
+      a:[['Rede de espiões','Compre 2 cartas de estratégia',0,()=>drawCards(2)],['Plano de campanha','+2 de Comando neste turno',0,()=>cmd+=2]],
+      p:[['Feira de comércio',`+${4+(p/15|0)} ouro agora`,0,()=>gold[me]+=4+(p/15|0)],['Reforma de impostos',`+1 de renda por turno em ${S[i][1]}, para sempre`,6,()=>boost[i]++]]}[top][v];
+    return{i,attr:{l:'liderança',a:'astúcia',p:'política'}[top],nome:O[0],txt:O[1],custo:O[2],fn:O[3]}})}}
+const councilNow=()=>{if(me<0)return null;if(!council||council.turn!=turn)council=makeCouncil();return council};
+function followCouncil(k){const c=councilNow(),o=c.list[k];if(c.done||gold[me]<o.custo)return;gold[me]-=o.custo;o.fn();c.done=true;
+  mood[owner[o.i]==me?o.i:me]={m:'smile',until:Date.now()+6000};note(`Conselho de ${S[o.i][4]}: ${o.nome.toLowerCase()}`);sfx.win()}
+function showCouncil(){const c=councilNow(),postOf=i=>Object.keys(posts).find(k=>posts[k]==i);
+  scr(`<h2>Conselho · turno ${turn}</h2><p class="c">${c.done?'Você já seguiu um conselho neste turno.':'Seus generais trazem propostas. Siga uma por turno.'}</p>`+
+    c.list.map((o,k)=>{const[l,a,p]=gs(o.i),po=postOf(o.i);return`<div class="ucard"><img src="${faceOf(o.i)}" alt="" style="width:72px;height:72px"><div style="flex:1">
+      <b>${S[o.i][4]}</b><small>${po?'Cargo: '+POSTS[po][0]+' · ':''}proposta pela ${o.attr}</small>
+      <div class="st" title="Liderança, astúcia, política"><i style="width:${l}%"></i><i style="width:${a}%"></i><i style="width:${p}%"></i></div>
+      <p><b>${o.nome}</b><br>${o.txt}</p><button data-s="cs-${k}" ${c.done||gold[me]<o.custo?'disabled':''}>${o.custo?`Seguir (${o.custo} ouro)`:'Seguir o conselho'}</button></div></div>`}).join('')+
+    `<div class="opt"><span>Delegar ao conselho</span><button data-s="deleg">‹ ${CFG.deleg?'Sim: escolhe sozinho':'Não'} ›</button></div><button data-s="close" class="end">Voltar ao mapa</button>`)}
 function showLog(){scr(`<h2>Crônica</h2><div class="loglist">${logs.map(l=>`<p>› ${esc(l)}</p>`).join('')||'<p>Nada aconteceu ainda.</p>'}</div><button data-s="close" class="end">Voltar</button>`)}
 function load(){try{const d=JSON.parse(localStorage.getItem(SAVE));undoS=[];summ=null;if(!d||d.owner.length!=N)return false;
-  reset(d.scn||0);({owner,troops,gold,me,turn,logs,fort,stats}=d);setGoal();moved=new Set(d.moved);sel=me;if(d.hq)hq=d.hq;hq.tech.art??=0;if(d.xp)xp=d.xp;if(d.port)port=d.port;pact=d.pact||{};ally=d.ally||{};trib=d.trib||{};angry=d.angry||{};betray=d.betray||0;linkPorts();return true}catch{return false}}
+  reset(d.scn||0);({owner,troops,gold,me,turn,logs,fort,stats}=d);setGoal();moved=new Set(d.moved);sel=me;if(d.hq)hq=d.hq;hq.tech.art??=0;if(d.xp)xp=d.xp;if(d.hand){hand=d.hand;cmd=d.cmd;posts=d.posts;boost=d.boost}council=null;if(d.port)port=d.port;pact=d.pact||{};ally=d.ally||{};trib=d.trib||{};angry=d.angry||{};betray=d.betray||0;linkPorts();return true}catch{return false}}
 const wipe=()=>{try{localStorage.removeItem(SAVE)}catch{}};
 const savedInfo=()=>{try{const d=JSON.parse(localStorage.getItem(SAVE));return d&&`${SCN[d.scn||0].n} · ${S[d.me][4]} · turno ${d.turn} · ${d.owner.filter(o=>o==d.me).length}/${N} ${TW}`}catch{return''}};
 
@@ -85,7 +105,7 @@ function dipHTML(f,where){ // cartão de diplomacia com um líder rival; where='
   const st=pact[f]>turn?(ally[f]>turn?`Aliado até o turno ${ally[f]}`:`Pacto até o turno ${pact[f]}`):angry[f]>turn?'Hostil: recusou tributo':betray>turn?'Desconfia de você: traidor':border(f).length?'Vizinho sem acordo':'Sem fronteira com você';
   const bt=(k,label)=>{const why=dipState(k,f);return`<button ${where=='hq'?'data-s="hq-dip"':'data-a="dip"'} data-k="${k}" data-f="${f}" ${why?'disabled':''} title="${why}">${why&&why!='Ouro insuficiente'?why:label}</button>`};
   return`<div class="own">${img(f)}<span><b>${S[f][4]}</b> · ${nOwn(f)} ${TW}<br>${st}</span></div>`+
-    bt('pact','Pacto de não agressão (6 ouro, 5 turnos)')+bt('ally','Aliança (12 ouro, 8 turnos)')+bt('trib','Exigir tributo')+
+    bt('pact',`Pacto de não agressão (${dipCost('pact')} ouro, 5 turnos)`)+bt('ally',`Aliança (${dipCost('ally')} ouro, 8 turnos)`)+bt('trib','Exigir tributo')+
     (pact[f]>turn?'<p><i>Atacar agora é traição: rompe todos os pactos e enfurece os vizinhos.</i></p>':'')}
 const traitTxt=i=>({atk:`+${S[i][6]*100}% ataque`,def:`+${S[i][6]*100}% defesa`,gold:`+${S[i][6]} ouro por turno`,rec:'recrutamento pela metade'})[S[i][5]];
 const scr=h=>{$('screen').hidden=!h;if(h){$('card').innerHTML=h;$('card').scrollTop=0;$('card').querySelector('button.end,button')?.focus()}};
@@ -105,6 +125,7 @@ function showCamps(){ // cada campanha abre num mapa próprio, só da região da
         <button data-s="th-${k}" class="${k==TKEY?'':'end'}">${k==TKEY?'Campanha aberta':'Abrir campanha'}</button></div>`}).join('')+
     `<button data-s="title">Voltar</button>`)}
 $('armyBtn').addEventListener('click',()=>{if(me>=0&&!B&&!HQ)showArmy()});
+$('councilBtn').addEventListener('click',()=>{if(me>=0&&!B&&!HQ&&!over)showCouncil()});
 addEventListener('hashchange',()=>location.reload()); // trocar de teatro recarrega o jogo com o mapa novo
 function showSetup(){const SC=SCN[scnI],pl=SC.play&&Object.keys(SC.play).map(Number);if(pl&&!pl.includes(pickI))pickI=pl[0];
   reset(scnI);sel=pickI;const i=pickI,s=S[i],reg=REG.find(r=>r[1].includes(i)),own=owner.filter(o=>o==i).length;
@@ -169,6 +190,8 @@ const onScr=e=>{const k=e.target.closest('button')?.dataset.s;if(!k)return;sfx.s
   else if(k=='close')scr();
   else if(k.startsWith('sv-')){try{localStorage.setItem(SLOT(k.slice(3)),JSON.stringify({...snap(),nome:$('svname').value.trim()||`Turno ${turn}`,quando:Date.now()}));note('Partida salva')}catch{note('Não foi possível salvar: armazenamento do navegador cheio ou bloqueado')}showSaves('close')}
   else if(k.startsWith('ld-')){const d=localStorage.getItem(SLOT(k.slice(3)));if(d){localStorage.setItem(SAVE,d);if(load()){regionCheck(true);scr();note('Partida carregada');ui()}}}
+  else if(k.startsWith('cs-')){followCouncil(+k.slice(3));showCouncil();ui()}
+  else if(k=='deleg'){CFG.deleg=CFG.deleg?0:1;saveCfg();showCouncil()}
   else if(k.startsWith('go-')){sel=+k.slice(3);marching=false;scr();ui()}
   else if(k=='saves')showSaves('title');
   else if(k=='tut'){tut=0;scr();ui()}
@@ -186,6 +209,8 @@ document.addEventListener('keydown',e=>{ // atalhos: clicam o botão corresponde
   const k=e.key.toLowerCase();
   if(k=='c')return $('campBtn').click();
   if(k=='x')return $('armyBtn').click();
+  if(k=='v')return $('councilBtn').click();
+  if(k=='escape'&&(aim||B?.aim)){aim=null;if(B)B.aim=null;return ui()}
   if(me>=0&&!B&&!HQ&&!aiShow&&!cam){const dv={arrowup:[0,-1],arrowdown:[0,1],arrowleft:[-1,0],arrowright:[1,0]}[k]; // teclado no mapa
     if(dv){e.preventDefault();const from=marching&&hov>=0?hov:sel,cand=marching?adj[sel]:S.map((_,j)=>j),[fx_,fy]=from>=0?proj(...px(from)):[405,305];
       let best=-1,bs=1e9;cand.forEach(j=>{if(j==from)return;const[jx,jy]=proj(...px(j)),dx=jx-fx_,dy=jy-fy,al=dx*dv[0]+dy*dv[1];if(al<=0)return;const sc=Math.hypot(dx,dy)+Math.abs(dx*dv[1]-dy*dv[0])*1.5;if(sc<bs){bs=sc;best=j}});
