@@ -46,6 +46,10 @@ Depois acesse http://localhost:8765.
 
 Os scripts compartilham o escopo global e precisam ser carregados na ordem de `index.html`.
 
+## Publicar
+
+Antes de cada publicação, rode `python3 tools/stamp.py`: ele marca os arquivos CSS e JS com a versão no `index.html`, para o navegador não misturar arquivos novos com antigos guardados em cache.
+
 ## Equilíbrio
 
 `tools/sim.js` joga partidas sem tela em todos os teatros (batalhas resolvidas nos dados) e mostra a taxa de vitória e o turno em que o jogador cai, por lado e dificuldade:
