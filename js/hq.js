@@ -161,12 +161,12 @@ const hqSpot=e=>{ // balão clicado, senão sala sob o cursor, torre ou portão
   const dx=(mx/2-HX)/IS,dy=(my/2-HY+3*ZS)/IH,a=(dy+dx)/2,b=(dy-dx)/2;
   return a>=0&&b>=0&&a<12&&b<12?ROOMS[(a>=6)+(b>=6)*2].k:a>12&&a<17&&b>4&&b<8?'gate':null};
 function closeHQ(){HQ=null;document.body.classList.remove('hq');$('room').hidden=true;ui()}
-function openHQ(){if(me<0||B||over||cam||aiShow)return;HQ={hov:null,zoom:null,t0:Date.now()};document.body.classList.add('hq');renderHQ();ui();(function loop(){if(!HQ)return;drawHQ();requestAnimationFrame(loop)})()}
+function openHQ(){if(me<0||B||over||cam||aiShow)return;HQ={hov:null,zoom:null,t0:Date.now()};document.body.classList.add('hq');renderHQ();ui();let lf=0;(function loop(t){if(!HQ)return;requestAnimationFrame(loop);if(document.hidden||t-lf<1000/[15,40,60][CFG.q]-2)return;lf=t;drawHQ()})(1e9)}
 const enterRoom=k=>{if(!HQ||HQ.zoom)return;if(k=='cam')return showCampaign();if(k=='gate')return closeHQ();
   const h=HQ;HQ.zoom={room:k,start:Date.now(),dir:1};sfx.move();setTimeout(()=>HQ===h&&showRoom(k),340)};
 function showRoom(k){
   const g=gold[me],own=owner.map((o,i)=>o==me?i:-1).filter(i=>i>=0),line=(t,btn)=>`<div class="rk"><span style="flex:1">${t}</span>${btn}</div>`;let h='';
-  if(k=='war')h=`<h2>Sala de Guerra</h2><p class="c">Doutrinas valem pelo resto da campanha.</p>`+
+  if(k=='war')h=`<h2>Sala de Guerra</h2><p class="c">${gl('doc','Doutrinas')} valem pelo resto da partida.</p>`+
     DOC.map(([id,n,d,c])=>line(`<b>${n}</b><br>${d}`,`<button data-s="hq-doc-${id}" ${hq.doc[id]||g<c?'disabled':''}>${hq.doc[id]?'Adotada':c+' ouro'}</button>`)).join('');
   if(k=='gen')h=`<h2>Salão dos Generais</h2><p class="c">Cada general comanda as tropas do seu ${TW1}, no ataque e na defesa. Conquiste o ${TW1} para ganhar o general. Barras: liderança, astúcia, política.</p>`+
     own.map(i=>{const v=hash(i+3,7);return`<div class="rk">${img(i,S[i][4])}<span style="flex:1"><b>${S[i][4]}</b> · ${S[i][0]}<br>${S[i][7]}: ${traitTxt(i)}<br>Comando: +${(gs(i)[0]-40)/4|0}% dano${gs(i)[1]>80?', +1 movimento':''}${gs(i)[2]>70?', +1 ouro':''}</span>
@@ -176,7 +176,7 @@ function showRoom(k){
       <div class="chips"><span>Anda ${UT[t][1]}</span><span>Alcance ${UT[t][2]}</span><span>Dano +${lv*10}%</span></div><p>Forte contra ${strong(t)}</p>
       <button data-s="hq-tech-${t}" ${lv>2||g<c?'disabled':''}>${lv>2?'Treino máximo':`Treinar: ${c} ouro`}</button></div></div>`}).join('');
   if(k=='tes'){const base=own.reduce((a,i)=>a+inc(i),0),tax=Math.ceil(income(me)/2);
-    h=`<h2>Tesouraria</h2><div class="chips c"><span>◉ Ouro ${g}</span><span>Renda +${income(me)} por turno</span></div>
+    h=`<h2>Tesouraria</h2>${SCN[scn].sub?.[me]?`<p class="c">${gl('sub','Subsídio da Corte')}: +${SCN[scn].sub[me]} ouro por turno</p>`:''}<div class="chips c"><span>◉ Ouro ${g}</span><span>Renda +${income(me)} por turno</span></div>
       <div class="rk"><span style="flex:1">${own.length} ${TW}</span><span>+${base}</span></div>`+
       REG.map(([n,st,b])=>`<div class="rk"><span style="flex:1">Região ${n} ${st.every(i=>owner[i]==me)?'completa':`(${st.filter(i=>owner[i]==me).length}/${st.length})`}</span><span>${st.every(i=>owner[i]==me)?'+'+b:'—'}</span></div>`).join('')+
       line('<b>Imposto de guerra</b><br>Uma vez por turno',`<button data-s="hq-tax" ${hq.tax==turn?'disabled':''}>${hq.tax==turn?'Cobrado':'+'+tax+' ouro'}</button>`)}

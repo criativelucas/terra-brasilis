@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<header><h1>TERRA BRASILIS</h1><div id="bar"></div><button id="campBtn">⚑ Campanha</button><button id="menuBtn" aria-haspopup="dialog">☰ Menu</button></header>
+<header><h1>TERRA BRASILIS</h1><div id="bar"></div><button id="armyBtn">⚔ Exército</button><button id="campBtn">⚑ Campanha</button><button id="menuBtn" aria-haspopup="dialog">☰ Menu</button></header>
 <main>
   <div id="stage">
     <canvas id="map" width="810" height="610" aria-label="Mapa do Brasil"></canvas>
@@ -19,9 +19,10 @@
     <div id="vs" hidden><div class="duel"><figure><img id="vsa" alt=""><figcaption id="vsan"></figcaption></figure><b>VS</b>
       <figure><img id="vsd" alt=""><figcaption id="vsdn"></figcaption></figure></div><div id="vsr"></div></div>
   </div>
-  <aside><div id="tut" hidden></div><div id="panel"></div><div id="log"></div></aside>
+  <aside><div id="tut" hidden></div><div id="panel"></div><div id="act" hidden></div><div id="log"></div></aside>
 </main>
 <section id="roster" aria-label="Líderes"></section>
+<div id="gloss" hidden role="tooltip"></div>
 <div id="screen" hidden role="dialog"><div id="card"></div></div>
 <div id="menu" hidden role="dialog" aria-label="Pausa"><div id="menuBox"></div></div>
 <script src="js/data.js"></script>

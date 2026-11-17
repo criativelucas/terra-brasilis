@@ -20,7 +20,7 @@ header{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center}
 .ucard{display:flex;gap:8px;align-items:center;background:#d6b877;border:2px solid var(--ink);padding:6px}
 .ucard>img{width:78px;height:72px;flex:none}.ucard>div{display:flex;flex-direction:column;gap:4px;min-width:0}
 .ulist{display:flex;flex-wrap:wrap;gap:4px}
-.ulist button{padding:2px 2px 4px;background:#cfae6a;color:var(--ink);display:flex;flex-direction:column;align-items:center;font-size:8px;box-shadow:none;border:2px solid var(--paper-edge)}
+.ulist button{padding:2px 2px 4px;background:#cfae6a;color:var(--ink);display:flex;flex-direction:column;align-items:center;font-size:10px;box-shadow:none;border:2px solid var(--paper-edge)}
 .ulist img{width:39px;height:36px}.ulist .done{opacity:.45}.ulist .cur{border-color:var(--red);background:var(--foam)}
 .tri{display:flex;align-items:center;justify-content:center;gap:2px;font:10px var(--display);color:var(--red)}.tri img{width:52px;height:48px}
 main{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
@@ -64,7 +64,7 @@ button.end{background:var(--blue);color:var(--foam)}
 input[type=range]{flex:1;min-width:0;accent-color:var(--red)}
 #log{border-top:2px dashed var(--paper-edge);padding-top:8px;font-size:18px;line-height:1.05;display:flex;flex-direction:column;gap:4px}
 #roster{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:6px;max-width:1166px}
-#roster button{padding:3px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:8px;background:#2a2140;box-shadow:none}
+#roster button{padding:3px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;background:#2a2140;box-shadow:none}
 #roster img{width:48px;height:48px}
 #roster .me{background:var(--blue)} #roster .sel{outline:2px solid var(--foam)}
 #roster .dead{opacity:.35} #roster .dead img{filter:grayscale(1)}
@@ -76,14 +76,14 @@ input[type=range]{flex:1;min-width:0;accent-color:var(--red)}
   border-inline:4px solid var(--paper-edge);border-block:12px solid var(--rod);box-shadow:6px 6px 0 #000;line-height:1.1}
 #card h2{font:12px/1.5 var(--display);margin:0;color:var(--red);text-align:center;text-wrap:balance}
 #card h2.big{font-size:20px;letter-spacing:2px}
-#card h3{font:9px var(--display);margin:6px 0 0;letter-spacing:1px}
+#card h3{font:10px var(--display);margin:6px 0 0;letter-spacing:1px}
 #card p{margin:0}.c{text-align:center;justify-content:center}
 #card .hero{width:120px;height:120px;border:4px solid var(--ink)}
 .pb{flex:1;height:10px;background:#bfa468;border:2px solid var(--ink);min-width:40px}.pb i{display:block;height:100%;background:var(--red)}
 .st{display:grid;gap:2px;width:64px;flex:none}.st i{height:5px;background:var(--red)}.st i:nth-child(2){background:var(--blue)}.st i:nth-child(3){background:#2f8a4a}
 #panel>button{text-align:left}
 .rk{display:flex;gap:8px;align-items:center}.rk img{width:32px;height:32px;border:2px solid var(--ink)}.rk span:first-of-type{flex:0 0 118px}
-kbd{font:8px var(--display);background:var(--ink);color:var(--paper);padding:2px 4px}
+kbd{font:10px var(--display);background:var(--ink);color:var(--paper);padding:2px 4px}
 .opt{display:flex;justify-content:space-between;align-items:center;gap:10px;font:10px var(--display);text-align:left}
 .opt button{min-width:168px}
 /* acabamento: papel riscado, botões em relevo, molduras */
@@ -111,7 +111,7 @@ body.hq canvas{width:min(100vw,calc(100vh*810/610));height:auto}
 @media (prefers-reduced-motion:no-preference){#room{animation:slide .25s steps(6)}}
 @keyframes slide{from{transform:translateX(110%)}}
 #tut{background:var(--foam);border:3px solid var(--red);padding:8px;display:flex;flex-direction:column;gap:6px;box-shadow:3px 3px 0 rgba(0,0,0,.35)}
-#tut b{font:9px var(--display);color:var(--red)}#tut p{margin:0}#tut button{align-self:flex-start;font-size:8px;padding:5px}
+#tut b{font:10px var(--display);color:var(--red)}#tut p{margin:0}#tut button{align-self:flex-start;font-size:10px;padding:5px}
 @media (prefers-reduced-motion:no-preference){#tut{animation:pulse 1.6s steps(4) infinite}}
 @keyframes pulse{50%{border-color:var(--paper-edge)}}
 /* avisos, contadores, botões vivos, título caindo */
@@ -126,3 +126,22 @@ button:hover:not(:disabled){box-shadow:0 0 0 2px var(--foam),0 0 12px 2px rgba(2
 }
 @keyframes tin{from{transform:translateX(120%)}}@keyframes tout{to{transform:translateX(120%);opacity:0}}
 @keyframes drop{0%{transform:translateY(-160px)}70%{transform:translateY(10px)}100%{transform:none}}
+/* painel: abas, barra de ações fixa, resumo do turno, glossário */
+aside{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
+#act{position:sticky;bottom:-14px;margin:0 -14px -14px;padding:10px 14px 14px;background:var(--paper);border-top:3px solid var(--paper-edge);display:flex;flex-direction:column;gap:6px;z-index:2}
+#act .row{flex-wrap:nowrap}#act .row button{flex:1;padding:8px 4px}
+.tabs{display:flex;gap:4px;border-bottom:3px solid var(--paper-edge)}
+.tabs button{flex:1;background:#cfae6a;color:var(--ink);box-shadow:none;border:2px solid var(--paper-edge);border-bottom:0;padding:7px 2px}
+.tabs button.on{background:var(--ink);color:var(--paper)}
+.summ{background:var(--foam);border:3px solid var(--blue);padding:8px;display:flex;flex-direction:column;gap:6px}.summ b{font:10px var(--display);color:var(--blue)}.summ p{margin:0}.summ button{align-self:flex-start}
+.chips .warn{background:#f3b0a6;border-color:var(--red)}
+.gl{border-bottom:2px dotted currentColor;cursor:help}
+#gloss{position:fixed;z-index:40;max-width:280px;background:var(--ink);color:var(--paper);border:2px solid var(--foam);padding:6px 8px;font-size:18px;line-height:1.05;pointer-events:none;box-shadow:3px 3px 0 #000}
+#log button{align-self:flex-start;font-size:10px;padding:6px}
+.loglist{max-height:55vh;overflow:auto;display:flex;flex-direction:column;gap:2px}.loglist p{margin:0}
+.arow{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:6px;align-items:center;text-align:left;background:#cfae6a;color:var(--ink);box-shadow:none;border:2px solid var(--paper-edge);font:inherit;padding:6px}
+#card input{font:inherit;padding:4px;min-width:0;flex:1;border:2px solid var(--paper-edge);background:#fffaf0}
+#tip small{font-size:15px}
+/* texto grande */
+body.big{font-size:24px}body.big button{font-size:12px}body.big .chips span{font-size:22px}body.big aside h2,body.big #card h2{font-size:14px}
+body.big #roster button,body.big .ulist button,body.big .tabs button{font-size:12px}body.big .opt{font-size:12px}

@@ -19,7 +19,7 @@ const startBattle=(from,to,n,ps)=>{tutEv('battle'); // ps: lado do jogador (0 at
   B={from,to,n,ps,af,was,T,bg,bio,rl:[0,0],wx:BOF[to]=='ama'&&Math.random()<.5?'rain':BOF[to]=='ser'&&Math.random()<.5?'dry':null,units:[...side(0,n),...side(1,troops[to])],round:1,selU:null,pops:[],fxs:[],parts:[],busy:false,hov:null,t0:Date.now(),nextBolt:Date.now()+2500};
   B.forest=[];B.puddles=[];T.forEach((row,y)=>row.forEach((t,c)=>{const h=hash(c,y);if(t=='f')B.forest.push([c,y,h]);else if(t=='g'&&B.wx=='rain'&&h%6==0)B.puddles.push([c,y,h])}));
   banner(ps?`INVASÃO! DEFENDA ${S[to][1].toUpperCase()}`:'RODADA 1 · SEU TURNO',ps?'#ff6a5c':'#ffd23f');
-  const b0=B;(function loop(){if(B!==b0)return;drawBattle();requestAnimationFrame(loop)})()};
+  const b0=B;let lf=0;(function loop(t){if(B!==b0)return;requestAnimationFrame(loop);if(document.hidden||t-lf<1000/[15,40,60][CFG.q]-2)return;lf=t;drawBattle()})(1e9)};
 function reach(u){ // casas alcançáveis: [x,y,chave da casa anterior]
   const mv=mvOf(u),seen=new Map([[u.x+','+u.y,[u.x,u.y,null]]]),q=[[u.x,u.y,0]],occ=new Set(B.units.filter(v=>v.hp>0&&v!=u).map(v=>v.x+','+v.y));
   while(q.length){const[cx,cy,d]=q.shift();if(d==mv)continue;
@@ -27,7 +27,7 @@ function reach(u){ // casas alcançáveis: [x,y,chave da casa anterior]
       if(nx<0||ny<0||nx>=GW||ny>=GH||seen.has(k)||'mw'.includes(B.T[ny][nx])||occ.has(k))return;seen.set(k,[nx,ny,cx+','+cy]);q.push([nx,ny,d+1])})}
   return[...seen.values()]}
 const banner=(t,col='#ffd23f')=>{if(B&&!B.auto)B.banner={t,col,start:Date.now()}}; // faixa que atravessa o campo no início de cada vez
-const puff=(px,py,col,n,spd)=>{for(let i=0;i<n;i++){const an=Math.random()*6.28,v=spd*(.4+Math.random()*.6); // partículas: poeira, respingo, faísca
+const puff=(px,py,col,n,spd)=>{if(!CFG.q)return;for(let i=0;i<n;i++){const an=Math.random()*6.28,v=spd*(.4+Math.random()*.6); // partículas: poeira, respingo, faísca
   B.parts.push({x:px,y:py,vx:Math.cos(an)*v,vy:Math.sin(an)*v-spd*.4,g:spd*1.4,t:Date.now(),life:320+Math.random()*320,col,s:3+Math.random()*3|0})}};
 const sleep=ms=>new Promise(r=>setTimeout(r,ms)), clashLeft=()=>B&&B.clash?Math.max(0,B.clash.until-Date.now()):0;
 const STEP=120; // ms por casa andada
@@ -64,7 +64,7 @@ function drawClash(now){ // dois quadros: corrida, golpe, queda e revide. Tempos
     SLOTS.slice(0,n0).forEach(([sx,sy],k)=>{const fallen=k>=n1&&p>myHit,fp=fallen?Math.min(1,(p-myHit)/.16):0,X=bx+(dir>0?sx:w-sx)+off,Y=by+sy,sp=sprite(u,f,mine,fallen?0:fr);
       x.fillStyle='rgba(0,0,0,.25)';x.fillRect(X-34,Y-8,68,10);
       x.save();x.globalAlpha=1-fp*.75;x.translate(X,Y);x.rotate(-fp*dir*1.45);x.scale(dir,1);x.drawImage(sp,-65,-120,130,120);
-      if(hurt&&!fallen){x.globalCompositeOperation='lighter';x.drawImage(sp,-65,-120,130,120)}x.restore();
+      if(hurt&&!fallen&&!CFG.calm){x.globalCompositeOperation='lighter';x.drawImage(sp,-65,-120,130,120)}x.restore();
       const t1=s0+(hitT-s0)*.6;
       if(acts&&ranged&&!fallen&&p>t1&&p<t1+(hitT-s0)*.2){x.fillStyle='#ffd23f';x.fillRect(X+dir*58-7,Y-72,14,14);x.fillStyle='#fff';x.fillRect(X+dir*58-3,Y-68,6,6)} // clarão do disparo
       if(acts&&ranged&&p>t1&&p<hitT+.16){const q=(p-t1)/(hitT+.16-t1);x.fillStyle=`rgba(230,230,230,${.6*(1-q)})`;x.fillRect(X+dir*(58+q*34)-12,Y-80-q*34,22+q*16,16+q*12)} // fumaça
@@ -155,7 +155,7 @@ function drawBattle(){
   const now=Date.now(),s=B.selU,ps=B.ps,cw=cv.width;
   x.fillStyle='#161126';x.fillRect(0,0,cw,cv.height);x.textBaseline='top';
   const ent=Math.min(1,(now-B.t0)/550),es=1+.3*Math.pow(1-ent,2); // entrada: o campo cresce e clareia
-  x.save();if(es>1){x.translate(cw/2,cv.height/2);x.scale(es,es);x.translate(-cw/2,-cv.height/2)}if(B.shake>now&&CFG.shake)x.translate((Math.random()-.5)*8,(Math.random()-.5)*8);
+  x.save();if(es>1){x.translate(cw/2,cv.height/2);x.scale(es,es);x.translate(-cw/2,-cv.height/2)}if(B.shake>now&&CFG.shake&&!CFG.calm)x.translate((Math.random()-.5)*8,(Math.random()-.5)*8);
   [[B.af,OX,'left',0],[B.was,cw-OX-80,'right',1]].forEach(([f,px_,al,sd])=>{
     x.fillStyle=sd==ps?'#ffd23f':'#8a5a2b';x.fillRect(px_-3,13,86,86);x.drawImage(fcv[f],px_,16,80,80);
     x.textAlign=al;const tx=al=='left'?px_+94:px_-14;
@@ -167,14 +167,14 @@ function drawBattle(){
   x.font=FONT(8);x.fillStyle='#bfae84';x.fillText(hc?TN[hc]+(hu?` · ${nmOf(hu)} ${hu.hp}`:''):B.bio.nome+(B.wx=='rain'?' · CHUVA':B.wx=='dry'?' · SECA':''),cw/2,76);
   x.fillStyle='#f1e3a8';x.fillText(`RODADA ${Math.min(B.round,MAXR)}/${MAXR}`,cw/2,92);
   x.fillStyle='#5a3a1c';x.fillRect(OX-5,OY-5,GW*CS+10,GH*CS+10);x.fillStyle='#8a5a2b';x.fillRect(OX-3,OY-3,GW*CS+6,GH*CS+6);
-  if(B.wx=='dry')for(let r=0;r<GH*CS;r+=6)x.drawImage(B.bg,0,r,GW*CS,6,OX+Math.round(Math.sin(now/260+r*.09)*1.6),OY+r,GW*CS,6); // calor tremendo no sertão
+  if(B.wx=='dry'&&CFG.q)for(let r=0;r<GH*CS;r+=6)x.drawImage(B.bg,0,r,GW*CS,6,OX+Math.round(Math.sin(now/260+r*.09)*1.6),OY+r,GW*CS,6); // calor tremendo no sertão
   else x.drawImage(B.bg,OX,OY);
   B.puddles.forEach(([gx,gy,h])=>{const X=OX+gx*CS+14+h%18,Y=OY+gy*CS+28+h%12,q=((now+h)%1100)/1100;x.fillStyle='rgba(90,150,220,.38)';x.beginPath();x.ellipse(X,Y,11+h%6,4,0,0,7);x.fill();
     x.strokeStyle=`rgba(220,235,255,${.7*(1-q)})`;x.lineWidth=1;x.beginPath();x.ellipse(X,Y,2+q*9,1+q*3,0,0,7);x.stroke()});
   const wt=now/260|0; // marolas
   for(let gy=0;gy<GH;gy++)for(let gx=0;gx<GW;gx++)if(B.T[gy][gx]=='w'){const h=hash(gx,gy);x.fillStyle='#8fc7ea';
     x.fillRect(OX+gx*CS+6+(h+wt)%30,OY+gy*CS+12+h%8,12,3);x.fillRect(OX+gx*CS+6+(h*7+wt*2)%30,OY+gy*CS+34+h%10,9,3)}
-  {const U=CS/18;B.forest.forEach(([gx,gy,h])=>{const X=OX+gx*CS+Math.round(Math.sin(now/650+gx*.9+gy*1.7)*1.4),Y=OY+gy*CS, // árvores balançando
+  {const U=CS/18;B.forest.forEach(([gx,gy,h])=>{const X=OX+gx*CS+(CFG.q?Math.round(Math.sin(now/650+gx*.9+gy*1.7)*1.4):0),Y=OY+gy*CS, // árvores balançando
     q=(a,bb,w,hh,col)=>{x.fillStyle=col;x.fillRect(Math.round(X+a*U),Math.round(Y+bb*U),Math.ceil(w*U),Math.ceil(hh*U))};
     [[1,0],[9,2],[4,8]].forEach(([a,bb],k)=>tree(q,B.bio.tree,a+(h>>k)%2,bb,h>>k))})}
   const cellBox=(gx,gy,fill)=>{x.fillStyle=fill;x.fillRect(OX+gx*CS+1,OY+gy*CS+1,CS-2,CS-2)};
@@ -218,10 +218,10 @@ function drawBattle(){
   B.pops=B.pops.filter(p=>p.until>now);
   B.pops.forEach(p=>{const y=OY+p.y*CS+14-(800-(p.until-now))/22;x.fillStyle='#000';x.fillText(p.txt,OX+p.x*CS+CS/2+2,y+2);x.fillStyle='#ffd23f';x.fillText(p.txt,OX+p.x*CS+CS/2,y)});
   if(B.wx=='rain'){x.strokeStyle='rgba(200,225,255,.6)';x.lineWidth=2;x.beginPath(); // chuva forte, respingos e raios
-    for(let i=0;i<150;i++){const rx=(i*137+now/2.2)%(GW*CS),ry=(i*89+now/1.1)%(GH*CS);x.moveTo(OX+rx,OY+ry);x.lineTo(OX+rx-4,OY+ry+14)}x.stroke();
+    for(let i=0;i<(CFG.q?150:50);i++){const rx=(i*137+now/2.2)%(GW*CS),ry=(i*89+now/1.1)%(GH*CS);x.moveTo(OX+rx,OY+ry);x.lineTo(OX+rx-4,OY+ry+14)}x.stroke();
     for(let i=0;i<14;i++){const h=hash(i,now/300|0),q=(now%300)/300;x.strokeStyle=`rgba(220,235,255,${.6*(1-q)})`;x.lineWidth=1;x.beginPath();x.ellipse(OX+h%(GW*CS),OY+(h>>>9)%(GH*CS),2+q*6,1+q*2,0,0,7);x.stroke()}
     if(now>B.nextBolt){B.bolt=now;B.nextBolt=now+4500+Math.random()*5000;B.boltX=OX+Math.random()*GW*CS;sfx.thunder()}
-    if(B.bolt&&now-B.bolt<260){const a=1-(now-B.bolt)/260;x.fillStyle=`rgba(255,255,255,${.45*a})`;x.fillRect(OX,OY,GW*CS,GH*CS);
+    if(B.bolt&&now-B.bolt<260&&!CFG.calm){const a=1-(now-B.bolt)/260;x.fillStyle=`rgba(255,255,255,${.45*a})`;x.fillRect(OX,OY,GW*CS,GH*CS);
       x.strokeStyle=`rgba(255,255,220,${a})`;x.lineWidth=3;x.beginPath();let lx=B.boltX,ly=OY;x.moveTo(lx,ly);for(let k=0;k<8;k++){lx+=hash(k,B.bolt%99991)%40-20;ly+=GH*CS/10;x.lineTo(lx,ly)}x.stroke()}}
   if(B.wx=='dry'){const g2=x.createLinearGradient(0,OY,0,OY+GH*CS);g2.addColorStop(0,'rgba(255,170,60,.24)');g2.addColorStop(1,'rgba(255,120,30,.06)');x.fillStyle=g2;x.fillRect(OX,OY,GW*CS,GH*CS);
     const t=(now/5200)%1,dx=OX+t*GW*CS,dy=OY+GH*CS*.6+Math.sin(t*12)*40;for(let k=0;k<12;k++){const a=now/110+k;x.fillStyle='rgba(222,184,112,.4)';x.fillRect(dx+Math.cos(a)*(4+k*2.2),dy-k*5,4,4)}} // redemoinho

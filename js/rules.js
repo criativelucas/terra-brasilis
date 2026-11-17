@@ -60,10 +60,14 @@ function ai(f){
       if(won)(was==me?note:say)(`${S[f][4]} tomou ${was==me?S[j][1]+' de você!':S[j][0]}`);
       else if(was==me)say(`Você repeliu ${S[f][4]} em ${S[j][0]}`);
       if(was==me)onFight(f,was,j,won)}}}
-function say(t){logs.unshift(t);logs.length=Math.min(logs.length,9)}
+function say(t){logs.unshift(t);logs.length=Math.min(logs.length,80)}
 function note(t){say(t);onNote(t)} // vai para a crônica e aparece como aviso na tela
 const setGoal=()=>{goal=SCN[scn].play?.[me]||null};
 function startAs(f){me=f;setGoal();gold[me]+=6;troops[me]+=3} // pequena vantagem na capital de quem joga
+function odds(a,b,n){ // chance de vencer e tropas que sobram, pelos mesmos dados do combate automático
+  let w=0,left=0;const A=n*(1+trait(a,'atk')),Dd=troops[b]*(1+defOf(b));
+  for(let k=0;k<300;k++){const pa=A*roll(),pd=Dd*roll()+1;if(pa>pd){w++;left+=Math.max(1,Math.round(n*(1-.7*pd/pa)))}}return[w/300,w?Math.round(left/w):0]}
+const danger=i=>owner[i]==me&&adj[i].some(j=>owner[j]!=me&&!(pact[owner[j]]>turn)&&troops[j]-1>troops[i]*(1+defOf(i))*1.2+1); // vizinho capaz de tomar o território
 function check(){const n=owner.filter(o=>o==me).length;
   if(n==N){over='O Brasil é seu!';victory=true}else if(goal&&goal.every(i=>owner[i]==me)){over='Objetivo cumprido!';victory=true}else if(!n)over='Seu domínio caiu.'}
 function endTurn(){evts=[];
