@@ -30,7 +30,7 @@ function ui(){
     return}
   let h='';
   if(over)h+=`<h2>${over}</h2><button data-a="new">Novo jogo</button>`;
-  else if(me<0)h+='<p>Escolha no mapa ou na galeria o líder da sua campanha. Cada estado tem vantagem própria.</p>';
+  else if(me<0)h+=`<p>Escolha no mapa ou na galeria o líder da sua partida. Cada ${TW1} tem vantagem própria.</p>`;
   if(sel>=0){const i=sel,f=owner[i],mine=f==me&&!over;
     h+=`<div class="who">${img(i,S[i][4])}<div><h2>${S[i][1]}</h2><p><b>${S[i][4]}</b></p><p>${S[i][7]}: ${traitTxt(i)}</p></div></div>
       <div class="chips"><span>⚔ Tropas ${troops[i]}</span><span>◉ Renda ${inc(i)}</span><span>⛨ Defesa +${Math.round(defOf(i)*100)}%</span>
@@ -49,7 +49,7 @@ function ui(){
   if(me>=0&&!over&&sel>=0&&owner[sel]!=me)h+='<h2>Diplomacia</h2>'+dipHTML(owner[sel]);
   if(me>=0&&!over)h+='<button data-a="hq">⌂ Quartel-General</button><button data-a="end" class="end">Fim do turno ▶</button>';
   $('panel').innerHTML=h;
-  $('bar').innerHTML=me<0?'<span>Ano de 1822</span>':`<span>Turno ${turn}</span><span>◉ Ouro ${gold[me]} (+${income(me)})</span><span>⚑ Estados ${owner.filter(o=>o==me).length}/${N}</span>`;
+  $('bar').innerHTML=me<0?`<span>${TH.nome} · ${TH.ano}</span>`:`<span>Turno ${turn}</span><span>◉ Ouro ${gold[me]} (+${income(me)})</span><span>⚑ ${TW[0].toUpperCase()+TW.slice(1)} ${owner.filter(o=>o==me).length}/${N}</span>`;
   $('log').innerHTML=logs.map(l=>`<div>› ${l}</div>`).join('');
   $('roster').innerHTML=S.map((s,i)=>{const n=owner.filter(o=>o==i).length;
     return`<button data-i="${i}" class="${i==me?'me ':''}${i==sel?'sel ':''}${n?'':'dead'}" title="${s[4]} (${s[1]})">${img(i,s[4])}<span>${s[0]} ${n}</span></button>`}).join('');

@@ -4,9 +4,7 @@ const GW=16,GH=10,CS=48,OX=21,OY=112,MAXR=14,SPD=[1.8,1,.45];
 const UT={inf:['Infantaria',3,1,1],cav:['Cavalaria',5,1,1.1],ati:['Atiradores',3,3,.7],art:['Artilharia',2,4,.9]}; // artilharia não atira em casa vizinha nem revida // nome, passos, alcance, dano
 const BEATS={inf:'cav',cav:'ati',ati:'inf'},strong=t=>BEATS[t]?UT[BEATS[t]][0]:'ninguém em especial';
 // tropa de elite de cada estado: nome, tipo que ela substitui, bônus
-const ELITE={CE:['Jangadeiros','ati',{rng:1}],RS:['Farroupilhas','cav',{dmg:1.25}],AL:['Guerreiros de Palmares','inf',{def:1.3}],SP:['Bandeirantes','inf',{mov:1}],PA:['Cabanos','inf',{dmg:1.2}],
-  AM:['Arqueiros Manaó','ati',{dmg:1.25}],BA:['Voluntários da Bahia','inf',{def:1.2}],MG:['Dragões de Minas','cav',{def:1.3}],PE:['Terço dos Henriques','inf',{dmg:1.2}],RJ:['Guarda Imperial','inf',{def:1.25}],
-  SC:['Lanceiros de Anita','cav',{mov:1}],MT:['Monçoeiros','ati',{mov:1}],MA:['Balaios','inf',{dmg:1.15}],RN:['Flecheiros Potiguares','ati',{rng:1}],PI:['Vaqueiros','cav',{dmg:1.15}],GO:['Tropeiros','cav',{mov:1}]};
+const ELITE=TH.ELITE||{};
 const elTxt=e=>e[2].rng?'+1 alcance':e[2].mov?'+1 movimento':e[2].dmg?`+${Math.round(e[2].dmg*100-100)}% dano`:`+${Math.round(e[2].def*100-100)}% defesa`;
 const stOf=u=>u.side?B.to:B.from, nmOf=u=>u.el?u.el[0]:UT[u.type][0]; // stOf: estado cujo general comanda a unidade
 const mvOf=u=>Math.max(1,UT[u.type][1]+(u.el?.[2].mov||0)+(gs(stOf(u))[1]>80?1:0)-(B.wx=='dry'&&u.type=='inf'?1:0));

@@ -31,7 +31,8 @@ function dipAct(k,f){
     if(mine>theirs*1.8){const g=Math.ceil(income(f)*1.5);gold[f]-=g;gold[me]+=g;say(`${S[f][4]} paga tributo de ${g} ouro`);return true}
     angry[f]=turn+4;say(`${S[f][4]} recusa o tributo e jura vingança`);return false}
   const[n,c,d]=DIP[k];gold[me]-=c;pact[f]=Math.max(pact[f]||0,turn+d);if(k=='ally')ally[f]=turn+d;say(`${n} ${k=='ally'?'firmada':'firmado'} com ${S[f][4]}`);return true}
-const income=f=>owner.reduce((a,o,i)=>a+(o==f?inc(i):0),0)+REG.reduce((a,[,st,b])=>a+(st.every(i=>owner[i]==f)?b:0),0);
+const income=f=>(SCN[scn].sub?.[f]&&owner.includes(f)?SCN[scn].sub[f]:0)+owner.reduce((a,o,i)=>a+(o==f?inc(i):0),0)+ // sub: reforços da Corte por turno
+  REG.reduce((a,[,st,b])=>a+(st.every(i=>owner[i]==f)?b:0),0);
 const defOf=i=>trait(i,'def')+.2*fort[i]+(docOn(owner[i],'gue')?.15:0);
 function fight(a,b,n){ // n tropas de a atacam b; devolve true se conquistou
   const pa=n*(1+trait(a,'atk'))*roll(), pd=troops[b]*(1+defOf(b))*roll()+1;
@@ -53,7 +54,7 @@ function ai(f){
     if(!fs.length){const to=adj[i].find(j=>foes(j).length)??adj[i][0];troops[to]+=troops[i]-1;troops[i]=1;continue}
     const j=fs[0];
     if(troops[i]-1>troops[j]*(1+defOf(j))*need+1&&Math.random()<chance*Math.min(1,.3+turn/10)*(owner[j]==me&&(betray>turn||angry[f]>turn)?1.5:1) // agressão cresce com os turnos
-      &&!(owner[j]==me&&(turn<TRUCE[CFG.diff]||pact[f]>turn))){ // trégua inicial e pactos poupam o jogador
+      &&!(owner[j]==me&&(turn<(TKEY=='brasil'?TRUCE[CFG.diff]:2)||pact[f]>turn))){ // trégua inicial e pactos poupam o jogador
       if(owner[j]==me&&tactical&&!CFG.tac){raids.push({from:i,to:j,f});continue}
       const was=owner[j],won=fight(i,j,troops[i]-1);
       if(won)say(`${S[f][4]} tomou ${S[j][0]}${was==me?' de você!':''}`);
@@ -61,7 +62,7 @@ function ai(f){
       if(was==me)onFight(f,was,j,won)}}}
 function say(t){logs.unshift(t);logs.length=Math.min(logs.length,9)}
 const setGoal=()=>{goal=SCN[scn].play?.[me]||null};
-function startAs(f){me=f;setGoal();gold[me]+=6;owner.forEach((o,i)=>{if(o==me)troops[i]+=3})} // pequena vantagem para quem joga
+function startAs(f){me=f;setGoal();gold[me]+=6;troops[me]+=3} // pequena vantagem na capital de quem joga
 function check(){const n=owner.filter(o=>o==me).length;
   if(n==N){over='O Brasil é seu!';victory=true}else if(goal&&goal.every(i=>owner[i]==me)){over='Objetivo cumprido!';victory=true}else if(!n)over='Seu domínio caiu.'}
 function endTurn(){

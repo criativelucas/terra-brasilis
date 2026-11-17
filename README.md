@@ -4,6 +4,18 @@ Jogo de estratégia por turnos em pixel art: unifique os 27 estados do Brasil co
 
 **Jogar:** https://criativelucas.github.io/terra-brasilis/
 
+## Modos de jogo
+
+- **Dominação do Brasil**: os 27 estados, cada um com seu líder; vence quem unificar o país.
+- **Campanhas históricas**: cada guerra tem mapa próprio, só da região dela, dividido em territórios da época, com os líderes daquela guerra e um objetivo para cada lado.
+  - Confederação do Equador (1824): `#equador`
+  - Guerra dos Farrapos (1835): `#farrapos`
+  - Cabanagem (1835): `#cabanagem`
+
+O modo vem do endereço (por exemplo `.../terra-brasilis/#farrapos`). Cada modo tem seu próprio salvamento.
+
+Para criar uma campanha nova, acrescente um teatro em `THEATERS` (`js/data.js`): territórios com coordenadas, retratos, biomas, contorno do mapa em lon/lat, lagoas, rios, regiões, costa, tropas de elite e o cenário (donos iniciais, bônus, subsídio da Corte e objetivo de cada lado). A vizinhança é calculada sozinha pelas fronteiras do mapa.
+
 ## Rodar localmente
 
 Os scripts são carregados por arquivo, então abra por um servidor (não por `file://`):
@@ -18,7 +30,7 @@ Depois acesse http://localhost:8765.
 
 | Arquivo | O que tem |
 |---|---|
-| `js/data.js` | estados, líderes, biomas, regiões, cenários, geografia do mapa |
+| `js/data.js` | teatros de guerra (Brasil e campanhas): territórios, líderes, biomas, regiões, cenário, geografia do mapa |
 | `js/rules.js` | regras da campanha, IA estratégica, diplomacia, portos (sem DOM) |
 | `js/base.js` | utilidades de tela, configurações, efeitos sonoros |
 | `js/portraits.js` | retratos 24x24 gerados por código |
@@ -36,7 +48,7 @@ Os scripts compartilham o escopo global e precisam ser carregados na ordem de `i
 
 ## Equilíbrio
 
-`tools/sim.js` joga campanhas sem tela (batalhas resolvidas nos dados) e mostra a taxa de vitória e o turno em que o jogador cai, por cenário e dificuldade:
+`tools/sim.js` joga partidas sem tela em todos os teatros (batalhas resolvidas nos dados) e mostra a taxa de vitória e o turno em que o jogador cai, por lado e dificuldade:
 
 ```bash
 node tools/sim.js 200

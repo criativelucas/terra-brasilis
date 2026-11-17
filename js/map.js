@@ -6,7 +6,7 @@ x.imageSmoothingEnabled=false;
 const relief=new Float32Array(W*H); // relevo falso: ruído suave iluminado de noroeste
 {const nz=(a,b)=>hash(a+50,b+50)%1000/1000,sm=(X,Y)=>{const i=Math.floor(X),j=Math.floor(Y),f=X-i,g=Y-j;return(nz(i,j)*(1-f)+nz(i+1,j)*f)*(1-g)+(nz(i,j+1)*(1-f)+nz(i+1,j+1)*f)*g},
   hg=(X,Y)=>sm(X/7,Y/7)+sm(X/2.6,Y/2.6)*.45;for(let cy=0;cy<H;cy++)for(let cx=0;cx<W;cx++)relief[cy*W+cx]=hg(cx-1,cy-1)-hg(cx+1,cy+1)}
-const LEFT=new Set(['PE','SE','GO']); // bandeiras viradas para a esquerda, para não se sobreporem
+const LEFT=new Set(TH.LEFT||[]); // bandeiras viradas para a esquerda, para não se sobreporem
 let blink=false,tick=0,tags=[],hov=-1,fx=null,B=null,HQ=null,cam=null; // cam: zoom no estado atacado antes da batalha
 function route(a,b,col,prog=1){ // rota de marcha: tracejado andando, contorno escuro e ponta de seta
   const[ax,ay]=proj(...px(a)),[tx,ty]=proj(...px(b)),bx=ax+(tx-ax)*prog,by=ay+(ty-ay)*prog,an=Math.atan2(by-ay,bx-ax);

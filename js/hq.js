@@ -163,7 +163,7 @@ function showRoom(k){
   const g=gold[me],own=owner.map((o,i)=>o==me?i:-1).filter(i=>i>=0),line=(t,btn)=>`<div class="rk"><span style="flex:1">${t}</span>${btn}</div>`;let h='';
   if(k=='war')h=`<h2>Sala de Guerra</h2><p class="c">Doutrinas valem pelo resto da campanha.</p>`+
     DOC.map(([id,n,d,c])=>line(`<b>${n}</b><br>${d}`,`<button data-s="hq-doc-${id}" ${hq.doc[id]||g<c?'disabled':''}>${hq.doc[id]?'Adotada':c+' ouro'}</button>`)).join('');
-  if(k=='gen')h=`<h2>Salão dos Generais</h2><p class="c">Cada general comanda as tropas do seu estado, no ataque e na defesa. Conquiste o estado para ganhar o general. Barras: liderança, astúcia, política.</p>`+
+  if(k=='gen')h=`<h2>Salão dos Generais</h2><p class="c">Cada general comanda as tropas do seu ${TW1}, no ataque e na defesa. Conquiste o ${TW1} para ganhar o general. Barras: liderança, astúcia, política.</p>`+
     own.map(i=>{const v=hash(i+3,7);return`<div class="rk">${img(i,S[i][4])}<span style="flex:1"><b>${S[i][4]}</b> · ${S[i][0]}<br>${S[i][7]}: ${traitTxt(i)}<br>Comando: +${(gs(i)[0]-40)/4|0}% dano${gs(i)[1]>80?', +1 movimento':''}${gs(i)[2]>70?', +1 ouro':''}</span>
       <div class="st" title="Liderança, astúcia, política"><i style="width:${40+v%60}%"></i><i style="width:${40+(v>>6)%60}%"></i><i style="width:${40+(v>>12)%60}%"></i></div></div>`}).join('');
   if(k=='bar')h=`<h2>Quartel</h2><p class="c">Treino aumenta o dano das suas unidades em batalha.</p>`+Object.keys(UT).map(t=>{const lv=hq.tech[t],c=6+4*lv;
@@ -172,7 +172,7 @@ function showRoom(k){
       <button data-s="hq-tech-${t}" ${lv>2||g<c?'disabled':''}>${lv>2?'Treino máximo':`Treinar: ${c} ouro`}</button></div></div>`}).join('');
   if(k=='tes'){const base=own.reduce((a,i)=>a+inc(i),0),tax=Math.ceil(income(me)/2);
     h=`<h2>Tesouraria</h2><div class="chips c"><span>◉ Ouro ${g}</span><span>Renda +${income(me)} por turno</span></div>
-      <div class="rk"><span style="flex:1">${own.length} estados</span><span>+${base}</span></div>`+
+      <div class="rk"><span style="flex:1">${own.length} ${TW}</span><span>+${base}</span></div>`+
       REG.map(([n,st,b])=>`<div class="rk"><span style="flex:1">Região ${n} ${st.every(i=>owner[i]==me)?'completa':`(${st.filter(i=>owner[i]==me).length}/${st.length})`}</span><span>${st.every(i=>owner[i]==me)?'+'+b:'—'}</span></div>`).join('')+
       line('<b>Imposto de guerra</b><br>Uma vez por turno',`<button data-s="hq-tax" ${hq.tax==turn?'disabled':''}>${hq.tax==turn?'Cobrado':'+'+tax+' ouro'}</button>`)}
   if(k=='dip'){const nb=[...new Set(own.flatMap(i=>adj[i]).map(j=>owner[j]))].filter(f=>f!=me);
