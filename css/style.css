@@ -158,3 +158,7 @@ body.hq #toasts{top:56px}
 /* texto grande */
 body.big{font-size:20px}body.big button{font-size:16px}body.big .chips span{font-size:18px}body.big aside h2,body.big #card h2{font-size:20px}
 body.big #roster button,body.big .ulist button,body.big .tabs button{font-size:15px}body.big .opt{font-size:16px}body.big .card small{font-size:15px}
+/* logo */
+h1 img{display:block;height:52px;width:auto;image-rendering:auto;filter:drop-shadow(2px 2px 0 rgba(0,0,0,.5))}
+.logo{display:block;width:min(420px,100%);height:auto;margin:-8px auto 0;image-rendering:auto;filter:drop-shadow(0 6px 0 rgba(0,0,0,.45))}
+@media (prefers-reduced-motion:no-preference){.logo{animation:drop .8s steps(12)}}

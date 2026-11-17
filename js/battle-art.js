@@ -9,32 +9,62 @@ function genMap(b){ // g grama, r estrada, w água, b ponte, f mata, m morro, v 
     if(ws.length){const[cc,yy]=ws[rnd(ws.length)];T[yy][cc]='b'}}
   const put=(ch,n)=>{for(let k=0,tries=0;k<n&&tries<500;tries++){const c=2+rnd(GW-4),yy=rnd(GH);if(T[yy][c]=='g'){T[yy][c]=ch;k++}}};
   put('m',b.m*1.3|0);put('f',b.f*1.3|0);put('v',3);return T}
-function tree(q,st,a,b,h){
-  if(st=='cactus'){q(a+3,b+1,2,8,'#3f8f4f');q(a+3,b+1,1,8,'#6fbf6f');q(a+1,b+3,1,3,'#3f8f4f');q(a+1,b+5,2,1,'#3f8f4f');q(a+6,b+2,1,4,'#3f8f4f');q(a+5,b+5,1,1,'#3f8f4f');q(a+3,b,1,1,'#f6c9d0');return}
-  q(a+1,b+9,6,1,'rgba(0,0,0,.22)');
-  if(st=='pine'){q(a+3,b+3,2,7,'#5a3a1c');q(a,b+1,8,2,'#1f5136');q(a+1,b,6,1,'#2f7048');q(a+1,b+1,4,1,'#3f8a58');q(a+1,b+3,2,1,'#1f5136');q(a+5,b+3,2,1,'#1f5136');return}
-  if(st=='twist'){const ipe=h%3==0;q(a+3,b+4,1,6,'#4a2c17');q(a+4,b+5,2,1,'#4a2c17');q(a+1,b+1,6,3,ipe?'#e0ac1f':'#6f8a2c');q(a+2,b,4,1,ipe?'#f7d34a':'#93ad3f');q(a+2,b+1,2,1,ipe?'#f7d34a':'#93ad3f');q(a+5,b+4,2,2,ipe?'#e0ac1f':'#6f8a2c');return}
-  const[d,m,l]=st=='jungle'?['#12502c','#1f8040','#52b855']:h%3==0?['#a8481a','#e0862a','#f8bc50']:['#1f6a2c','#34a03c','#74d05c']; // no Sudeste, uma em três é de outono
-  q(a+3,b+6,2,4,'#5a3a1c');q(a,b+1,8,5,d);q(a+1,b,6,7,d);q(a+1,b+1,5,4,m);q(a+2,b+1,3,2,l);q(a+5,b+4,2,1,l);q(a+1,b+5,1,1,l)}
+function tree(q,st,a,b,h){ // q aceita meia unidade: dá para desenhar detalhes finos
+  if(st=='cactus'){const G='#3f8f4f',Gd='#2a6a38',Gl='#7fcf7f'; // mandacaru: braços em candelabro, costelas claras, flor no topo
+    q(a+2,b+9,4,.5,'rgba(0,0,0,.25)');q(a+3,b+1,2,8,G);q(a+3,b+1,.5,8,Gl);q(a+4.5,b+1,.5,8,Gd);
+    q(a+1,b+3,1,3,G);q(a+1,b+5.5,2,1,G);q(a+1,b+3,.5,3,Gl);q(a+6,b+2,1,4,G);q(a+5,b+5,1.5,1,G);q(a+6.5,b+2,.5,4,Gd);
+    q(a+3.5,b,1,1,'#f6c9d0');q(a+3.75,b+.25,.5,.5,'#fff');return}
+  q(a,b+9.5,8,.75,'rgba(0,0,0,.22)'); // sombra no chão
+  if(st=='pine'){ // araucária: tronco alto e copa em taça, em andares
+    q(a+3.5,b+2,1,8,'#5a3a1c');q(a+3.5,b+2,.5,8,'#7a5030');
+    q(a,b+1,8,1.5,'#1f5136');q(a+.5,b,7,1,'#2f7048');q(a+1,b-.5,6,.5,'#3f8a58');q(a+1.5,b-.5,2,.5,'#6fb07a');
+    q(a+1,b+3,6,1,'#1f5136');q(a+1.5,b+2.5,5,.5,'#3f8a58');q(a+2,b+5,4,.75,'#1f5136');q(a+2.5,b+4.5,3,.5,'#2f7048');return}
+  if(st=='twist'){const ipe=h%3==0,[d,m,l]=ipe?['#c08a12','#e0ac1f','#f7d34a']:['#4f6a1c','#6f8a2c','#93ad3f']; // cerrado: tronco torto, copa rala; um em três é ipê
+    q(a+3,b+4,1,6,'#4a2c17');q(a+3.5,b+4,.5,6,'#6b4524');q(a+4,b+5,2,1,'#4a2c17');q(a+2,b+6,1,.75,'#4a2c17');
+    q(a+1,b+1,6,3,d);q(a+1.5,b+.5,5,2.5,m);q(a+2,b,3,1.5,l);q(a+5,b+4,2,2,d);q(a+5.5,b+4,1,1,m);q(a+2.5,b+.5,1,.5,'rgba(255,255,255,.4)');return}
+  const[d,m,l]=st=='jungle'?['#12502c','#1f8040','#52b855']:h%3==0?['#a8481a','#e0862a','#f8bc50']:['#1f6a2c','#34a03c','#74d05c'];
+  q(a+3,b+6,2,4,'#5a3a1c');q(a+3,b+6,.5,4,'#7a5030');q(a+4.5,b+6,.5,4,'#3a2413');q(a+2.5,b+9.5,3,.5,'#3a2413'); // tronco com luz e raízes
+  q(a,b+1.5,8,4.5,d);q(a+.5,b+.5,7,6,d);q(a+1,b,6,6.5,d); // copa: massa escura
+  q(a+.5,b+1,6,4,m);q(a+1,b+.5,5,4,m); // tom médio
+  q(a+1.5,b+1,3,2,l);q(a+1,b+2,1,1,l);q(a+5,b+3,1.5,1,l);q(a+2,b+.5,1.5,.5,'rgba(255,255,255,.3)'); // luz de noroeste
+  q(a+6,b+4,1.5,1.5,'rgba(0,0,0,.18)');q(a+1,b+5,2,1,'rgba(0,0,0,.15)'); // sombra interna
+  for(let k=0;k<4;k++){const v=hash(h+k,a*3+b|0);q(a+1+v%5,b+1+(v>>4)%4,.5,.5,k%2?l:d)}} // folhas soltas
 function tile(g,T,c,y,b){
-  const t=T[y][c],h=hash(c,y),X=c*CS,Y=y*CS,U=CS/18,q=(a,bb,w,hh,col)=>{g.fillStyle=col;g.fillRect(Math.round(X+a*U),Math.round(Y+bb*U),Math.ceil(w*U),Math.ceil(hh*U))};
+  const t=T[y][c],h=hash(c,y),X=c*CS,Y=y*CS,U=CS/18,q=(a,bb,w,hh,col)=>{g.fillStyle=col;g.fillRect(Math.round(X+a*U),Math.round(Y+bb*U),Math.max(1,Math.round(w*U)),Math.max(1,Math.round(hh*U)))};
   const at=(dx,dy)=>T[y+dy]?.[c+dx],road=v=>v=='r'||v=='b',wet=v=>v=='w'||v=='b';
-  q(0,0,18,18,b.g[(c+y)%2]);
-  for(let k=0;k<5;k++){const v=h>>>(k*5);q(v%17,(v>>>3)%17,k%2?2:1,1,k%2?b.gd:b.gl)}
-  if(h%4==0){q(3+h%11,4+(h>>5)%10,1,1,'#fff');q(4+h%11,4+(h>>5)%10,1,1,'#ffd23f')} // florzinhas
-  if(t=='r'){const d='#c79a5e';q(3,3,12,12,d);
-    if(c==0||road(at(-1,0)))q(0,4,3,10,d);if(c==GW-1||road(at(1,0)))q(15,4,3,10,d);if(road(at(0,-1)))q(4,0,10,3,d);if(road(at(0,1)))q(4,15,10,3,d);
-    q(5+h%6,6+(h>>4)%6,2,1,'#a97f47');q(9+(h>>7)%4,11,1,1,'#e3c08a');q(4+(h>>9)%8,8,1,1,'#a97f47')}
-  if(wet(t)){q(0,0,18,18,'#2f7fc4');q(2,2,14,14,'#2a72b5');const dry=v=>v&&!wet(v),foam='#cfeaf5';
-    if(dry(at(0,-1)))q(0,0,18,1,foam);if(dry(at(0,1)))q(0,17,18,1,'#1f5f95');if(dry(at(-1,0)))q(0,0,1,18,foam);if(dry(at(1,0)))q(17,0,1,18,foam)}
-  if(t=='b'){q(0,3,18,12,'#9a6a36');for(let k=0;k<18;k+=3)q(k,3,1,12,'#7a4f26');q(0,3,18,1,'#c99a5c');q(0,14,18,1,'#4a2c17');q(0,2,18,1,'#4a2c17')}
-  if(t=='f')q(0,0,18,18,'rgba(0,40,0,.12)'); // as árvores são desenhadas ao vivo, balançando (drawBattle)
+  // grama: xadrez suave, luz no alto da casa, tufos em 3 tons, pedrinhas e flores
+  q(0,0,18,18,b.g[(c+y)%2]);q(0,0,18,2,'rgba(255,255,255,.05)');q(0,16,18,2,'rgba(0,0,0,.05)');
+  for(let k=0;k<7;k++){const v=hash(c*7+k,y*13+k),tx=v%16,ty=(v>>>4)%16;q(tx,ty+1,1,.5,b.gd);q(tx+.5,ty,.5,1,b.gl);q(tx+1,ty+.5,.5,.5,b.gd)}
+  if(h%5==0){const px_=2+h%12,py=3+(h>>5)%11;q(px_,py,1.5,1,'#8d877b');q(px_,py,1,.5,'#c9c4b8')}
+  if(h%4==0){const fx_=3+h%11,fy=4+(h>>5)%10;q(fx_,fy,1,1,'#fff');q(fx_+.25,fy+.25,.5,.5,'#ffd23f');q(fx_+4,fy+3,1,1,'#ff8fa3');q(fx_+4.25,fy+3.25,.5,.5,'#fff')}
+  if(t=='r'){const d='#c79a5e',e='#a97f47',hz=c==0||c==GW-1||road(at(-1,0))||road(at(1,0)); // estrada de terra com borda, sulcos e cascalho
+    q(3,3,12,12,e);q(3.5,3.5,11,11,d);
+    if(c==0||road(at(-1,0))){q(0,4,3.5,10,e);q(0,4.5,3.5,9,d)}if(c==GW-1||road(at(1,0))){q(14.5,4,3.5,10,e);q(14.5,4.5,3.5,9,d)}
+    if(road(at(0,-1))){q(4,0,10,3.5,e);q(4.5,0,9,3.5,d)}if(road(at(0,1))){q(4,14.5,10,3.5,e);q(4.5,14.5,9,3.5,d)}
+    if(hz){q(0,7,18,.5,'#b58a52');q(0,11,18,.5,'#b58a52')}else{q(7,0,.5,18,'#b58a52');q(11,0,.5,18,'#b58a52')}
+    for(let k=0;k<4;k++){const v=hash(c+k*5,y+k*3);q(4+v%10,5+(v>>4)%8,.5,.5,k%2?'#e3c08a':'#8a6a3a')}}
+  if(wet(t)){q(0,0,18,18,'#2f7fc4');q(2,2,14,14,'#2a72b5');q(4,4,10,10,'#2668a8'); // água: mais funda no meio
+    q(3+h%6,4+(h>>3)%4,3,.5,'rgba(255,255,255,.35)');q(9+(h>>5)%5,10+(h>>7)%4,2,.5,'rgba(255,255,255,.25)');q(5+(h>>9)%6,13,1.5,.5,'rgba(255,255,255,.2)'); // reflexos
+    const dry=v=>v&&!wet(v),sand='#e3cf94',foam='#e6f4fb';
+    if(dry(at(0,-1))){q(0,0,18,1,sand);q(0,1,18,.5,foam)}if(dry(at(0,1))){q(0,17,18,1,sand);q(0,16.5,18,.5,foam)}
+    if(dry(at(-1,0))){q(0,0,1,18,sand);q(1,0,.5,18,foam)}if(dry(at(1,0))){q(17,0,1,18,sand);q(16.5,0,.5,18,foam)}}
+  if(t=='b'){q(0,4,18,10,'rgba(0,0,0,.25)'); // ponte: tábuas com luz, corrimão e postes
+    q(0,3,18,11,'#9a6a36');for(let k=0;k<18;k+=3){q(k,3,.5,11,'#6b4524');q(k+.5,3,2,.5,'#c99a5c')}
+    q(0,2,18,1,'#5a3a1c');q(0,2,18,.5,'#8a5a2b');q(0,14,18,1,'#5a3a1c');
+    for(let k=1;k<18;k+=6){q(k,1,1,2,'#4a2c17');q(k,14,1,2.5,'#4a2c17')}}
   if(t=='m'){const[l,d,top]=b.mc;q(1,16,16,1,'rgba(0,0,0,.25)');
-    if(b.mesa){q(2,6,14,10,d);q(2,6,7,10,l);q(2,11,14,1,'rgba(0,0,0,.2)');q(1,4,16,3,top);q(1,4,16,1,'rgba(255,255,255,.25)');q(5,8,1,5,'rgba(0,0,0,.18)');q(11,9,1,6,'rgba(0,0,0,.18)')}
-    else[[9,2,13],[4,7,8]].forEach(([cx_,ty,n])=>{for(let k=0;k<n;k++){const w=1+k;q(cx_-w,ty+k,w,1,l);q(cx_,ty+k,w,1,d)}q(cx_-2,ty+1,2,2,top);q(cx_-1,ty,1,1,top)})}
-  if(t=='v'){q(3,8,8,6,'#efe2c0');q(9,8,2,6,'#cdbd95');q(2,5,10,3,'#2a9db0');q(3,4,8,1,'#52c8d6');q(2,7,10,1,'#1f7385');q(6,11,2,3,'#5a3a1c');q(4,10,1,1,'#f6d26a');
-    q(11,11,5,4,'#efe2c0');q(10,9,7,2,'#2a9db0');q(13,13,1,2,'#5a3a1c');q(2,14,15,1,'rgba(0,0,0,.2)')}}
-
+    if(b.mesa){q(2,6,14,10,d);q(2,6,7,10,l);for(let k=8;k<16;k+=2.5)q(2,k,14,.5,'rgba(0,0,0,.14)'); // chapada em camadas
+      q(1,4,16,3,top);q(1,4,16,.5,'rgba(255,255,255,.3)');q(1,6.5,16,.5,'rgba(0,0,0,.2)');q(5,8,.5,6,'rgba(0,0,0,.2)');q(11,9,.5,6,'rgba(0,0,0,.2)');q(3,9,1,.5,'rgba(255,255,255,.2)')}
+    else[[9,2,13],[4,7,8]].forEach(([cx_,ty,n])=>{for(let k=0;k<n;k++){const w=1+k;q(cx_-w,ty+k,w,1,l);q(cx_,ty+k,w,1,d)} // pico: face clara e face escura
+      q(cx_-1,ty+3,.5,n-4,'rgba(0,0,0,.18)');q(cx_+2,ty+5,.5,n-6,'rgba(0,0,0,.2)');q(cx_-3,ty+n-3,1,.5,'rgba(255,255,255,.2)'); // veios na rocha
+      q(cx_-2,ty+1,2,2,top);q(cx_-1,ty,1,1,top);q(cx_,ty+1,1.5,1.5,'rgba(255,255,255,.6)')})}
+  if(t=='v'){q(2,14,15,1,'rgba(0,0,0,.22)'); // vila: casa com telhas, janela acesa, porta e chaminé; casinha ao lado
+    q(3,8,8,6,'#efe2c0');q(9,8,2,6,'#cdbd95');q(3,8,8,.5,'rgba(255,255,255,.3)');
+    q(2,5,10,3,'#2a9db0');for(let k=5.5;k<8;k+=1)q(2,k,10,.5,'#1f7385');q(3,4,8,1,'#52c8d6');q(3,4,8,.5,'#9fe6ee');
+    q(9,2.5,1.5,2,'#8a6a3c');q(9,2.5,1.5,.5,'#a98a5a');
+    q(6,11,2,3,'#5a3a1c');q(7.5,12.5,.5,.5,'#ffd23f');q(3.75,9.5,1.5,1.5,'#3a2413');q(4,9.75,1,1,'#ffe27a');
+    q(11,11,5,4,'#efe2c0');q(15,11,1,4,'#cdbd95');q(10,9,7,2,'#2a9db0');q(10,9,7,.5,'#52c8d6');q(10,10.5,7,.5,'#1f7385');q(13,13,1,2,'#5a3a1c');
+    q(1,15,.5,2,'#8a5a2b');q(4,15,.5,2,'#8a5a2b');q(1,15.5,3.5,.5,'#8a5a2b')}}
 // sprites 52x48 (base em blocos de 2 px e detalhes de 1 px) com contorno; quadros: 0-1 parado, 2-3 andando, 4 golpe; cacheados por tipo, facção e pele
 const SPR=new Map,CUSTOM={units:{}}; // CUSTOM: folhas de sprite carregadas de assets/sprites.json (js/assets.js)
 function sprite(u,f,mine,fr){

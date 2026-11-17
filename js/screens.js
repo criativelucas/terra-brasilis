@@ -112,7 +112,7 @@ const scr=h=>{$('screen').hidden=!h;if(h){$('card').innerHTML=h;$('card').scroll
 let pickI=ix.RJ,scnI=0,EVT=null;
 const goalTxt=(sc,f)=>{const g=SCN[sc].play?.[f];return g?`Domine ${g.map(i=>S[i][0]).join(', ')}`:'Unifique os ${N} ${TW}'};
 function showTitle(){const sv=savedInfo(),camp=TKEY!='brasil';
-  scr(`<h2 class="big">TERRA BRASILIS</h2>${camp?`<h2>${TH.nome} · ${TH.ano}</h2>`:''}<p class="c">${TH.title}</p>
+  scr(`<img class="logo" src="assets/logo.png" alt="Terra Brasilis" width="880" height="579">${camp?`<h2>${TH.nome} · ${TH.ano}</h2>`:''}<p class="c">${TH.title}</p>
     ${sv?`<button data-s="cont" class="end">Continuar</button><p class="c">${sv}</p>`:''}
     <button data-s="setup" ${sv?'':'class="end"'}>${camp?'Nova partida desta campanha':'Dominação do Brasil: nova partida'}</button>
     <button data-s="camps">${camp?'Outras campanhas históricas':'Campanhas históricas'}</button>${[1,2,3].some(k=>slotOf(k))?'<button data-s="saves">Carregar partida salva</button>':''}

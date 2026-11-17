@@ -88,6 +88,9 @@ const THEATERS={
       [[-36.4,-7.9],[-35.6,-8.0],[-34.95,-8.05]]],
     REG:[['Pernambuco','REC GOI CAR PAJ',4],['Paraíba e Rio Grande','PAR NAT',3],['Ceará','FOR SOB ICO CRA',4],['Alagoas e Piauí','MAC OEI',3]],
     SEA:[['FOR','REC'],['NAT','MAC']],COAST:'SOB FOR NAT PAR GOI REC MAC',
+    NB:[[-47,-1.0],[-44.3,-2.4],[-42.5,-2.8],[-41.9,-2.85],[-40.5,-2.8],[-39.1,-3.3],[-38.0,-4.3],[-37.2,-4.85],[-36.0,-5.05],[-35.25,-5.2],[-35.0,-6.0],[-34.8,-7.2],[-34.85,-8.0],
+      [-35.1,-8.8],[-35.6,-9.55],[-36.3,-10.25],[-36.9,-10.6],[-37.4,-11.3],[-37.9,-12.4],[-47,-12.4]],
+    NBL:[['MARANHÃO',-43.1,-4.2],['BAHIA',-40.3,-10.3],['OCEANO ATLÂNTICO',-36.4,-3.4]],
     ELITE:{REC:['Voluntários de Caneca','inf',{def:1.2}],CAR:['Batalhão dos Henriques','inf',{dmg:1.2}],FOR:['Jangadeiros','ati',{rng:1}],
       ICO:['Vaqueiros do Jaguaribe','cav',{dmg:1.15}],MAC:['Fuzileiros Imperiais','inf',{def:1.25}],NAT:['Marinheiros de Cochrane','ati',{rng:1}]},
     SCN:[{n:'Confederação do Equador',y:1824,d:'Recife proclama a Confederação; o Ceará adere. O Império marcha de Alagoas pelo Agreste e pelo Pajeú; Natal e Oeiras ficam com a Corte, mas cuidam de si.',
@@ -126,6 +129,9 @@ const THEATERS={
       [[-55.0,-29.65],[-56.6,-29.45]],[[-50.3,-27.4],[-51.2,-27.7],[-52.3,-27.5]]],
     REG:[['Campanha','BAG ALE MIS CCP',3],['Litoral e Lagoa','POA RGR PEL CAM PIR',4],['Serra','PFU VAC CAC',2],['Santa Catarina','LAG DES LGS',3]],
     SEA:[['RGR','LAG'],['RGR','DES']],COAST:'DES LAG POA CAM PEL RGR',LEFT:['PEL'],
+    NB:[[-62,-22],[-47.5,-22],[-48.3,-25.3],[-48.6,-26.0],[-48.6,-26.5],[-48.45,-27.2],[-48.6,-27.8],[-48.8,-28.6],[-49.7,-29.3],[-50.1,-30.0],[-50.7,-31.0],
+      [-51.6,-32.0],[-52.5,-33.0],[-53.4,-33.7],[-53.8,-34.2],[-54.9,-34.95],[-56.2,-34.9],[-57.8,-34.4],[-58.5,-34.6],[-62,-36]],
+    NBL:[['ARGENTINA',-56.4,-27.4],['URUGUAI',-55.4,-32.4],['PARANÁ',-51.2,-25.2],['OCEANO ATLÂNTICO',-49.4,-31.6]],
     ELITE:{PIR:['Farroupilhas','cav',{dmg:1.25}],VAC:['Lanceiros Negros','cav',{dmg:1.3}],LAG:['Lanceiros de Anita','cav',{mov:1}],
       POA:['Guarda Nacional','inf',{def:1.25}],CAM:['Marinheiros de Garibaldi','ati',{rng:1}],PFU:['Guerrilheiros de Moringue','inf',{mov:1}],BAG:['Cavalaria do Seival','cav',{def:1.2}]},
     SCN:[{n:'Guerra dos Farrapos',y:1835,d:'Bento Gonçalves domina a Campanha e funda a República em Piratini. O Império segura Porto Alegre, os portos e a Serra.',
@@ -158,6 +164,9 @@ const THEATERS={
       [[-49.3,-5.4],[-49.5,-3.5],[-49.6,-1.8]],[[-52.6,-5.5],[-52.1,-3.6],[-52.1,-1.8]]],
     REG:[['Guajará','BEL VIG ACA BRA',4],['Marajó e Amapá','MAR MAC',2],['Baixo Amazonas','CAM SAN XIN',3],['Rio Negro','MAU MAN',3]],
     SEA:[['BEL','MAC'],['BRA','MAR']],COAST:'MAC MAR VIG BRA',
+    NB:[[-63,9],[-60,8.5],[-58.6,6.9],[-57.2,6.0],[-55,5.95],[-53.9,5.75],[-52.5,5.2],[-51.7,4.6],[-51.6,4.2],[-51.0,3.0],[-50.3,1.8],[-50.0,0.6],[-49.6,0.0],
+      [-48.4,-0.3],[-47.6,-0.6],[-46.9,-0.8],[-46.1,-1.1],[-44.5,-1.6],[-44,-2.4],[-43,-9.5],[-63,-9.5]],
+    NBL:[['SURINAME',-55.8,3.9],['GUIANA FRANCESA',-53.1,3.7],['RORAIMA',-60.3,1.9],['AMAZONAS',-59.8,-6.2],['MATO GROSSO',-54.5,-7.2],['MARANHÃO',-45.4,-4.6],['OCEANO ATLÂNTICO',-48.6,2.6]],
     ELITE:{BEL:['Cabanos','inf',{dmg:1.2}],VIG:['Canoeiros do Guajará','ati',{rng:1}],MAU:['Arqueiros Mawé','ati',{dmg:1.25}],SAN:['Guerreiros do Tapajós','inf',{mov:1}],
       CAM:['Fuzileiros Imperiais','inf',{def:1.25}],MAN:['Guarda da Barra','inf',{def:1.2}]},
     SCN:[{n:'Cabanagem',y:1835,d:'Os cabanos tomam Belém e o Guajará. O Império resiste em Cametá, Macapá e na Barra do Rio Negro e espera reforços.',
@@ -183,10 +192,10 @@ const W=162,H=158,C=5,[X0,Y0,D]=TH.grid||(()=>{const xs=P.map(p=>p[0]),ys=P.map(
   d=Math.max((Mx-mx)/(W-16),(My-my)/(H-24));return[(mx+Mx)/2-W*d/2,(my+My)/2+H*d/2+d*6,d]})();
 const inPoly=(x,y,Q=P)=>{let c=false;for(let i=0,j=Q.length-1;i<Q.length;j=i++){const[xi,yi]=Q[i],[xj,yj]=Q[j];
   if((yi>y)!=(yj>y)&&x<(xj-xi)*(y-yi)/(yj-yi)+xi)c=!c}return c};
-const cell=new Int8Array(W*H).fill(-1); // -1 mar ou lagoa, >=0 território
+const cell=new Int8Array(W*H).fill(-1); // -1 mar ou lagoa, -2 terra vizinha (fora do jogo), >=0 território
 for(let cy=0;cy<H;cy++)for(let cx=0;cx<W;cx++){
   const lon=X0+(cx+.5)*D,lat=Y0-(cy+.5)*D;
-  if(!inPoly(lon,lat)||LAKES.some(q=>inPoly(lon,lat,q)))continue;
+  if(!inPoly(lon,lat)||LAKES.some(q=>inPoly(lon,lat,q))){if(TH.NB&&!inPoly(lon,lat)&&inPoly(lon,lat,TH.NB))cell[cy*W+cx]=-2;continue}
   let best=-1,bd=1e9;
   S.forEach((s,i)=>{const d=Math.hypot(lon-s[2],lat-s[3]);
     if(s[0]=='DF'&&d>.75)return; // DF é um enclave pequeno, não uma região de Voronoi

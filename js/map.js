@@ -6,15 +6,19 @@ x.imageSmoothingEnabled=false;
 const relief=new Float32Array(W*H); // relevo falso: ruído suave iluminado de noroeste
 {const nz=(a,b)=>hash(a+50,b+50)%1000/1000,sm=(X,Y)=>{const i=Math.floor(X),j=Math.floor(Y),f=X-i,g=Y-j;return(nz(i,j)*(1-f)+nz(i+1,j)*f)*(1-g)+(nz(i,j+1)*(1-f)+nz(i+1,j+1)*f)*g},
   hg=(X,Y)=>sm(X/7,Y/7)+sm(X/2.6,Y/2.6)*.45;for(let cy=0;cy<H;cy++)for(let cx=0;cx<W;cx++)relief[cy*W+cx]=hg(cx*C/10-1,cy*C/10-1)-hg(cx*C/10+1,cy*C/10+1)}
+if(TH.NB)for(let cy=0;cy<H;cy++)for(let cx=0;cx<W;cx++){if(cell[cy*W+cx]!=-2)continue; // terra vizinha: apagada, com relevo e praia
+  const h=hash(cx,cy);wg.fillStyle=`hsl(${80+h%12},${12+h%5}%,${34+relief[cy*W+cx]*18+h%3}%)`;wg.fillRect(cx*C,cy*C,C,C);
+  if(h%11==0){wg.fillStyle='rgba(20,40,10,.25)';wg.fillRect(cx*C+1,cy*C+1,C-2,C-2)}
+  [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy])=>{if(cell[(cy+dy)*W+cx+dx]!=-1)return;wg.fillStyle='rgba(241,227,168,.6)';dx?wg.fillRect(cx*C+(dx>0?C-1:0),cy*C,1,C):wg.fillRect(cx*C,cy*C+(dy>0?C-1:0),C,1)})}
 const LEFT=new Set(TH.LEFT||[]); // bandeiras viradas para a esquerda, para não se sobreporem
 let blink=false,tick=0,tags=[],hov=-1,fx=null,B=null,HQ=null,cam=null; // cam: zoom no estado atacado antes da batalha
 let oddsC={},aiShow=null,cele=null,evtDue=false,dayTint=[0,0,0,0]; // aiShow: reencenação dos ataques da IA; cele: festa de conquista
 const area=S.map((_,i)=>cell.reduce((a,c)=>a+(c==i),0)); // casas de cada território: limita o tamanho do exército desenhado
 const revealAt=[];S.map((_,i)=>i).sort((a,b)=>S[b][3]-S[a][3]).forEach((s,k)=>revealAt[s]=k/N*1400); // abertura: o mapa se forma de norte a sul
 let intro=null,rKey='';const lastOwner=[],flagT=[];
-const coastSea=[];for(let cy=1;cy<H-1;cy++)for(let cx=1;cx<W-1;cx++){const k=cy*W+cx;if(cell[k]>=0)continue; // mar junto da costa, para as jangadas
+const coastSea=[];for(let cy=1;cy<H-1;cy++)for(let cx=1;cx<W-1;cx++){const k=cy*W+cx;if(cell[k]!=-1)continue; // mar junto da costa, para as jangadas
   const lon=X0+(cx+.5)*D,lat=Y0-(cy+.5)*D;if(LAKES.some(q=>inPoly(lon,lat,q)))continue;
-  if([1,-1,W,-W].some(d=>cell[k+d]>=0)&&hash(cx,cy)%11==0)coastSea.push([cx*C+C/2,cy*C+C/2])}
+  if([1,-1,W,-W].some(d=>cell[k+d]!=-1)&&hash(cx,cy)%11==0)coastSea.push([cx*C+C/2,cy*C+C/2])}
 const TOD=[['Manhã','☀',[255,170,110,.12]],['Dia','☀',[0,0,0,0]],['Tarde','☀',[255,130,40,.18]],['Noite','☾',[12,18,70,.44]]]; // ciclo do dia: um período por turno
 function playAI(then){ // fim do turno: todos os ataques da IA correm ao mesmo tempo pelo mapa, depois o jogo segue
   if(!evts.length||!CFG.clash)return then();const s=aiShow={start:Date.now(),ev:evts.slice(0,30),dur:2300};
@@ -60,13 +64,13 @@ function render(){ // terreno em cache: só redesenha quando algo do mapa muda
     [[1,0],[0,1]].forEach(([dx,dy])=>{
       const t=cx+dx<W&&cy+dy<H?cell[(cy+dy)*W+cx+dx]:-1;if(t==s||(s<0&&t<0))return;
       if((s>=0&&revealAt[s]>el)||(t>=0&&revealAt[t]>el))return;
-      const coast=s<0||t<0,war=!coast&&owner[s]!=owner[t];
-      fg.fillStyle=coast?'#f1e3a8':war?'#120a1c':'rgba(0,0,0,.35)';
-      const w=(coast||war?4:2)*Math.max(.75,C/10);
+      const coast=s==-1||t==-1,ext=!coast&&(s<0||t<0),war=!coast&&!ext&&owner[s]!=owner[t]; // ext: divisa com terra vizinha
+      fg.fillStyle=coast?'#f1e3a8':war||ext?'#120a1c':'rgba(0,0,0,.35)';
+      const w=(coast||war||ext?4:2)*Math.max(.75,C/10);
       dx?fg.fillRect((cx+1)*C-w/2,cy*C,w,C):fg.fillRect(cx*C,(cy+1)*C-w/2,C,w)})}
   sg.clearRect(0,0,scene.width,scene.height);
   // cada linha da tela puxa uma linha do mapa plano; as silhuetas esticadas para baixo formam o barranco
-  [[sil[0],1,.4,18,36],[sil[0],18],[sil[1],11],[flat,1]].forEach(([src,th,al=1,ox=0,oy=0])=>{sg.globalAlpha=al; // primeiro, a sombra do continente no mar
+  [[world,1],[sil[0],1,.4,18,36],[sil[0],18],[sil[1],11],[flat,1]].forEach(([src,th,al=1,ox=0,oy=0])=>{sg.globalAlpha=al; // primeiro, a sombra do continente no mar
     for(let dy=YB-HS;dy<=YB;dy++){const u=unproj(SW/2,dy);
       sg.drawImage(src,0,Math.min(SH-1,u[1])|0,SW,1,SW/2*(1-u[2])+ox,dy+oy,SW*u[2],Math.max(1,th*u[2]))}})}
 function ship(sx,sy,flip){x.save();x.translate(sx,sy);if(flip)x.scale(-1,1);const r=(a,b,w,h,c)=>{x.fillStyle=c;x.fillRect(a*3,b*3,w*3,h*3)};
@@ -85,6 +89,8 @@ function draw(){
     x.fillStyle=k%4?'#5fb0e6':'#c8ecfa';x.fillRect(wx,y,7*sc,2);x.fillRect(wx+7*sc,y-2,5*sc,2)}
   ship((tick*1.2+590)%900-50,250,false);ship(860-(tick*.8+300)%900,505,true);
   x.drawImage(scene,0,0);
+  if(TH.NBL){x.font=FONT(9);x.textAlign='center';TH.NBL.forEach(([n,lon,lat])=>{const[lx,ly]=proj((lon-X0)/D*C,(Y0-lat)/D*C),sea=n.startsWith('OCEANO'); // nomes dos vizinhos e do mar
+    x.fillStyle='rgba(0,0,0,.4)';x.fillText(n,lx+1,ly+1);x.fillStyle=sea?'rgba(190,225,255,.6)':'rgba(240,232,205,.7)';x.fillText(n,lx,ly)});x.textAlign='left'}
   if(CFG.q)for(let k=0;k<5;k++){const cx_=(tick*(.6+k*.25)+k*330)%960-120,cy_=30+k*46;x.fillStyle='rgba(10,20,40,.13)';x.fillRect(cx_+40,cy_+150,66,12);x.fillRect(cx_+52,cy_+141,36,9)} // sombra das nuvens
   if(CFG.q)RIOS.forEach((r,ri)=>{const n=r.length-1,t=(now/42000+ri*.37)%1,u=t<.5?t*2:2-t*2,fi=u*n,k=Math.min(n-1,fi|0),q=fi-k, // canoas subindo e descendo os rios
     lon=r[k][0]+(r[k+1][0]-r[k][0])*q,lat=r[k][1]+(r[k+1][1]-r[k][1])*q,sx=(lon-X0)/D*C,sy=(Y0-lat)/D*C;if(!(cell[(sy/C|0)*W+(sx/C|0)]>=0))return;
