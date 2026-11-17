@@ -58,6 +58,20 @@ const REG=[['Norte','AC AM RR RO PA AP TO',4],['Nordeste','MA PI CE RN PB PE AL 
   ['Sudeste','MG ES RJ SP',5],['Sul','PR SC RS',3]].map(([n,u,b])=>[n,u.split(' ').map(k=>ix[k]),b]);
 // rotas marítimas: portos distantes contam como vizinhos
 const SEA=[['RS','RJ'],['RJ','PE'],['PE','PA']].map(q=>q.map(k=>ix[k]));SEA.forEach(([a,b])=>{adj[a].push(b);adj[b].push(a)});
+// estados litorâneos na ordem da costa; um porto liga o estado a outros litorâneos a até 4 posições
+const COAST='AP PA MA PI CE RN PB PE AL SE BA ES RJ SP PR SC RS'.split(' ').map(k=>ix[k]);
+const ADJ0=adj.map(a=>[...a]);let portLinks=[];
+// cenários: dono inicial (líder: estados), quem pode jogar e o objetivo de cada lado (estados a dominar)
+const SCN=[
+  {n:'Independência',y:1822,d:'Vinte e sete províncias livres, cada uma com seu líder. Unifique o Brasil.'},
+  {n:'Confederação do Equador',y:1824,d:'Pernambuco se levanta com o Nordeste contra a Corte do Rio de Janeiro.',
+    own:{PE:'PE PB RN CE PI',RJ:'RJ SP MG ES BA'},bonus:{PE:2},play:{PE:'PI CE RN PB PE AL SE BA',RJ:'PE PB RN CE PI'}},
+  {n:'Guerra dos Farrapos',y:1835,d:'Os farroupilhas proclamam a República Rio-Grandense e marcham contra o Império.',
+    own:{RS:'RS SC',RJ:'RJ SP MG PR ES'},play:{RS:'RS SC PR SP',RJ:'RS SC'}},
+  {n:'Cabanagem',y:1835,d:'Os cabanos tomam Belém. O Império manda tropas pelo Maranhão e pelo Amazonas.',
+    own:{PA:'PA AP TO',RJ:'RJ SP MG ES MA AM'},bonus:{PA:4},play:{PA:'AM PA AP TO MA',RJ:'PA AP TO'}}
+].map(s=>({...s,bonus:s.bonus&&Object.fromEntries(Object.entries(s.bonus).map(([k,v])=>[ix[k],v])),own:s.own&&Object.fromEntries(Object.entries(s.own).map(([k,v])=>[ix[k],v.split(' ').map(u=>ix[u])])),
+  play:s.play&&Object.fromEntries(Object.entries(s.play).map(([k,v])=>[ix[k],v.split(' ').map(u=>ix[u])]))}));
 
 // contorno grosseiro do Brasil (lon,lat); estados = Voronoi dos centros dentro dele
 const P=[[-60.2,5.2],[-59.8,4.4],[-58.9,1.2],[-56.5,1.9],[-54,2.2],[-52.5,2.6],[-51.6,4.4],[-50,1.8],[-50,0],[-48.4,-.7],

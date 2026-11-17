@@ -1,5 +1,6 @@
 // painel lateral, botões e cliques do mapa
 function ui(){
+  tutBox();
   $('hqBar').hidden=!HQ;
   if(HQ){$('hqBar').innerHTML=`<span>◉ Ouro ${gold[me]} (+${income(me)}) · Turno ${turn}</span><button data-a="hqexit" class="end">Voltar ao mapa ▶</button>`;
     $('panel').innerHTML=`<h2>Quartel-General</h2><div class="chips"><span>◉ Ouro ${gold[me]} (+${income(me)})</span><span>Turno ${turn}</span></div>
@@ -11,7 +12,7 @@ function ui(){
     $('panel').innerHTML=`<h2>${B.ps?'Defesa':'Batalha'} de ${S[B.to][1]}</h2>
       <div class="chips"><span>Rodada ${Math.min(B.round,MAXR)}/${MAXR}</span><span>${B.bio.nome}</span>${B.wx=='rain'?'<span>Chuva: tiro −1 de alcance</span>':B.wx=='dry'?'<span>Seca: infantaria anda −1</span>':''}</div>
       <p><b>Objetivo:</b> ${B.ps?'manter seu comandante (retrato dourado) vivo até a última rodada, ou derrubar o invasor.':'derrubar o comandante inimigo (retrato dourado) antes da última rodada.'}</p>
-      ${s?`<div class="ucard"><img src="${icon(s.type,pf,true,s.ld)}" alt=""><div><b>${nmOf(s)}${s.ld?' · Comandante':''}</b>
+      ${s?`<div class="ucard"><img src="${icon(s.type,pf,true,s.ld)}" alt=""><div><b>${nmOf(s)}${s.ld?' · Comandante':''}${s.lv?` · Nível ${s.lv}`:''}</b>
           <div class="chips"><span>♥ ${s.hp}/${s.max}</span><span>Anda ${mvOf(s)}</span><span>Alcance ${rgOf(s)}</span></div>
           <p>${s.el?`<b>Elite:</b> ${elTxt(s.el)}<br>`:''}Forte contra ${strong(s.type)}<br>Fraca contra ${weak(s.type)}</p></div></div>
           <p><i>${s.moved?'Clique num alvo marcado em vermelho.':'Mova para uma casa hachurada ou ataque um alvo em vermelho.'}</i></p>`
@@ -23,7 +24,7 @@ function ui(){
       <div class="ulist">${B.units.map((u,k)=>u.side==B.ps&&u.hp>0?`<button data-u="${k}" class="${u.done?'done ':''}${u==s?'cur':''}" title="${nmOf(u)}${u.done?' (já agiu)':''}"><img src="${icon(u.type,pf,true,u.ld)}" alt="${nmOf(u)}">♥${u.hp}</button>`:'').join('')}</div>
       <div class="tri">${ic('inf')}▶${ic('cav')}▶${ic('ati')}▶${ic('inf')}</div>
       <p class="c">A seta aponta quem leva +50% de dano.<br>Mata e vila: +30% de defesa. Morro e água bloqueiam.</p>
-      <button data-a="brally" ${B.rally||B.busy?'disabled':''}>${B.rally?'Brado já usado':'Brado do comandante: +40% de dano nesta rodada'}</button>
+      <button data-a="brally" ${B.rl[B.ps]||B.busy?'disabled':''}>${B.rl[B.ps]?'Brado já usado':'Brado do comandante: +40% de dano nesta rodada'}</button>${B.rl[1-B.ps]?'<p><i>O inimigo já usou o brado.</i></p>':''}
       <div class="row"><button data-a="bwait" ${s&&!B.busy?'':'disabled'}>Esperar</button><button data-a="bundo" ${B.undo&&!B.busy?'':'disabled'}>Desfazer</button></div>
       <div class="row"><button data-a="bend" class="end" ${dis}>Encerrar rodada ▶</button><button data-a="bauto" ${dis}>Automático</button></div>`;
     return}
@@ -33,21 +34,19 @@ function ui(){
   if(sel>=0){const i=sel,f=owner[i],mine=f==me&&!over;
     h+=`<div class="who">${img(i,S[i][4])}<div><h2>${S[i][1]}</h2><p><b>${S[i][4]}</b></p><p>${S[i][7]}: ${traitTxt(i)}</p></div></div>
       <div class="chips"><span>⚔ Tropas ${troops[i]}</span><span>◉ Renda ${inc(i)}</span><span>⛨ Defesa +${Math.round(defOf(i)*100)}%</span>
-        <span>Recruta: ${cost(i)} ouro</span><span>${BIO[BOF[i]].nome}</span>${vet[i]?`<span>Veteranos ${vet[i]} (+${vet[i]*5}% dano)</span>`:''}${ELITE[S[i][0]]?`<span>★ ${ELITE[S[i][0]][0]}</span>`:''}${fort[i]?`<span>Forte nível ${fort[i]}</span>`:''}</div>
+        <span>Recruta: ${cost(i)} ouro</span><span>${BIO[BOF[i]].nome}</span>${xp[i].some(v=>lvl(v))?`<span>Regimentos nível ${xp[i].map(lvl).join('·')}</span>`:''}${port[i]?'<span>⚓ Porto</span>':''}${ELITE[S[i][0]]?`<span>★ ${ELITE[S[i][0]][0]}</span>`:''}${fort[i]?`<span>Forte nível ${fort[i]}</span>`:''}</div>
       <div class="own">${img(f)}<span>Domínio: ${f==me?'você':S[f][4]+' ('+S[f][0]+')'}</span></div>`;
     if(me<0)h+=`<button data-a="start">Começar com ${S[i][0]}</button>`;
     else if(mine){const c=cost(i),g=gold[me],can=!moved.has(i)&&troops[i]>1;
       h+=`<div class="row"><button data-a="rec" data-n="1" ${g<c?'disabled':''}>+1</button>
         <button data-a="rec" data-n="5" ${g<c*5?'disabled':''}>+5</button>
         <button data-a="rec" data-n="${Math.floor(g/c)}" ${g<c?'disabled':''}>Máx</button><span>recrutar</span></div>
+        ${COAST.includes(i)&&!port[i]?`<button data-a="port" ${g<5?'disabled':''}>⚓ Construir porto (5 ouro): +1 renda e rotas marítimas</button>`:''}
         <button data-a="fort" ${g<fcost()||fort[i]>1?'disabled':''}>${fort[i]>1?'Forte no máximo':`Fortificar (${fcost()} ouro)`}</button>`;
       if(can)h+=`<div class="row"><label for="n">Enviar</label><input type="range" id="n" min="1" max="${troops[i]-1}" value="${troops[i]-1}"><b id="nv">${troops[i]-1}</b></div>
         <button data-a="march" class="${marching?'on':''}">${marching?'Escolha um vizinho…':'Marchar / Atacar'}</button>`;
       else h+=`<p><i>${troops[i]>1?'Estas tropas já marcharam neste turno.':'Guarnição mínima: recrute para marchar.'}</i></p>`}}
-  if(me>=0&&!over&&sel>=0&&owner[sel]!=me){const f=owner[sel],on=pact[f]>turn,near=adj[sel].some(j=>owner[j]==me);
-    h+=`<h2>Diplomacia</h2><div class="own">${img(f)}<span><b>${S[f][4]}</b> · ${owner.filter(o=>o==f).length} estados<br>${on?`Pacto em vigor até o turno ${pact[f]}`:betray>turn?'Desconfia de você: traidor':near?'Vizinho sem acordo':'Sem fronteira com você'}</span></div>
-      <button data-a="pact" data-f="${f}" ${on||gold[me]<6?'disabled':''}>${on?'Pacto em vigor':'Propor pacto de não agressão (6 ouro, 5 turnos)'}</button>
-      ${on?'<p><i>Atacar agora é traição: rompe todos os pactos e enfurece os vizinhos.</i></p>':''}`}
+  if(me>=0&&!over&&sel>=0&&owner[sel]!=me)h+='<h2>Diplomacia</h2>'+dipHTML(owner[sel]);
   if(me>=0&&!over)h+='<button data-a="hq">⌂ Quartel-General</button><button data-a="end" class="end">Fim do turno ▶</button>';
   $('panel').innerHTML=h;
   $('bar').innerHTML=me<0?'<span>Ano de 1822</span>':`<span>Turno ${turn}</span><span>◉ Ouro ${gold[me]} (+${income(me)})</span><span>⚑ Estados ${owner.filter(o=>o==me).length}/${N}</span>`;
@@ -58,21 +57,23 @@ function ui(){
   if(over&&!endShown){endShown=true;showEnd()}}
 $('panel').addEventListener('input',e=>{if(e.target.id=='n')$('nv').textContent=e.target.value});
 const onPanel=e=>{const b=e.target.closest('button');if(!b||cam)return;const a=b.dataset.a;sfx.sel();
-  if(a=='hq')return openHQ();
+  if(a=='tutskip'){tut=-1;try{localStorage.setItem('tb-tut','1')}catch{}return ui()}
+  if(a=='hq'){tutEv('hq');return openHQ()}
   if(a=='room')return enterRoom(b.dataset.r);
   if(a=='hqexit')return closeHQ();
   if(b.dataset.u){const u=B.units[+b.dataset.u];if(!B.busy&&!u.done)B.selU=u;return ui()}
   if(a=='bend')return bEnd();
   if(a=='bauto')return bEnd(true);
-  if(a=='brally'){B.rally=B.round;sfx.win()}
+  if(a=='brally'){B.rl[B.ps]=B.round;sfx.win()}
   if(a=='bwait'&&B.selU){B.selU.done=true;B.selU=B.undo=null}
   if(a=='bundo'&&B.undo){const{u,x:ux,y:uy}=B.undo;u.x=ux;u.y=uy;u.moved=u.done=false;B.selU=u;B.undo=null}
   if(a=='start'){me=sel;say(`${S[me][4]} ergue a bandeira em ${S[me][1]}`);scr()}
-  if(a=='rec'){const n=+b.dataset.n;troops[sel]+=n;gold[me]-=n*cost(sel)}
-  if(a=='pact'){const f=+b.dataset.f;gold[me]-=6;pact[f]=turn+5;say('Pacto firmado com '+S[f][4]);sfx.win()}
+  if(a=='rec'){tutEv('rec');const n=+b.dataset.n;troops[sel]+=n;gold[me]-=n*cost(sel)}
+  if(a=='dip'){dipAct(b.dataset.k,+b.dataset.f)?sfx.win():sfx.lose()}
+  if(a=='port'){gold[me]-=5;buildPort(sel);say(`Porto construído em ${S[sel][1]}`)}
   if(a=='fort'){gold[me]-=fcost();fort[sel]++}
-  if(a=='march')marching=!marching;
-  if(a=='end'){endTurn();if(raids.length)return nextRaid()}
+  if(a=='march'){marching=!marching;if(marching)tutEv('march')}
+  if(a=='end'){tutEv('end');endTurn();if(raids.length)return nextRaid()}
   if(a=='new'){reset();return showSetup()}
   ui()};
 $('panel').addEventListener('click',onPanel);$('hqBar').addEventListener('click',onPanel);

@@ -5,18 +5,18 @@ function nextRaid(){
   if(over||owner[r.to]!=me||owner[r.from]!=r.f||troops[r.from]<2)return nextRaid(); // situação mudou desde a ordem
   tactical(r.from,r.to,troops[r.from]-1,1);ui()}
 tactical=(from,to,n,ps=0)=>zoomTo(from,to,()=>{startBattle(from,to,n,ps);ui()}); // câmera fecha no alvo, depois abre o campo
-const startBattle=(from,to,n,ps)=>{ // ps: lado do jogador (0 ataca pela esquerda, 1 defende pela direita)
+const startBattle=(from,to,n,ps)=>{tutEv('battle'); // ps: lado do jogador (0 ataca pela esquerda, 1 defende pela direita)
   const af=owner[from],was=owner[to],bio=BIO[BOF[to]],T=genMap(bio);
   const side=(sd,tot)=>{const k=Math.min(6,Math.ceil(tot/4)),f=sd?was:af,E=ELITE[S[sd?to:from][0]],TY=['inf','cav','ati','inf','cav','art'];
     return Array.from({length:k},(_,j)=>({side:sd,type:TY[j],el:E&&E[1]==TY[j]?E:null,x:sd?GW-1:0,y:Math.floor((j+.5)*GH/k),
-      hp:Math.floor(tot/k)+(j<tot%k?1:0),max:Math.floor(tot/k)+(j<tot%k?1:0),moved:false,done:false,ld:!j,sk:j?'LTBDT'[(f+j)%5]:L[f][0],ph:j*.37}))};
+      j,lv:lvl(xp[sd?to:from][j]),hits:0,hp:Math.floor(tot/k)+(j<tot%k?1:0),max:Math.floor(tot/k)+(j<tot%k?1:0),moved:false,done:false,ld:!j,sk:j?'LTBDT'[(f+j)%5]:L[f][0],ph:j*.37}))};
   const[bg,g]=mk(GW*CS,GH*CS);for(let y=0;y<GH;y++)for(let c=0;c<GW;c++)tile(g,T,c,y,bio);
   for(let y=0;y<GH;y++)for(let c=0;c<GW;c++)if('mfv'.includes(T[y][c])){const X=c*CS,Y=y*CS; // sombra projetada para sudeste
     g.fillStyle='rgba(10,20,50,.22)';g.beginPath();g.moveTo(X+6,Y+CS-5);g.lineTo(X+CS+2,Y+CS-5);g.lineTo(X+CS+16,Y+CS+9);g.lineTo(X+20,Y+CS+9);g.fill()}
   const lg=g.createLinearGradient(0,0,GW*CS,GH*CS);lg.addColorStop(0,'rgba(255,236,170,.24)');lg.addColorStop(.5,'rgba(255,255,255,0)');lg.addColorStop(1,'rgba(20,10,60,.3)');
   g.fillStyle=lg;g.fillRect(0,0,GW*CS,GH*CS); // sol de noroeste
   g.strokeStyle='rgba(0,0,0,.07)';g.lineWidth=1;for(let c=1;c<GW;c++)g.strokeRect(c*CS-.5,-1,0,GH*CS+2);for(let y=1;y<GH;y++)g.strokeRect(-1,y*CS-.5,GW*CS+2,0);
-  B={from,to,n,ps,af,was,T,bg,bio,rally:0,wx:BOF[to]=='ama'&&Math.random()<.5?'rain':BOF[to]=='ser'&&Math.random()<.5?'dry':null,units:[...side(0,n),...side(1,troops[to])],round:1,selU:null,pops:[],fxs:[],busy:false,hov:null};
+  B={from,to,n,ps,af,was,T,bg,bio,rl:[0,0],wx:BOF[to]=='ama'&&Math.random()<.5?'rain':BOF[to]=='ser'&&Math.random()<.5?'dry':null,units:[...side(0,n),...side(1,troops[to])],round:1,selU:null,pops:[],fxs:[],busy:false,hov:null};
   const b0=B;(function loop(){if(B!==b0)return;drawBattle();requestAnimationFrame(loop)})()};
 function reach(u){ // casas alcançáveis: [x,y,chave da casa anterior]
   const mv=mvOf(u),seen=new Map([[u.x+','+u.y,[u.x,u.y,null]]]),q=[[u.x,u.y,0]],occ=new Set(B.units.filter(v=>v.hp>0&&v!=u).map(v=>v.x+','+v.y));
@@ -30,7 +30,7 @@ function walk(u,gx,gy,R){ // move na lógica já; o desenho percorre o caminho c
   const m=new Map(R.map(c=>[c[0]+','+c[1],c])),pts=[];let c=m.get(gx+','+gy);while(c){pts.unshift([c[0],c[1]]);c=m.get(c[2])}
   u.x=gx;u.y=gy;u.anim={pts,start:Date.now()};const d=(pts.length-1)*STEP;B.lock=Date.now()+d;return d}
 function hit(a,t,back){ // aplica o dano na hora; a cena de combate é só a encenação do que já aconteceu
-  const ha0=a.hp,ht0=t.hp,d=Math.min(t.hp,Math.max(1,Math.round(est(a,t,back)*roll())));t.hp-=d;
+  const ha0=a.hp,ht0=t.hp,d=Math.min(t.hp,Math.max(1,Math.round(est(a,t,back)*roll())));t.hp-=d;a.hits++;
   a.lunge={dx:Math.sign(t.x-a.x),dy:Math.sign(t.y-a.y),until:Date.now()+180};t.flash=Date.now()+220;
   B.pops.push({x:t.x,y:t.y,txt:'-'+d,until:Date.now()+800});sfx.hit();
   B.fxs.push({a:[a.x,a.y],t:[t.x,t.y],shot:dist(a,t)>1,start:Date.now()});B.shake=Date.now()+160;if(t.hp<=0)t.dead=Date.now()+200;
@@ -63,10 +63,12 @@ function drawClash(now){ // dois quadros: unidade do atacante à esquerda do cam
     if(dmg>0&&p>tHit){x.font=FONT(22);x.fillStyle='#22140c';x.fillText('-'+dmg,bx+w/2+3,by+113-(p-tHit)*60);x.fillStyle='#ffd23f';x.fillText('-'+dmg,bx+w/2,by+110-(p-tHit)*60)}
     if(!hp&&p>tHit){x.font=FONT(12);x.fillStyle='#b3312a';x.fillText('DERROTADOS',bx+w/2,by+220)}})}
 async function aiSide(sd,ms){
-  const b0=B;
+  const b0=B,ldr=B.units.find(u=>u.side==sd&&u.ld);
+  if(!B.rl[sd]&&sd!=B.ps&&(B.round>=3||ldr.hp<ldr.max/2||(B.round>=2&&total(sd)<total(1-sd)))){B.rl[sd]=B.round; // a IA usa o brado quando aperta
+    B.pops.push({x:ldr.x,y:ldr.y,txt:'BRADO!',until:Date.now()+1100});sfx.win();await sleep(500);if(B!==b0)return}
   for(const u of alive(sd)){
     if(B!==b0||bOver())return;
-    const pri=p=>dist(u,p)-(BEATS[u.type]==p.type?1.5:0)-(p.ld?.5:0),t=alive(1-sd).sort((p,q)=>pri(p)-pri(q))[0]; // prefere quem ela vence e o comandanteif(u.hp<=0||!t)continue;
+    const pri=p=>dist(u,p)-(BEATS[u.type]==p.type?1.5:0)-(p.ld?.5:0),t=alive(1-sd).sort((p,q)=>pri(p)-pri(q))[0]; if(u.hp<=0||!t)continue; // prefere quem ela vence e o comandante
     const rg=rgOf(u),far=c=>Math.abs(Math.abs(c[0]-t.x)+Math.abs(c[1]-t.y)-(rg>1?2:1))-('fv'.includes(B.T[c[1]][c[0]])?.6:0); // fica à distância de tiro e busca abrigo
     if(!inR(u,t)&&(!u.ld||dist(u,t)<=4)){ // comandante só se mexe com o inimigo perto
      const R=reach(u),c=[...R].sort((p,q)=>far(p)-far(q))[0]; // comandante segura posição
@@ -82,10 +84,12 @@ async function bEnd(auto){
     if(B!==b0)return;
     B.round++;B.units.forEach(u=>u.moved=u.done=false)}while(auto&&!bOver());
   B.busy=false;bOver()?bFinish():ui()}
-function bFinish(){
+function bFinish(){tutEv('bdone');
   const{from,to,n,was,af,ps}=B,a=total(0),d=total(1),won=!ld(1)&&ld(0); // won = atacante venceu
   troops[from]-=n;
-  {const v=won?from:to;vet[v]=Math.min(3,vet[v]+1)} // quem vence ganha veteranice
+  // experiência: regimento que sobreviveu ganha 1, mais 1 se acertou golpes, mais 1 se o lado venceu
+  for(const sd of[0,1]){const st=sd?to:from,win=sd?!won:won;B.units.filter(u=>u.side==sd).forEach(u=>{if(u.hp>0)xp[st][u.j]+=1+(u.hits>0)+win})}
+  if(won)xp[to]=[...xp[from]];
   if(won){fort[to]=0;owner[to]=af;troops[to]=Math.max(1,a)}else{troops[to]=Math.max(1,d);troops[from]+=a}
   if(ps)say(won?`${S[af][4]} tomou ${S[to][0]} de você!`:`Você repeliu ${S[af][4]} em ${S[to][0]}`);
   else{say(won?`Você conquistou ${S[to][1]} de ${S[was][4]}`:a?`Recuo em ${S[to][1]}`:`Derrota em ${S[to][1]}`);moved.add(from).add(to)}
@@ -97,7 +101,7 @@ function bClick(e){
   const u=B.units.find(v=>v.hp>0&&v.x==gx&&v.y==gy),s=B.selU;
   if(u&&u.side==B.ps){B.selU=u.done?null:u;B.peek=null;sfx.sel()}
   else if(s&&u&&inR(s,u)){hit(s,u);B.selU=B.undo=null}
-  else if(s&&!u&&!s.moved&&(R=reach(s)).some(c=>c[0]==gx&&c[1]==gy)){B.undo={u:s,x:s.x,y:s.y};walk(s,gx,gy,R);s.moved=true;sfx.move();
+  else if(s&&!u&&!s.moved&&(R=reach(s)).some(c=>c[0]==gx&&c[1]==gy)){B.undo={u:s,x:s.x,y:s.y};walk(s,gx,gy,R);s.moved=true;sfx.move();tutEv('bmove');
     if(!alive(1-B.ps).some(f=>inR(s,f))){s.done=true;B.selU=null}}
   else{B.selU=null;B.peek=u&&B.peek!=u?u:null;if(u)sfx.sel()} // inimigo fora de alcance: espia o movimento dele
   if(bOver()){B.busy=true;setTimeout(()=>B===b0&&bFinish(),700+clashLeft())}
@@ -119,7 +123,8 @@ function drawUnit(u,now){
   if(u.ld){const bx=u.side?px_+CS-24:px_-2;x.fillStyle='#22140c';x.fillRect(bx-3,py-23,30,30);x.fillStyle='#ffd23f';x.fillRect(bx-2,py-22,28,28);x.drawImage(fcv[f],bx,py-20,24,24)}
   const t=''+u.hp,w=t.length*8+7,hx=u.side?px_+1:px_+CS-w-1;x.fillStyle='#fff';x.fillRect(hx-1,py+CS-17,w+2,15);
   x.fillStyle=mine?'#1d3fa8':'#22140c';x.fillRect(hx,py+CS-16,w,13);x.fillStyle='#fff';x.textAlign='left';x.font=FONT(8);x.fillText(t,hx+4,py+CS-13);
-  if(u.el){x.fillStyle='#22140c';x.fillRect(hx+w-4,py+CS-24,9,9);x.fillStyle='#ffd23f';x.fillRect(hx+w-3,py+CS-23,7,7)}} // selo de elite
+  if(u.el){x.fillStyle='#22140c';x.fillRect(hx+w-4,py+CS-24,9,9);x.fillStyle='#ffd23f';x.fillRect(hx+w-3,py+CS-23,7,7)} // selo de elite
+  for(let k=0;k<u.lv;k++){const cx_=u.side?px_+CS-8:px_+6,cy_=py+CS-26-k*5;x.fillStyle='#22140c';x.fillRect(cx_-4,cy_-1,9,5);x.fillStyle='#ffd23f';x.fillRect(cx_-3,cy_,3,2);x.fillRect(cx_,cy_+1,1,2);x.fillRect(cx_+1,cy_,3,2)}} // divisas de nível
 function drawBattle(){
   const now=Date.now(),s=B.selU,ps=B.ps,cw=cv.width;
   x.fillStyle='#161126';x.fillRect(0,0,cw,cv.height);x.textBaseline='top';

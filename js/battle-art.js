@@ -36,9 +36,12 @@ function tile(g,T,c,y,b){
     q(11,11,5,4,'#efe2c0');q(10,9,7,2,'#2a9db0');q(13,13,1,2,'#5a3a1c');q(2,14,15,1,'rgba(0,0,0,.2)')}}
 
 // sprites 26x24 com contorno, 2 quadros de animação; cacheados por tipo, facção e pele
-const SPR=new Map;
+const SPR=new Map,CUSTOM={units:{}}; // CUSTOM: folhas de sprite carregadas de assets/sprites.json (js/assets.js)
 function sprite(u,f,mine,fr){
   const key=[u.type,f,mine,u.ld,u.sk,fr].join();if(SPR.has(key))return SPR.get(key);
+  const cu=CUSTOM.units[u.ld?'ld':u.type]||CUSTOM.units[u.type];
+  if(cu){const fw=cu.im.width/cu.frames,[c,g]=mk(fw,cu.im.height);g.drawImage(cu.im,(fr%cu.frames)*fw,0,fw,cu.im.height,0,0,fw,cu.im.height);
+    g.fillStyle=`hsl(${hue(f)},${mine?78:52}%,48%)`;g.fillRect(0,cu.im.height-2,fw,2);SPR.set(key,c);return c} // faixa na cor da facção
   const[t,g]=mk(26,24),h=hue(f),s=mine?78:52,C=`hsl(${h},${s}%,48%)`,Cd=`hsl(${h},${s}%,30%)`,Cl=`hsl(${h},${s}%,70%)`,
     [sk,skd]=SK[u.sk],O='#1a1020',mt='#dfe5ea',mtd='#8a94a0',wd='#8a5a2b',lt='#4a2c17',bk='#22140c',gold='#e0b030',red='#b3312a',wh='#ece6d6',b=fr;
   const r=(a,bb,w,hh,c)=>{g.fillStyle=c;g.fillRect(a+1,bb+1,w,hh)};

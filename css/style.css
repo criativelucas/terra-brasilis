@@ -110,3 +110,7 @@ body.hq canvas{width:min(100vw,calc(100vh*810/610));height:auto}
 #room h2{font:12px/1.5 var(--display);margin:0;color:var(--red);text-align:center}#room p{margin:0}
 @media (prefers-reduced-motion:no-preference){#room{animation:slide .25s steps(6)}}
 @keyframes slide{from{transform:translateX(110%)}}
+#tut{background:var(--foam);border:3px solid var(--red);padding:8px;display:flex;flex-direction:column;gap:6px;box-shadow:3px 3px 0 rgba(0,0,0,.35)}
+#tut b{font:9px var(--display);color:var(--red)}#tut p{margin:0}#tut button{align-self:flex-start;font-size:8px;padding:5px}
+@media (prefers-reduced-motion:no-preference){#tut{animation:pulse 1.6s steps(4) infinite}}
+@keyframes pulse{50%{border-color:var(--paper-edge)}}

@@ -68,7 +68,7 @@ function draw(){
     x.fillStyle=k%4?'#5fb0e6':'#c8ecfa';x.fillRect(wx,y,7*sc,2);x.fillRect(wx+7*sc,y-2,5*sc,2)}
   ship((tick*1.2+590)%900-50,250,false);ship(860-(tick*.8+300)%900,505,true);
   x.drawImage(scene,0,0);
-  SEA.forEach(([a,b])=>{const[ax,ay]=proj(...px(a)),[bx,by]=proj(...px(b));x.strokeStyle='rgba(255,255,255,.75)';x.lineWidth=2;x.setLineDash([3,7]); // rotas marítimas
+  [...SEA,...portLinks].forEach(([a,b])=>{const[ax,ay]=proj(...px(a)),[bx,by]=proj(...px(b));x.strokeStyle='rgba(255,255,255,.75)';x.lineWidth=2;x.setLineDash([3,7]); // rotas marítimas
     x.beginPath();x.moveTo(ax,ay);x.quadraticCurveTo((ax+bx)/2+120,(ay+by)/2,bx,by);x.stroke();x.setLineDash([])});
   // bússola
   x.save();x.translate(74,522);x.fillStyle='rgba(10,6,20,.35)';x.beginPath();x.arc(0,0,44,0,7);x.fill();
@@ -83,6 +83,7 @@ function draw(){
       left=LEFT.has(S[i][0]),rx=left?bx-w-1:bx+1;
     x.fillStyle='rgba(0,0,0,.4)';x.fillRect(bx-3,by+27,7,2);
     x.fillStyle='#22140c';x.fillRect(bx-8,by+18,16,11);x.fillStyle='#f6ecc4';x.fillRect(bx-6,by+22,12,6);x.fillStyle='#b3312a';x.fillRect(bx-7,by+19,14,4);x.fillStyle='#3a2413';x.fillRect(bx-1,by+25,3,3); // capital
+    if(port[i]){const ax=bx+11,ay=by+16;x.fillStyle='#22140c';x.fillRect(ax-5,ay-2,11,13);x.fillStyle='#9fd0ff';x.fillRect(ax,ay,1,9);x.fillRect(ax-2,ay+1,5,1);x.fillRect(ax-3,ay+7,7,1);x.fillRect(ax-3,ay+6,1,1);x.fillRect(ax+3,ay+6,1,1)} // âncora
     x.fillStyle='#120a1c';x.fillRect(bx-1,by,2,28);
     x.fillStyle=owner[i]==me?'#1d3fa8':'#22140c';x.fillRect(rx,by,w,14);
     x.fillStyle=`hsl(${hue(owner[i])},70%,60%)`;x.fillRect(left?rx+w-3:rx,by,3,14);

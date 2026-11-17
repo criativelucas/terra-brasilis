@@ -37,24 +37,47 @@ $('menu').addEventListener('input',e=>{if(e.target.id=='mus'){CFG.mus=+e.target.
 // ---------- salvar ----------
 const SAVE='tb-save';
 function save(){if(me<0||B||raids.length)return;try{over?localStorage.removeItem(SAVE):
-  localStorage.setItem(SAVE,JSON.stringify({owner,troops,gold,me,turn,logs,fort,stats,hq,vet,pact,betray,moved:[...moved]}))}catch{}}
+  localStorage.setItem(SAVE,JSON.stringify({scn,owner,troops,gold,me,turn,logs,fort,stats,hq,xp,port,pact,ally,trib,angry,betray,moved:[...moved]}))}catch{}}
 function load(){try{const d=JSON.parse(localStorage.getItem(SAVE));if(!d||d.owner.length!=N)return false;
-  reset();({owner,troops,gold,me,turn,logs,fort,stats}=d);moved=new Set(d.moved);sel=me;if(d.hq)hq=d.hq;hq.tech.art??=0;vet=d.vet||vet;pact=d.pact||{};betray=d.betray||0;return true}catch{return false}}
+  reset(d.scn||0);({owner,troops,gold,me,turn,logs,fort,stats}=d);setGoal();moved=new Set(d.moved);sel=me;if(d.hq)hq=d.hq;hq.tech.art??=0;if(d.xp)xp=d.xp;if(d.port)port=d.port;pact=d.pact||{};ally=d.ally||{};trib=d.trib||{};angry=d.angry||{};betray=d.betray||0;linkPorts();return true}catch{return false}}
 const wipe=()=>{try{localStorage.removeItem(SAVE)}catch{}};
-const savedInfo=()=>{try{const d=JSON.parse(localStorage.getItem(SAVE));return d&&`${S[d.me][4]} · turno ${d.turn} · ${d.owner.filter(o=>o==d.me).length}/${N} estados`}catch{return''}};
+const savedInfo=()=>{try{const d=JSON.parse(localStorage.getItem(SAVE));return d&&`${SCN[d.scn||0].n} · ${S[d.me][4]} · turno ${d.turn} · ${d.owner.filter(o=>o==d.me).length}/${N} estados`}catch{return''}};
 
 // ---------- telas: título, nova campanha, campanha, ajuda, evento, fim ----------
+// tutorial do primeiro jogo: cada passo avança quando o jogador faz a ação dele
+const TUT=[['rec','Bem-vindo! Seu estado está no painel. Recrute tropas com +1, +5 ou Máx; cada tropa custa ouro.'],
+  ['march','Clique em Marchar / Atacar. As setas vermelhas mostram os vizinhos que você pode atacar.'],
+  ['battle','Clique num estado com seta vermelha. Passe o mouse antes: o balão diz se o ataque é favorável.'],
+  ['bmove','Na batalha, clique numa unidade sua e depois numa casa hachurada para mover. Clique num inimigo para ver até onde ele vai.'],
+  ['bdone','Derrube o comandante inimigo (retrato dourado). Quando todas agirem, a rodada passa sozinha. Automático resolve rápido.'],
+  ['end','Clique em Fim do turno: a IA joga e você recebe ouro.'],
+  ['hq','Abra o Quartel-General para treinar tropas, adotar doutrinas e fazer diplomacia. Bom jogo!']];
+let tut=-1;
+const tutStart=()=>{let seen=false;try{seen=localStorage.getItem('tb-tut')}catch{}if(!seen)tut=0};
+function tutEv(ev){if(tut<0)return;const k=TUT.findIndex((s,i)=>i>=tut&&s[0]==ev);if(k<0)return;tut=k+1;
+  if(tut>=TUT.length){tut=-1;try{localStorage.setItem('tb-tut','1')}catch{}}}
+function tutBox(){const el=$('tut');el.hidden=tut<0||!!HQ;if(tut>=0)el.innerHTML=`<b>Tutorial ${tut+1}/${TUT.length}</b><p>${TUT[tut][1]}</p><button data-a="tutskip">Pular tutorial</button>`}
+function dipHTML(f,where){ // cartão de diplomacia com um líder rival; where='hq' para os botões da Chancelaria
+  const st=pact[f]>turn?(ally[f]>turn?`Aliado até o turno ${ally[f]}`:`Pacto até o turno ${pact[f]}`):angry[f]>turn?'Hostil: recusou tributo':betray>turn?'Desconfia de você: traidor':border(f).length?'Vizinho sem acordo':'Sem fronteira com você';
+  const bt=(k,label)=>{const why=dipState(k,f);return`<button ${where=='hq'?'data-s="hq-dip"':'data-a="dip"'} data-k="${k}" data-f="${f}" ${why?'disabled':''} title="${why}">${why&&why!='Ouro insuficiente'?why:label}</button>`};
+  return`<div class="own">${img(f)}<span><b>${S[f][4]}</b> · ${nOwn(f)} estados<br>${st}</span></div>`+
+    bt('pact','Pacto de não agressão (6 ouro, 5 turnos)')+bt('ally','Aliança (12 ouro, 8 turnos)')+bt('trib','Exigir tributo')+
+    (pact[f]>turn?'<p><i>Atacar agora é traição: rompe todos os pactos e enfurece os vizinhos.</i></p>':'')}
 const traitTxt=i=>({atk:`+${S[i][6]*100}% ataque`,def:`+${S[i][6]*100}% defesa`,gold:`+${S[i][6]} ouro por turno`,rec:'recrutamento pela metade'})[S[i][5]];
 const scr=h=>{$('screen').hidden=!h;if(h){$('card').innerHTML=h;$('card').scrollTop=0;$('card').querySelector('button.end,button')?.focus()}};
-let pickI=ix.RJ,EVT=null;
+let pickI=ix.RJ,scnI=0,EVT=null;
+const goalTxt=(sc,f)=>{const g=SCN[sc].play?.[f];return g?`Domine ${g.map(i=>S[i][0]).join(', ')}`:'Unifique os 27 estados'};
 function showTitle(){const sv=savedInfo();
   scr(`<h2 class="big">TERRA BRASILIS</h2><p class="c">1822. Vinte e sete províncias, vinte e sete líderes, um só Brasil a unificar.</p>
     ${sv?`<button data-s="cont" class="end">Continuar campanha</button><p class="c">${sv}</p>`:''}
     <button data-s="setup" ${sv?'':'class="end"'}>Nova campanha</button><button data-s="help">Como jogar</button>`)}
-function showSetup(){sel=pickI;const i=pickI,s=S[i],reg=REG.find(r=>r[1].includes(i));
+function showSetup(){const SC=SCN[scnI],pl=SC.play&&Object.keys(SC.play).map(Number);if(pl&&!pl.includes(pickI))pickI=pl[0];
+  reset(scnI);sel=pickI;const i=pickI,s=S[i],reg=REG.find(r=>r[1].includes(i)),own=owner.filter(o=>o==i).length;
   scr(`<h2>Nova campanha</h2>
+    <div class="opt"><span>Cenário</span><button data-s="scn">‹ ${SC.n} (${SC.y}) ›</button></div><p class="c">${SC.d}</p>
     <div class="row c"><button data-s="prev" aria-label="Líder anterior">‹</button><img class="hero" src="${face[i]}" alt="${s[4]}"><button data-s="next" aria-label="Próximo líder">›</button></div>
-    <p class="c"><b>${s[4]}</b><br>${s[1]} · região ${reg[0]}</p>
+    <p class="c"><b>${s[4]}</b><br>${s[1]} · região ${reg[0]}${own>1?` · começa com ${own} estados`:''}</p>
+    <p class="c"><b>Objetivo:</b> ${goalTxt(scnI,i)}</p>
     <p>${s[7]}: ${traitTxt(i)}<br>Terreno de batalha: ${BIO[BOF[i]].nome}<br>Fronteiras: ${adj[i].map(j=>S[j][0]).join(', ')}<br>Região completa rende +${reg[2]} ouro por turno</p>
     <div class="opt"><span>Dificuldade</span><button data-s="diff">‹ ${OPT.diff[1][CFG.diff]} ›</button></div>
     <button data-s="go" class="end">Iniciar campanha</button><button data-s="rand">Sortear líder</button><button data-s="title">Voltar</button>`);
@@ -66,19 +89,21 @@ function showHelp(){scr(`<h2>Como jogar</h2>
   <p><b>Batalha:</b> derrube o comandante inimigo. Infantaria vence Cavalaria, Cavalaria vence Atiradores, Atiradores vencem Infantaria. Mata e vila protegem.</p>
   <p><b>Atalhos:</b> <kbd>E</kbd> fim do turno ou da rodada · <kbd>M</kbd> marchar · <kbd>R</kbd> recrutar · <kbd>F</kbd> fortificar · <kbd>N</kbd> próximo estado · <kbd>C</kbd> campanha · <kbd>Z</kbd> desfazer · <kbd>W</kbd> esperar · <kbd>A</kbd> automático · <kbd>Esc</kbd> menu</p>
   <p>O jogo salva sozinho a cada ação, neste navegador.</p>
+  ${me>=0?'<button data-s="tut">Rever tutorial</button>':''}
   <button data-s="${me<0?'title':'close'}" class="end">Voltar</button>`)}
 function showCampaign(){
   const mine=owner.filter(o=>o==me).length,pw=[...new Set(owner)].map(f=>[f,owner.filter(o=>o==f).length,owner.reduce((a,o,i)=>a+(o==f?troops[i]:0),0)]).sort((a,b)=>b[1]-a[1]||b[2]-a[2]);
   scr(`<h2>Campanha de ${S[me][4]}</h2>
+    <p class="c">${SCN[scn].n} (${SCN[scn].y}) · ${goalTxt(scn,me)}</p>${goal?`<div class="rk"><span>Objetivo</span><div class="pb"><i style="width:${goal.filter(i=>owner[i]==me).length/goal.length*100}%"></i></div><span>${goal.filter(i=>owner[i]==me).length}/${goal.length}</span></div>`:''}
     <div class="rk"><span>Brasil unificado</span><div class="pb"><i style="width:${mine/N*100}%"></i></div><span>${mine}/${N}</span></div>
     <h3>REGIÕES</h3>`+REG.map(([n,st,b])=>{const k=st.filter(i=>owner[i]==me).length;
       return`<div class="rk"><span>${n}</span><div class="pb"><i style="width:${k/st.length*100}%"></i></div><span>${k}/${st.length} ${k==st.length?'✔':''} +${b}</span></div>`}).join('')+
     `<h3>POTÊNCIAS</h3>`+pw.slice(0,5).map(([f,n,t])=>`<div class="rk">${img(f)}<span>${f==me?'<b>Você</b>':S[f][4]}</span><span>${n} estados · ${t} tropas</span></div>`).join('')+
     `<h3>CRÔNICA</h3><p>Turno ${turn} · ${stats.won} vitórias · ${stats.lost} derrotas · ${stats.taken} estados tomados · renda ${income(me)} por turno</p>
     <button data-s="close" class="end">Voltar ao mapa</button><button data-s="help">Como jogar</button>`)}
-function showEnd(){const win=owner.every(o=>o==me);win?sfx.win():sfx.lose();
-  scr(`<h2 class="big">${win?'BRASIL UNIFICADO':'FIM DA CAMPANHA'}</h2><div class="row c"><img class="hero" src="${face[me]}" alt=""></div>
-    <p class="c">${win?`${S[me][4]} reúne as 27 províncias sob uma só bandeira.`:`O domínio de ${S[me][4]} caiu.`}</p>
+function showEnd(){const win=victory;win?sfx.win():sfx.lose();
+  scr(`<h2 class="big">${win?(goal&&!owner.every(o=>o==me)?'OBJETIVO CUMPRIDO':'BRASIL UNIFICADO'):'FIM DA CAMPANHA'}</h2><div class="row c"><img class="hero" src="${face[me]}" alt=""></div>
+    <p class="c">${win?(goal&&!owner.every(o=>o==me)?`${S[me][4]} vence a ${SCN[scn].n}.`:`${S[me][4]} reúne as 27 províncias sob uma só bandeira.`):`O domínio de ${S[me][4]} caiu.`}</p>
     <p class="c">${turn} turnos · ${stats.won} vitórias · ${stats.lost} derrotas · ${stats.taken} estados tomados</p>
     <button data-s="setup" class="end">Nova campanha</button><button data-s="close">Ver o mapa</button>`)}
 function showEvent(){ // escolha de início de turno: [título, texto, [[opção, custo em ouro, efeito]]]
@@ -99,16 +124,18 @@ const onScr=e=>{const k=e.target.closest('button')?.dataset.s;if(!k)return;sfx.s
   else if(k=='setup'){reset();showSetup()}
   else if(k=='help')showHelp();
   else if(k=='title'){sel=-1;ui();showTitle()}
-  else if(k=='prev'||k=='next'){pickI=(pickI+(k=='next'?1:N-1))%N;showSetup()}
-  else if(k=='rand'){pickI=Math.random()*N|0;showSetup()}
+  else if(k=='prev'||k=='next'){const pl=SCN[scnI].play?Object.keys(SCN[scnI].play).map(Number):S.map((_,j)=>j),p=pl.indexOf(pickI);pickI=pl[(p+(k=='next'?1:pl.length-1))%pl.length];showSetup()}
+  else if(k=='rand'){const pl=SCN[scnI].play?Object.keys(SCN[scnI].play).map(Number):S.map((_,j)=>j);pickI=pl[Math.random()*pl.length|0];showSetup()}
+  else if(k=='scn'){scnI=(scnI+1)%SCN.length;showSetup()}
   else if(k=='diff'){CFG.diff=(CFG.diff+1)%3;saveCfg();showSetup()}
-  else if(k=='go'){reset();me=sel=pickI;say(`${S[me][4]} ergue a bandeira em ${S[me][1]}`);scr();ui()}
+  else if(k=='go'){reset(scnI);startAs(pickI);sel=me;say(`${SCN[scnI].y}: ${S[me][4]} ergue a bandeira em ${S[me][1]}`);scr();tutStart();ui()}
   else if(k=='close')scr();
+  else if(k=='tut'){tut=0;scr();ui()}
+  else if(k=='hq-dip'){const b=e.target.closest('button');dipAct(b.dataset.k,+b.dataset.f)?sfx.win():sfx.lose();save();showRoom(HQ.room);ui()}
   else if(k.startsWith('hq-')){const[,a,id]=k.split('-');
     if(a=='close'){$('room').hidden=true;const z=HQ.zoom={room:HQ.room,start:Date.now(),dir:-1};setTimeout(()=>{if(HQ&&HQ.zoom===z)HQ.zoom=null},340);return ui()}
     if(a=='doc'){gold[me]-=DOC.find(d=>d[0]==id)[3];hq.doc[id]=1;say('Doutrina adotada: '+DOC.find(d=>d[0]==id)[1])}
     if(a=='tech'){gold[me]-=6+4*hq.tech[id];hq.tech[id]++;say(`${UT[id][0]} treinada: nível ${hq.tech[id]}`)}
-    if(a=='pact'){gold[me]-=6;pact[id]=turn+5;say('Pacto firmado com '+S[id][4])}
     if(a=='tax'){gold[me]+=Math.ceil(income(me)/2);hq.tax=turn;say('Imposto de guerra cobrado')}
     sfx.win();save();showRoom(HQ.room);ui()}
   else if(k.startsWith('ev')){const[l,c,fn]=EVT[2][+k[2]];gold[me]-=c;fn();say(`${EVT[0]}: ${l.split(' (')[0].toLowerCase()}`);scr();ui()}};

@@ -176,9 +176,7 @@ function showRoom(k){
       REG.map(([n,st,b])=>`<div class="rk"><span style="flex:1">Região ${n} ${st.every(i=>owner[i]==me)?'completa':`(${st.filter(i=>owner[i]==me).length}/${st.length})`}</span><span>${st.every(i=>owner[i]==me)?'+'+b:'—'}</span></div>`).join('')+
       line('<b>Imposto de guerra</b><br>Uma vez por turno',`<button data-s="hq-tax" ${hq.tax==turn?'disabled':''}>${hq.tax==turn?'Cobrado':'+'+tax+' ouro'}</button>`)}
   if(k=='dip'){const nb=[...new Set(own.flatMap(i=>adj[i]).map(j=>owner[j]))].filter(f=>f!=me);
-    h=`<h2>Chancelaria</h2><p class="c">Pacto de não agressão: 6 de ouro, vale 5 turnos. Atacar quem tem pacto é traição: rompe todos os pactos e enfurece os vizinhos.</p>`+
-      nb.map(f=>`<div class="rk">${img(f,S[f][4])}<span style="flex:1"><b>${S[f][4]}</b><br>${owner.filter(o=>o==f).length} estados${pact[f]>turn?` · pacto até o turno ${pact[f]}`:''}</span>
-        <button data-s="hq-pact-${f}" ${pact[f]>turn||g<6?'disabled':''}>${pact[f]>turn?'Em vigor':'6 ouro'}</button></div>`).join('')+
-      (betray>turn?`<p class="c"><b>Você é visto como traidor até o turno ${betray}.</b></p>`:'')}
+    h=`<h2>Chancelaria</h2><p class="c">Pacto: não se atacam. Aliança: pacto mais reforço de tropas na fronteira comum. Tributo: exige ouro de quem é bem mais fraco que você na fronteira; se recusar, fica hostil. Atacar quem tem pacto é traição.</p>`+
+      nb.map(f=>`<div class="ucard" style="flex-direction:column;align-items:stretch">${dipHTML(f,'hq')}</div>`).join('')}
   $('room').innerHTML=h+`<p class="c">◉ Ouro em caixa: ${g}</p><button data-s="hq-close" class="end">Voltar ao quartel</button>`;$('room').hidden=false;HQ.room=k}
 
