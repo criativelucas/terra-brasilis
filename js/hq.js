@@ -125,6 +125,8 @@ function renderHQ(){
 function drawHQ(){
   const now=Date.now(),zm=HQ.zoom,own=owner.map((o,i)=>o==me?i:-1).filter(i=>i>=0),fc=`hsl(${hue(me)},80%,50%)`,P=(a,b,z)=>{const p=iso(a,b,z);return[p[0]*2,p[1]*2]};
   x.fillStyle='#1d2418';x.fillRect(0,0,cv.width,cv.height);x.save();
+  const ip=Math.min(1,(now-HQ.t0)/1300),ie=1-Math.pow(1-ip,3); // entrada: a câmera atravessa o pátio a partir do portão
+  if(ip<1){const[gx,gy]=P(14.4,6,0),s=1+1.6*(1-ie);x.translate(405,305);x.scale(s,s);x.translate(-(405+(gx-405)*(1-ie)),-(305+(gy-305)*(1-ie)))}
   if(zm){const p=Math.min(1,(now-zm.start)/320),e=zm.dir>0?p:1-p,R=ROOMS.find(r=>r.k==(zm.room=='dip'?'gen':zm.room)),[cx,cy]=P(R.a+3,R.b+3,3);
     x.translate(405-150*e,305+20*e);x.scale(1+e*.85,1+e*.85);x.translate(-(405+(cx-405)*e),-(305+(cy-305)*e)); // a sala cresce e fica à esquerda; o painel dela entra pela direita
     if(p>=1&&zm.dir<0)HQ.zoom=null}
@@ -147,6 +149,9 @@ function drawHQ(){
     x.fillStyle='#b3312a';x.font=FONT(8);x.fillText(sp.n.toUpperCase(),cx,by+6);if(hot){x.fillStyle='#3a2413';x.fillText(sp.s,cx,by+20)}
     if(!zm)HQ.bub.push([sp.k,cx-w/2,by,w,bh+13])});
   x.restore();
+  if(ip<.55){const o=ip/.55*420;[[-o,0],[405+o,1]].forEach(([dx,k])=>{x.fillStyle='#6b4524';x.fillRect(dx,0,405,610);x.fillStyle='#4a2c17'; // portão abrindo
+    for(let t=0;t<405;t+=45)x.fillRect(dx+t,0,4,610);x.fillStyle='#2f2f36';x.fillRect(dx,120,405,16);x.fillRect(dx,470,405,16);
+    x.fillStyle='#8a8f98';for(let t=20;t<405;t+=45){x.fillRect(dx+t,124,6,6);x.fillRect(dx+t,474,6,6)}x.fillStyle='#e0b030';x.fillRect(dx+(k?18:375),290,12,28)})}
   x.fillStyle='rgba(10,6,20,.7)';x.fillRect(0,580,cv.width,30);x.fillStyle='#f1e3a8';x.font=FONT(10);x.textAlign='center';x.textBaseline='top';
   x.fillText('QUARTEL-GENERAL DE '+S[me][4].toUpperCase(),405,590)}
 const hqSpot=e=>{ // balão clicado, senão sala sob o cursor, torre ou portão
@@ -156,7 +161,7 @@ const hqSpot=e=>{ // balão clicado, senão sala sob o cursor, torre ou portão
   const dx=(mx/2-HX)/IS,dy=(my/2-HY+3*ZS)/IH,a=(dy+dx)/2,b=(dy-dx)/2;
   return a>=0&&b>=0&&a<12&&b<12?ROOMS[(a>=6)+(b>=6)*2].k:a>12&&a<17&&b>4&&b<8?'gate':null};
 function closeHQ(){HQ=null;document.body.classList.remove('hq');$('room').hidden=true;ui()}
-function openHQ(){if(me<0||B||over||cam)return;HQ={hov:null,zoom:null};document.body.classList.add('hq');renderHQ();ui();(function loop(){if(!HQ)return;drawHQ();requestAnimationFrame(loop)})()}
+function openHQ(){if(me<0||B||over||cam||aiShow)return;HQ={hov:null,zoom:null,t0:Date.now()};document.body.classList.add('hq');renderHQ();ui();(function loop(){if(!HQ)return;drawHQ();requestAnimationFrame(loop)})()}
 const enterRoom=k=>{if(!HQ||HQ.zoom)return;if(k=='cam')return showCampaign();if(k=='gate')return closeHQ();
   const h=HQ;HQ.zoom={room:k,start:Date.now(),dir:1};sfx.move();setTimeout(()=>HQ===h&&showRoom(k),340)};
 function showRoom(k){

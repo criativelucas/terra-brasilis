@@ -114,3 +114,15 @@ body.hq canvas{width:min(100vw,calc(100vh*810/610));height:auto}
 #tut b{font:9px var(--display);color:var(--red)}#tut p{margin:0}#tut button{align-self:flex-start;font-size:8px;padding:5px}
 @media (prefers-reduced-motion:no-preference){#tut{animation:pulse 1.6s steps(4) infinite}}
 @keyframes pulse{50%{border-color:var(--paper-edge)}}
+/* avisos, contadores, botões vivos, título caindo */
+#toasts{position:absolute;top:10px;right:10px;display:flex;flex-direction:column;gap:6px;align-items:flex-end;pointer-events:none;z-index:3}
+body.hq #toasts{top:56px}
+.toast{background:var(--paper);color:var(--ink);border:3px solid var(--paper-edge);box-shadow:3px 3px 0 #000;padding:4px 10px;font-size:18px;line-height:1;max-width:320px}
+.cnt{transition:color .2s}.cnt.up{color:#74d05c}.cnt.dn{color:#ff6a5c}
+button:hover:not(:disabled){box-shadow:0 0 0 2px var(--foam),0 0 12px 2px rgba(255,210,63,.55);transform:translateY(-1px)}
+@media (prefers-reduced-motion:no-preference){
+  .toast{animation:tin .25s steps(5),tout .3s steps(5) 2.35s forwards}
+  #card h2.big{animation:drop .7s steps(10)}
+}
+@keyframes tin{from{transform:translateX(120%)}}@keyframes tout{to{transform:translateX(120%);opacity:0}}
+@keyframes drop{0%{transform:translateY(-160px)}70%{transform:translateY(10px)}100%{transform:none}}

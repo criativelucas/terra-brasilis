@@ -1,13 +1,18 @@
 // combate no mapa, menu de pausa, salvamento, telas de campanha, atalhos
 let vsT;
+let regDone=new Set;
+function regionCheck(silent){REG.forEach(([n,st,b],k)=>{const full=st.every(i=>owner[i]==me); // domínio de região: fanfarra e aviso
+  if(full&&!regDone.has(k)){regDone.add(k);if(!silent){note(`Região ${n} dominada! +${b} ouro por turno`);sfx.fanfare()}}if(!full)regDone.delete(k)})}
+onNote=toast;
 onFight=(a,d,st,won)=>{
-  fx={s:st,until:Date.now()+700};
-  if((a==me)==won){sfx.win();stats.won++;if(a==me)stats.taken++}else{sfx.lose();stats.lost++}
+  fx={s:st,until:Date.now()+700};const wf=won?a:d,lf=won?d:a,until=Date.now()+9000;mood[wf]={m:'smile',until};mood[lf]={m:'angry',until};
+  if((a==me)==won){sfx.win();stats.won++;if(a==me){stats.taken++;cele={i:st,start:Date.now(),dur:1900,n:70};note(`${S[st][1]} conquistado!`)}}
+  else{sfx.lose();stats.lost++;if(d==me&&won)note(`${S[a][4]} tomou ${S[st][1]}!`)}
+  regionCheck();
   if(CFG.shake){$('stage').classList.remove('shake');void $('stage').offsetWidth;$('stage').classList.add('shake')}
-  (function step(){draw();if(Date.now()<fx.until)requestAnimationFrame(step)})();
   $('vsa').src=face[a];$('vsd').src=face[d];$('vsan').textContent=S[a][4];$('vsdn').textContent=S[d][4];
   $('vsr').textContent=`${S[st][1].toUpperCase()}: `+(a==me?(won?'VITÓRIA!':'DERROTA'):(won?'TERRITÓRIO PERDIDO':'DEFESA HEROICA!'));
-  $('vs').hidden=false;clearTimeout(vsT);vsT=setTimeout(()=>$('vs').hidden=true,1700)};
+  $('vs').hidden=false;clearTimeout(vsT);setTimeout(()=>{$('vsa').src=faceOf(a);$('vsd').src=faceOf(d)},500);vsT=setTimeout(()=>$('vs').hidden=true,1700)};
 $('vs').addEventListener('click',()=>$('vs').hidden=true);
 
 // ---------- menu de pausa ----------
@@ -111,7 +116,7 @@ function showCampaign(){
     `<h3>POTÊNCIAS</h3>`+pw.slice(0,5).map(([f,n,t])=>`<div class="rk">${img(f)}<span>${f==me?'<b>Você</b>':S[f][4]}</span><span>${n} ${TW} · ${t} tropas</span></div>`).join('')+
     `<h3>CRÔNICA</h3><p>Turno ${turn} · ${stats.won} vitórias · ${stats.lost} derrotas · ${stats.taken} ${TW} tomados · renda ${income(me)} por turno</p>
     <button data-s="close" class="end">Voltar ao mapa</button><button data-s="help">Como jogar</button>`)}
-function showEnd(){const win=victory;win?sfx.win():sfx.lose();
+function showEnd(){const win=victory;win?sfx.fanfare():sfx.lose();if(win){cele={i:me,start:Date.now(),dur:6000,n:180};mood[me]={m:'smile',until:Date.now()+6e4}}
   scr(`<h2 class="big">${win?(goal&&!owner.every(o=>o==me)?'OBJETIVO CUMPRIDO':'BRASIL UNIFICADO'):'FIM DA CAMPANHA'}</h2><div class="row c"><img class="hero" src="${face[me]}" alt=""></div>
     <p class="c">${win?(goal&&!owner.every(o=>o==me)?`${S[me][4]} vence a ${SCN[scn].n}.`:`${S[me][4]} reúne ${TKEY=='brasil'?'as 27 províncias':'todos os '+TW} sob uma só bandeira.`):`O domínio de ${S[me][4]} caiu.`}</p>
     <p class="c">${turn} turnos · ${stats.won} vitórias · ${stats.lost} derrotas · ${stats.taken} ${TW} tomados</p>
@@ -127,10 +132,10 @@ function showEvent(){ // escolha de início de turno: [título, texto, [[opção
   EVT=E[Math.random()*E.length|0];sel=st;
   scr(`<h2>${EVT[0]}</h2><div class="row c"><img class="hero" src="${face[me]}" alt=""></div><p class="c">${EVT[1]}</p>`+
     EVT[2].map(([l,c],k)=>`<button data-s="ev${k}" ${gold[me]<c?'disabled':''}>${l}</button>`).join(''))}
-onTurn=()=>{if(Math.random()<.35)showEvent()};
+onTurn=()=>{if(Math.random()<.35){if(aiShow)evtDue=true;else showEvent()}}; // durante a reencenação da IA, o evento espera
 $('campBtn').addEventListener('click',()=>{if(me>=0&&!B)showCampaign()});
 const onScr=e=>{const k=e.target.closest('button')?.dataset.s;if(!k)return;sfx.sel();
-  if(k=='cont'){if(load()){scr();ui()}else showSetup()}
+  if(k=='cont'){if(load()){regionCheck(true);scr();ui()}else showSetup()}
   else if(k=='setup'){reset();showSetup()}
   else if(k=='help')showHelp();
   else if(k=='camps')showCamps();
@@ -140,17 +145,17 @@ const onScr=e=>{const k=e.target.closest('button')?.dataset.s;if(!k)return;sfx.s
   else if(k=='rand'){const pl=SCN[scnI].play?Object.keys(SCN[scnI].play).map(Number):S.map((_,j)=>j);pickI=pl[Math.random()*pl.length|0];showSetup()}
   else if(k=='scn'){scnI=(scnI+1)%SCN.length;showSetup()}
   else if(k=='diff'){CFG.diff=(CFG.diff+1)%3;saveCfg();showSetup()}
-  else if(k=='go'){reset(scnI);startAs(pickI);sel=me;say(`${SCN[scnI].y}: ${S[me][4]} ergue a bandeira em ${S[me][1]}`);scr();tutStart();ui()}
+  else if(k=='go'){reset(scnI);startAs(pickI);sel=me;regionCheck(true);say(`${SCN[scnI].y}: ${S[me][4]} ergue a bandeira em ${S[me][1]}`);scr();tutStart();ui()}
   else if(k=='close')scr();
   else if(k=='tut'){tut=0;scr();ui()}
   else if(k=='hq-dip'){const b=e.target.closest('button');dipAct(b.dataset.k,+b.dataset.f)?sfx.win():sfx.lose();save();showRoom(HQ.room);ui()}
   else if(k.startsWith('hq-')){const[,a,id]=k.split('-');
     if(a=='close'){$('room').hidden=true;const z=HQ.zoom={room:HQ.room,start:Date.now(),dir:-1};setTimeout(()=>{if(HQ&&HQ.zoom===z)HQ.zoom=null},340);return ui()}
-    if(a=='doc'){gold[me]-=DOC.find(d=>d[0]==id)[3];hq.doc[id]=1;say('Doutrina adotada: '+DOC.find(d=>d[0]==id)[1])}
-    if(a=='tech'){gold[me]-=6+4*hq.tech[id];hq.tech[id]++;say(`${UT[id][0]} treinada: nível ${hq.tech[id]}`)}
-    if(a=='tax'){gold[me]+=Math.ceil(income(me)/2);hq.tax=turn;say('Imposto de guerra cobrado')}
+    if(a=='doc'){gold[me]-=DOC.find(d=>d[0]==id)[3];hq.doc[id]=1;note('Doutrina adotada: '+DOC.find(d=>d[0]==id)[1])}
+    if(a=='tech'){gold[me]-=6+4*hq.tech[id];hq.tech[id]++;note(`${UT[id][0]} treinada: nível ${hq.tech[id]}`)}
+    if(a=='tax'){gold[me]+=Math.ceil(income(me)/2);hq.tax=turn;note(`Imposto de guerra: +${Math.ceil(income(me)/2)} ouro`)}
     sfx.win();save();showRoom(HQ.room);ui()}
-  else if(k.startsWith('ev')){const[l,c,fn]=EVT[2][+k[2]];gold[me]-=c;fn();say(`${EVT[0]}: ${l.split(' (')[0].toLowerCase()}`);scr();ui()}};
+  else if(k.startsWith('ev')){const[l,c,fn]=EVT[2][+k[2]];gold[me]-=c;fn();note(`${EVT[0]}: ${l.split(' (')[0].toLowerCase()}`);scr();ui()}};
 $('screen').addEventListener('click',onScr);$('room').addEventListener('click',onScr);
 document.addEventListener('keydown',e=>{ // atalhos: clicam o botão correspondente do painel, se existir e estiver ativo
   if(!$('screen').hidden||!$('menu').hidden||e.ctrlKey||e.metaKey||e.altKey)return;

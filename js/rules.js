@@ -12,8 +12,8 @@ const DOC=[['log','Logística','Recrutar custa 1 de ouro em todos os seus estado
 const roll=()=>.7+Math.random()*.6;
 const AGG=[[1.6,.45],[1.3,.6],[1.1,.8]],TRUCE=[8,6,4]; // por dificuldade: vantagem exigida, chance de atacar, turnos de trégua com o jogador
 let owner,troops,gold,me,sel,moved,turn,over,marching,logs,onFight=()=>{},onMarch=()=>{},tactical=null,raids=[]; // raids: ataques da IA ao jogador, à espera da defesa tática
-let scn=0,goal=null,victory=false,fort,stats,endShown,hq,xp,port,pact,ally,trib,angry,betray,onTurn=()=>{}; // xp: experiência dos 6 regimentos de cada estado; pact/ally/trib/angry: facção -> turno em que acaba // hq: treino por tipo de unidade, doutrinas, turno do último imposto // fort: nível do forte por estado (0-2), +20% defesa cada
-function reset(sc=0){scn=sc;goal=null;victory=false;owner=S.map((_,i)=>i);troops=S.map(()=>4+Math.floor(Math.random()*5));gold=S.map(()=>6);
+let evts=[],burn=[],lastLoss=-9,onNote=()=>{},scn=0,goal=null,victory=false,fort,stats,endShown,hq,xp,port,pact,ally,trib,angry,betray,onTurn=()=>{}; // xp: experiência dos 6 regimentos de cada estado; pact/ally/trib/angry: facção -> turno em que acaba // hq: treino por tipo de unidade, doutrinas, turno do último imposto // fort: nível do forte por estado (0-2), +20% defesa cada
+function reset(sc=0){scn=sc;evts=[];burn=S.map(()=>-9);lastLoss=-9;goal=null;victory=false;owner=S.map((_,i)=>i);troops=S.map(()=>4+Math.floor(Math.random()*5));gold=S.map(()=>6);
   const own=SCN[sc].own||{},bon=SCN[sc].bonus||{};for(const f in own)own[f].forEach(i=>{owner[i]=+f;troops[i]+=3+(bon[f]||0)});
   me=-1;sel=-1;moved=new Set;turn=1;over='';marching=false;logs=[];raids=[];fort=S.map(()=>0);stats={won:0,lost:0,taken:0};endShown=false;hq={tech:{inf:0,cav:0,ati:0,art:0},doc:{},tax:0};xp=S.map(()=>[0,0,0,0,0,0]);port=S.map(()=>0);pact={};ally={};trib={};angry={};betray=0;linkPorts()}
 const lvl=v=>Math.min(3,v/2|0); // nível do regimento: a cada 2 de experiência, até 3
@@ -28,16 +28,16 @@ function dipState(k,f){ // devolve motivo de bloqueio, ou '' se pode
   return ally[f]>turn?(k=='pact'?'Incluso na aliança':'Aliança em vigor'):k=='pact'&&pact[f]>turn?'Pacto em vigor':betray>turn?'Não confiam em traidores':gold[me]<DIP[k][1]?'Ouro insuficiente':''}
 function dipAct(k,f){
   if(k=='trib'){trib[f]=turn+3;const mine=border(f).reduce((a,i)=>a+troops[i],0),theirs=owner.reduce((a,o,i)=>a+(o==f?troops[i]:0),0);
-    if(mine>theirs*1.8){const g=Math.ceil(income(f)*1.5);gold[f]-=g;gold[me]+=g;say(`${S[f][4]} paga tributo de ${g} ouro`);return true}
-    angry[f]=turn+4;say(`${S[f][4]} recusa o tributo e jura vingança`);return false}
-  const[n,c,d]=DIP[k];gold[me]-=c;pact[f]=Math.max(pact[f]||0,turn+d);if(k=='ally')ally[f]=turn+d;say(`${n} ${k=='ally'?'firmada':'firmado'} com ${S[f][4]}`);return true}
+    if(mine>theirs*1.8){const g=Math.ceil(income(f)*1.5);gold[f]-=g;gold[me]+=g;note(`${S[f][4]} paga tributo de ${g} ouro`);return true}
+    angry[f]=turn+4;note(`${S[f][4]} recusa o tributo e jura vingança`);return false}
+  const[n,c,d]=DIP[k];gold[me]-=c;pact[f]=Math.max(pact[f]||0,turn+d);if(k=='ally')ally[f]=turn+d;note(`${n} ${k=='ally'?'firmada':'firmado'} com ${S[f][4]}`);return true}
 const income=f=>(SCN[scn].sub?.[f]&&owner.includes(f)?SCN[scn].sub[f]:0)+owner.reduce((a,o,i)=>a+(o==f?inc(i):0),0)+ // sub: reforços da Corte por turno
   REG.reduce((a,[,st,b])=>a+(st.every(i=>owner[i]==f)?b:0),0);
 const defOf=i=>trait(i,'def')+.2*fort[i]+(docOn(owner[i],'gue')?.15:0);
 function fight(a,b,n){ // n tropas de a atacam b; devolve true se conquistou
   const pa=n*(1+trait(a,'atk'))*roll(), pd=troops[b]*(1+defOf(b))*roll()+1;
   troops[a]-=n;
-  if(pa>pd){xp[a]=xp[a].map(v=>v+1);xp[b]=[...xp[a]];fort[b]=0;owner[b]=owner[a];troops[b]=Math.max(1,Math.round(n*(1-.7*pd/pa)));return true}
+  if(pa>pd){burn[b]=turn;if(owner[b]==me)lastLoss=turn;xp[a]=xp[a].map(v=>v+1);xp[b]=[...xp[a]];fort[b]=0;owner[b]=owner[a];troops[b]=Math.max(1,Math.round(n*(1-.7*pd/pa)));return true}
   xp[b]=xp[b].map(v=>v+1);troops[b]=Math.max(1,Math.round(troops[b]*(1-.7*pa/pd)));troops[a]+=Math.round(n*.3);return false}
 function ai(f){
   gold[f]+=income(f);
@@ -56,25 +56,26 @@ function ai(f){
     if(troops[i]-1>troops[j]*(1+defOf(j))*need+1&&Math.random()<chance*Math.min(1,.3+turn/10)*(owner[j]==me&&(betray>turn||angry[f]>turn)?1.5:1) // agressão cresce com os turnos
       &&!(owner[j]==me&&(turn<(TKEY=='brasil'?TRUCE[CFG.diff]:2)||pact[f]>turn))){ // trégua inicial e pactos poupam o jogador
       if(owner[j]==me&&tactical&&!CFG.tac){raids.push({from:i,to:j,f});continue}
-      const was=owner[j],won=fight(i,j,troops[i]-1);
-      if(won)say(`${S[f][4]} tomou ${S[j][0]}${was==me?' de você!':''}`);
+      const was=owner[j],won=fight(i,j,troops[i]-1);evts.push({f,a:i,b:j,won,was});
+      if(won)(was==me?note:say)(`${S[f][4]} tomou ${was==me?S[j][1]+' de você!':S[j][0]}`);
       else if(was==me)say(`Você repeliu ${S[f][4]} em ${S[j][0]}`);
       if(was==me)onFight(f,was,j,won)}}}
 function say(t){logs.unshift(t);logs.length=Math.min(logs.length,9)}
+function note(t){say(t);onNote(t)} // vai para a crônica e aparece como aviso na tela
 const setGoal=()=>{goal=SCN[scn].play?.[me]||null};
 function startAs(f){me=f;setGoal();gold[me]+=6;troops[me]+=3} // pequena vantagem na capital de quem joga
 function check(){const n=owner.filter(o=>o==me).length;
   if(n==N){over='O Brasil é seu!';victory=true}else if(goal&&goal.every(i=>owner[i]==me)){over='Objetivo cumprido!';victory=true}else if(!n)over='Seu domínio caiu.'}
-function endTurn(){
+function endTurn(){evts=[];
   for(let f=0;f<N;f++)if(f!=me&&owner.includes(f))ai(f);
   if(!raids.length)closeTurn()} // com raids, a UI joga as defesas e depois fecha o turno
 function closeTurn(){
   const help=new Set;for(const f in ally)if(ally[f]>turn&&owner.includes(+f))border(+f).forEach(i=>help.add(i)); // aliados reforçam a fronteira comum
-  [...help].slice(0,3).forEach(i=>troops[i]++);if(help.size)say(`Reforço aliado: +1 tropa em ${Math.min(3,help.size)} estado(s)`);
-  gold[me]+=income(me);moved.clear();turn++;marching=false;check();if(!over)onTurn()}
+  [...help].slice(0,3).forEach(i=>troops[i]++);if(help.size)note(`Reforço aliado: +1 tropa em ${Math.min(3,help.size)} estado(s)`);
+  {const g=income(me);gold[me]+=g;onNote(`Turno ${turn+1}: +${g} ouro`)}moved.clear();turn++;marching=false;check();if(!over)onTurn()}
 function act(to){ // marcha de sel para to
   const n=+(document.getElementById('n')?.value||troops[sel]-1),from=sel;
-  if(owner[to]!=me&&pact[owner[to]]>turn){pact={};ally={};betray=turn+5;say('Traição! Pactos rompidos, vizinhos enfurecidos')}
+  if(owner[to]!=me&&pact[owner[to]]>turn){pact={};ally={};betray=turn+5;note('Traição! Pactos rompidos, vizinhos enfurecidos')}
   if(owner[to]==me){troops[from]-=n;troops[to]+=n;onMarch(from,to)}
   else if(tactical&&CFG.tac<2){marching=false;return tactical(from,to,n)}
   else{const was=owner[to],won=fight(from,to,n);

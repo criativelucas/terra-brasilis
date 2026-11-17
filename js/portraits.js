@@ -3,8 +3,8 @@
 const SK={L:['#e9b58c','#c98f66'],T:['#c98d5e','#a56d42'],B:['#9a6238','#7a4a28'],D:['#6b4226','#4f2f1a'],I:['#b5713f','#8f5530']};
 const HC={k:'#1c1410',b:'#4a2c17',g:'#9a9a9a',w:'#e8e4d8'};
 const fcv=[],fhd=[]; // fhd: mesmo rosto sem fundo, vira a cabeça do comandante no campo
-const mkFace=bare=>([sk,hs,hc,bd,hat,cl,ex],i)=>{
-  const[c,g]=mk(24,24);(bare?fhd:fcv).push(c);const r=(a,b,w,h,col)=>{g.fillStyle=col;g.fillRect(a,b,w,h)};
+const mkFace=(bare,mood='n')=>([sk,hs,hc,bd,hat,cl,ex],i)=>{ // mood: n neutro, blink piscando, smile vitória, angry derrota
+  const[c,g]=mk(24,24);if(mood=='n')(bare?fhd:fcv).push(c);const r=(a,b,w,h,col)=>{g.fillStyle=col;g.fillRect(a,b,w,h)};
   const[s,sh]=SK[sk],h=HC[hc],gold='#e0b030',red='#b3312a',dk='#1c1410',side=(y,n)=>{r(7,y,1,n,h);r(16,y,1,n,h)};
   if(!bare){[20,26,32,38,44].forEach((l,k)=>r(0,20-k*5,24,5,`hsl(${hue(i)},50%,${l}%)`));r(0,0,24,1,'rgba(255,255,255,.25)');r(0,0,3,24,'rgba(0,0,0,.18)');r(21,0,3,24,'rgba(0,0,0,.18)')}
   r(3,20,18,4,cl);r(5,19,14,1,cl);r(15,20,6,4,'rgba(0,0,0,.22)');r(3,20,3,4,'rgba(255,255,255,.14)');r(12,21,1,1,gold);r(12,23,1,1,gold);
@@ -36,8 +36,16 @@ const mkFace=bare=>([sk,hs,hc,bd,hat,cl,ex],i)=>{
   if(hat=='cocar'){for(let k=0;k<10;k++)r(7+k,1+(Math.abs(k-4.5)/2|0),1,4,[red,gold,'#2f8a4a','#2a5fb0'][k%4]);r(7,5,10,1,red)}
   if(hat=='wrap'){r(7,3,10,3,'#eee');r(6,5,12,1,'#ddd');r(16,1,2,2,'#eee')}
   if(hat=='band')r(7,6,10,1,red);
+  const mo='#7a2e24';
+  if(mood=='blink'){r(9,10,2,1,sh);r(13,10,2,1,sh)}
+  if(mood=='smile'){r(10,14,4,1,mo);r(9,13,1,1,mo);r(14,13,1,1,mo);r(9,10,2,1,sh);r(13,10,2,1,sh);r(9,11,2,1,dk);r(13,11,2,1,dk)}
+  if(mood=='angry'){r(9,9,2,1,s);r(13,9,2,1,s);r(9,8,1,1,brow);r(10,9,1,1,brow);r(14,8,1,1,brow);r(13,9,1,1,brow);r(10,14,4,1,mo);r(9,15,1,1,mo);r(14,15,1,1,mo)}
   if(ex.includes('g')){r(8,10,1,1,dk);r(11,10,2,1,dk);r(15,10,1,1,dk);r(8,11,3,1,dk);r(13,11,3,1,dk)}
   return c.toDataURL()};
 const face=L.map(mkFace(false));L.forEach(mkFace(true));
-const img=(f,alt='')=>`<img src="${face[f]}" alt="${alt}">`;
+const FACE={blink:L.map(mkFace(false,'blink')),smile:L.map(mkFace(false,'smile')),angry:L.map(mkFace(false,'angry'))},mood={}; // mood: facção -> {m, until}
+const faceOf=f=>{const m=mood[f];return m&&m.until>Date.now()?FACE[m.m][f]:face[f]};
+const img=(f,alt='')=>`<img class="pt" data-f="${f}" src="${faceOf(f)}" alt="${alt}">`;
+setInterval(()=>{const ims=[...document.querySelectorAll('img.pt')].filter(e=>e.offsetParent);if(!ims.length)return; // alguém pisca de vez em quando
+  const el=ims[Math.random()*ims.length|0],f=+el.dataset.f;el.src=FACE.blink[f];setTimeout(()=>el.src=faceOf(f),150)},1300);
 

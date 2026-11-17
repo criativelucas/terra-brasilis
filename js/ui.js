@@ -33,7 +33,7 @@ function ui(){
   else if(me<0)h+=`<p>Escolha no mapa ou na galeria o líder da sua partida. Cada ${TW1} tem vantagem própria.</p>`;
   if(sel>=0){const i=sel,f=owner[i],mine=f==me&&!over;
     h+=`<div class="who">${img(i,S[i][4])}<div><h2>${S[i][1]}</h2><p><b>${S[i][4]}</b></p><p>${S[i][7]}: ${traitTxt(i)}</p></div></div>
-      <div class="chips"><span>⚔ Tropas ${troops[i]}</span><span>◉ Renda ${inc(i)}</span><span>⛨ Defesa +${Math.round(defOf(i)*100)}%</span>
+      <div class="chips"><span>⚔ Tropas ${cnt('t'+i,troops[i])}</span><span>◉ Renda ${inc(i)}</span><span>⛨ Defesa +${Math.round(defOf(i)*100)}%</span>
         <span>Recruta: ${cost(i)} ouro</span><span>${BIO[BOF[i]].nome}</span>${xp[i].some(v=>lvl(v))?`<span>Regimentos nível ${xp[i].map(lvl).join('·')}</span>`:''}${port[i]?'<span>⚓ Porto</span>':''}${ELITE[S[i][0]]?`<span>★ ${ELITE[S[i][0]][0]}</span>`:''}${fort[i]?`<span>Forte nível ${fort[i]}</span>`:''}</div>
       <div class="own">${img(f)}<span>Domínio: ${f==me?'você':S[f][4]+' ('+S[f][0]+')'}</span></div>`;
     if(me<0)h+=`<button data-a="start">Começar com ${S[i][0]}</button>`;
@@ -49,14 +49,14 @@ function ui(){
   if(me>=0&&!over&&sel>=0&&owner[sel]!=me)h+='<h2>Diplomacia</h2>'+dipHTML(owner[sel]);
   if(me>=0&&!over)h+='<button data-a="hq">⌂ Quartel-General</button><button data-a="end" class="end">Fim do turno ▶</button>';
   $('panel').innerHTML=h;
-  $('bar').innerHTML=me<0?`<span>${TH.nome} · ${TH.ano}</span>`:`<span>Turno ${turn}</span><span>◉ Ouro ${gold[me]} (+${income(me)})</span><span>⚑ ${TW[0].toUpperCase()+TW.slice(1)} ${owner.filter(o=>o==me).length}/${N}</span>`;
+  $('bar').innerHTML=me<0?`<span>${TH.nome} · ${TH.ano}</span>`:`<span>Turno ${turn} · ${TOD[turn%4][1]} ${TOD[turn%4][0]}</span><span>◉ Ouro ${cnt('gold',gold[me])} (+${income(me)})</span><span>⚑ ${TW[0].toUpperCase()+TW.slice(1)} ${cnt('terr',owner.filter(o=>o==me).length)}/${N}</span>`;
   $('log').innerHTML=logs.map(l=>`<div>› ${l}</div>`).join('');
   $('roster').innerHTML=S.map((s,i)=>{const n=owner.filter(o=>o==i).length;
     return`<button data-i="${i}" class="${i==me?'me ':''}${i==sel?'sel ':''}${n?'':'dead'}" title="${s[4]} (${s[1]})">${img(i,s[4])}<span>${s[0]} ${n}</span></button>`}).join('');
   draw();save();
   if(over&&!endShown){endShown=true;showEnd()}}
 $('panel').addEventListener('input',e=>{if(e.target.id=='n')$('nv').textContent=e.target.value});
-const onPanel=e=>{const b=e.target.closest('button');if(!b||cam)return;const a=b.dataset.a;sfx.sel();
+const onPanel=e=>{const b=e.target.closest('button');if(!b||cam||aiShow)return;const a=b.dataset.a;sfx.sel();
   if(a=='tutskip'){tut=-1;try{localStorage.setItem('tb-tut','1')}catch{}return ui()}
   if(a=='hq'){tutEv('hq');return openHQ()}
   if(a=='room')return enterRoom(b.dataset.r);
@@ -70,17 +70,17 @@ const onPanel=e=>{const b=e.target.closest('button');if(!b||cam)return;const a=b
   if(a=='start'){me=sel;say(`${S[me][4]} ergue a bandeira em ${S[me][1]}`);scr()}
   if(a=='rec'){tutEv('rec');const n=+b.dataset.n;troops[sel]+=n;gold[me]-=n*cost(sel)}
   if(a=='dip'){dipAct(b.dataset.k,+b.dataset.f)?sfx.win():sfx.lose()}
-  if(a=='port'){gold[me]-=5;buildPort(sel);say(`Porto construído em ${S[sel][1]}`)}
-  if(a=='fort'){gold[me]-=fcost();fort[sel]++}
+  if(a=='port'){gold[me]-=5;buildPort(sel);note(`Porto construído em ${S[sel][1]}`)}
+  if(a=='fort'){gold[me]-=fcost();fort[sel]++;note(`Forte nível ${fort[sel]} em ${S[sel][1]}`)}
   if(a=='march'){marching=!marching;if(marching)tutEv('march')}
-  if(a=='end'){tutEv('end');endTurn();if(raids.length)return nextRaid()}
+  if(a=='end'){tutEv('end');endTurn();ui();return playAI(()=>{if(raids.length)nextRaid();else{ui();if(evtDue){evtDue=false;showEvent()}}})}
   if(a=='new'){reset();return showSetup()}
   ui()};
 $('panel').addEventListener('click',onPanel);$('hqBar').addEventListener('click',onPanel);
 $('roster').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||B||HQ||cam)return;sel=+b.dataset.i;marching=false;sfx.sel();
   if(me<0){pickI=sel;return showSetup()} // antes da campanha, a galeria escolhe o líder
   ui()});
-cv.addEventListener('click',e=>{if(cam)return;if(HQ){const k=hqSpot(e);return k&&enterRoom(k)}if(B)return bClick(e);const i=pick(e);if(i<0)return;sfx.sel();
+cv.addEventListener('click',e=>{if(cam||aiShow)return;if(HQ){const k=hqSpot(e);return k&&enterRoom(k)}if(B)return bClick(e);const i=pick(e);if(i<0)return;sfx.sel();
   if(marching&&adj[sel].includes(i))act(i);else{sel=i;marching=false}
   ui()});
 cv.addEventListener('mousemove',e=>{const tip=$('tip');if(HQ){tip.hidden=true;HQ.hov=hqSpot(e);return}if(B){tip.hidden=true;B.hov=bCell(e);return}const i=pick(e);
