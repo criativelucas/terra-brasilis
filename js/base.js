@@ -2,7 +2,7 @@
 const $=id=>document.getElementById(id),cv=$('map'),x=cv.getContext('2d');
 const hue=f=>f*137.508%360, px=i=>[(S[i][2]-X0)/D*C,(Y0-S[i][3])/D*C];
 const mk=(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');g.imageSmoothingEnabled=false;return[c,g]};
-const FONT=n=>`${n}px "Press Start 2P",monospace`;
+const FONT=n=>`600 ${Math.round(n*1.45)}px "Pixelify Sans",sans-serif`; // fonte de pixel moderna; n segue a escala antiga
 CFG.q=2;CFG.big=0;CFG.cb=0;CFG.confirm=1;CFG.calm=matchMedia('(prefers-reduced-motion: reduce)').matches?1:0; // q: qualidade dos efeitos; calm: efeitos fortes reduzidos
 try{Object.assign(CFG,JSON.parse(localStorage.getItem('tb-cfg')||'{}'))}catch{}
 const applyCfg=()=>{document.body.classList.toggle('big',!!CFG.big)};applyCfg();

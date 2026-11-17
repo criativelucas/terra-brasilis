@@ -142,7 +142,7 @@ function drawHQ(){
   fig.sort((p,q)=>p[0]+p[1]-q[0]-q[1]).forEach(([a,b,u,f,dir,z],k)=>{const[sx,sy]=P(a,b,z),sp=sprite(u,f,true,((now/450+k*.3)|0)%2);
     x.fillStyle='rgba(0,0,0,.25)';x.fillRect(sx-18,sy-4,36,6);x.save();x.translate(sx-dir*39,sy-66);x.scale(dir,1);x.drawImage(sp,0,0,78,72);x.restore()});
   x.textBaseline='top';x.textAlign='center';HQ.bub=[];
-  if(!zm)SPOTS.forEach((sp,k)=>{const hot=HQ.hov==sp.k,[cx,cy]=P(...sp.at),bh=hot?34:20,by=cy-sp.up*2+Math.sin(now/400+k)*4-(hot?14:0),w=Math.max(sp.n.length,hot?sp.s.length:0)*8+18,R=ROOMS.find(r=>r.k==sp.k);
+  if(!zm)SPOTS.forEach((sp,k)=>{const hot=HQ.hov==sp.k,[cx,cy]=P(...sp.at),bh=hot?34:20,by=cy-sp.up*2+Math.sin(now/400+k)*4-(hot?14:0),w=(x.font=FONT(8),Math.ceil(Math.max(x.measureText(sp.n.toUpperCase()).width,hot?x.measureText(sp.s).width:0))+18),R=ROOMS.find(r=>r.k==sp.k);
     if(hot&&R){x.strokeStyle='#ffd23f';x.lineWidth=4;x.beginPath();[[0,0],[6,0],[6,6],[0,6]].forEach(([da,db],i)=>{const p=P(R.a+da,R.b+db,3);i?x.lineTo(...p):x.moveTo(...p)});x.closePath();x.stroke()}
     x.fillStyle='#22140c';x.fillRect(cx-w/2-3,by-3,w+6,bh+6);x.fillStyle=hot?'#ffd23f':'#f6ecc4';x.fillRect(cx-w/2,by,w,bh);
     x.fillStyle='#22140c';x.beginPath();x.moveTo(cx-7,by+bh+3);x.lineTo(cx+7,by+bh+3);x.lineTo(cx,by+bh+13);x.fill();
@@ -161,7 +161,7 @@ const hqSpot=e=>{ // balão clicado, senão sala sob o cursor, torre ou portão
   const dx=(mx/2-HX)/IS,dy=(my/2-HY+3*ZS)/IH,a=(dy+dx)/2,b=(dy-dx)/2;
   return a>=0&&b>=0&&a<12&&b<12?ROOMS[(a>=6)+(b>=6)*2].k:a>12&&a<17&&b>4&&b<8?'gate':null};
 function closeHQ(){HQ=null;document.body.classList.remove('hq');$('room').hidden=true;ui()}
-function openHQ(){if(me<0||B||over||cam||aiShow)return;HQ={hov:null,zoom:null,t0:Date.now()};document.body.classList.add('hq');renderHQ();ui();let lf=0;(function loop(t){if(!HQ)return;requestAnimationFrame(loop);if(document.hidden||t-lf<1000/[15,40,60][CFG.q]-2)return;lf=t;drawHQ()})(1e9)}
+function openHQ(){if(me<0||B||over||cam||aiShow)return;HQ={hov:null,zoom:null,t0:Date.now()};document.body.classList.add('hq');renderHQ();ui();let lf=0;(function loop(t){if(!HQ)return;requestAnimationFrame(loop);if(document.hidden||t-lf<1000/[15,40,60][CFG.q]-2)return;lf=t;drawHQ()})(performance.now())}
 const enterRoom=k=>{if(!HQ||HQ.zoom)return;if(k=='cam')return showCampaign();if(k=='gate')return closeHQ();
   const h=HQ;HQ.zoom={room:k,start:Date.now(),dir:1};sfx.move();setTimeout(()=>HQ===h&&showRoom(k),340)};
 $('room').addEventListener('change',e=>{const el=e.target;if(el.dataset.post==null)return;const i=+el.dataset.post; // nomear ou dispensar general

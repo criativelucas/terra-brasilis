@@ -56,7 +56,7 @@ const THEATERS={
   [[-50.5,-20],[-52.5,-22.5],[-54.4,-25.4]],[[-48.6,-12.5],[-48.2,-8],[-49.2,-5.3],[-49.3,-1.5]]],
     REG:[['Norte','AC AM RR RO PA AP TO',4],['Nordeste','MA PI CE RN PB PE AL SE BA',6],['Centro-Oeste','MT GO DF MS',3],
   ['Sudeste','MG ES RJ SP',5],['Sul','PR SC RS',3]],SEA:[['RS','RJ'],['RJ','PE'],['PE','PA']],COAST:'AP PA MA PI CE RN PB PE AL SE BA ES RJ SP PR SC RS',
-    grid:[-74.5,5.5,.5],LEFT:['PE','SE','GO'],
+    grid:[-74.5,5.5,.25],LEFT:['PE','SE','GO'],
     ELITE:{CE:['Jangadeiros','ati',{rng:1}],RS:['Farroupilhas','cav',{dmg:1.25}],AL:['Guerreiros de Palmares','inf',{def:1.3}],SP:['Bandeirantes','inf',{mov:1}],PA:['Cabanos','inf',{dmg:1.2}],
   AM:['Arqueiros Manaó','ati',{dmg:1.25}],BA:['Voluntários da Bahia','inf',{def:1.2}],MG:['Dragões de Minas','cav',{def:1.3}],PE:['Terço dos Henriques','inf',{dmg:1.2}],RJ:['Guarda Imperial','inf',{def:1.25}],
   SC:['Lanceiros de Anita','cav',{mov:1}],MT:['Monçoeiros','ati',{mov:1}],MA:['Balaios','inf',{dmg:1.15}],RN:['Flecheiros Potiguares','ati',{rng:1}],PI:['Vaqueiros','cav',{dmg:1.15}],GO:['Tropeiros','cav',{mov:1}]},
@@ -179,8 +179,8 @@ const CFG={mus:.4,vol:.5,tac:0,speed:1,diff:1,shake:1,clash:1}; // tac: 0 sempre
 const N=S.length, ix=Object.fromEntries(S.map((s,i)=>[s[0],i]));
 const P=TH.P,RIOS=TH.RIOS,LAKES=TH.LAKES||[];
 // grade fixa de 81x79 casas; o enquadramento se ajusta ao contorno de cada teatro
-const W=81,H=79,C=10,[X0,Y0,D]=TH.grid||(()=>{const xs=P.map(p=>p[0]),ys=P.map(p=>p[1]),mx=Math.min(...xs),Mx=Math.max(...xs),my=Math.min(...ys),My=Math.max(...ys),
-  d=Math.max((Mx-mx)/(W-8),(My-my)/(H-12));return[(mx+Mx)/2-W*d/2,(my+My)/2+H*d/2+d*3,d]})();
+const W=162,H=158,C=5,[X0,Y0,D]=TH.grid||(()=>{const xs=P.map(p=>p[0]),ys=P.map(p=>p[1]),mx=Math.min(...xs),Mx=Math.max(...xs),my=Math.min(...ys),My=Math.max(...ys),
+  d=Math.max((Mx-mx)/(W-16),(My-my)/(H-24));return[(mx+Mx)/2-W*d/2,(my+My)/2+H*d/2+d*6,d]})();
 const inPoly=(x,y,Q=P)=>{let c=false;for(let i=0,j=Q.length-1;i<Q.length;j=i++){const[xi,yi]=Q[i],[xj,yj]=Q[j];
   if((yi>y)!=(yj>y)&&x<(xj-xi)*(y-yi)/(yj-yi)+xi)c=!c}return c};
 const cell=new Int8Array(W*H).fill(-1); // -1 mar ou lagoa, >=0 território

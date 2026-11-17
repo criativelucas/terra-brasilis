@@ -35,16 +35,17 @@ function tile(g,T,c,y,b){
   if(t=='v'){q(3,8,8,6,'#efe2c0');q(9,8,2,6,'#cdbd95');q(2,5,10,3,'#2a9db0');q(3,4,8,1,'#52c8d6');q(2,7,10,1,'#1f7385');q(6,11,2,3,'#5a3a1c');q(4,10,1,1,'#f6d26a');
     q(11,11,5,4,'#efe2c0');q(10,9,7,2,'#2a9db0');q(13,13,1,2,'#5a3a1c');q(2,14,15,1,'rgba(0,0,0,.2)')}}
 
-// sprites 26x24 com contorno; quadros: 0-1 parado, 2-3 andando, 4 golpe; cacheados por tipo, facção e pele
+// sprites 52x48 (base em blocos de 2 px e detalhes de 1 px) com contorno; quadros: 0-1 parado, 2-3 andando, 4 golpe; cacheados por tipo, facção e pele
 const SPR=new Map,CUSTOM={units:{}}; // CUSTOM: folhas de sprite carregadas de assets/sprites.json (js/assets.js)
 function sprite(u,f,mine,fr){
   const key=[u.type,f,mine,u.ld,u.sk,fr].join();if(SPR.has(key))return SPR.get(key);
   const cu=CUSTOM.units[u.ld?'ld':u.type]||CUSTOM.units[u.type];
   if(cu){const fw=cu.im.width/cu.frames,[c,g]=mk(fw,cu.im.height);g.drawImage(cu.im,(fr%cu.frames)*fw,0,fw,cu.im.height,0,0,fw,cu.im.height);
     g.fillStyle=`hsl(${hue(f)},${mine?78:52}%,48%)`;g.fillRect(0,cu.im.height-2,fw,2);SPR.set(key,c);return c} // faixa na cor da facção
-  const[t,g]=mk(26,24),h=hue(f),s=mine?78:52,C=`hsl(${h},${s}%,48%)`,Cd=`hsl(${h},${s}%,30%)`,Cl=`hsl(${h},${s}%,70%)`,
+  const[t,g]=mk(52,48),h=hue(f),s=mine?78:52,C=`hsl(${h},${s}%,48%)`,Cd=`hsl(${h},${s}%,30%)`,Cl=`hsl(${h},${s}%,70%)`,
     [sk,skd]=SK[u.sk],O='#1a1020',mt='#dfe5ea',mtd='#8a94a0',wd='#8a5a2b',lt='#4a2c17',bk='#22140c',gold='#e0b030',red='#b3312a',wh='#ece6d6',b=fr==1||fr==3?1:0,st=fr==2?1:fr==3?-1:0,atk=fr==4;
-  const r=(a,bb,w,hh,c)=>{g.fillStyle=c;g.fillRect(a+1,bb+1,w,hh)};
+  const r=(a,bb,w,hh,c)=>{g.fillStyle=c;g.fillRect((a+1)*2,(bb+1)*2,w*2,hh*2)}, // desenho base em blocos de 2 px
+    p=(a,bb,c,w=1,hh=1)=>{g.fillStyle=c;g.fillRect(Math.round(a*2+2),Math.round(bb*2+2),w,hh)}; // detalhe de 1 px (16-bit)
   if(u.type=='cav'){const hc=['#8a5a2b','#5a3a1c','#c9b08a','#4a3a32'][f%4],sh='rgba(0,0,0,.28)';
     r(1,10,2,7,bk);if(atk){r(14,7,11,1,wd);r(24,7,1,1,mt)}else{r(15,-1,1,14,wd);r(15,-1,1,2,mt);r(16,1,3,2,Cl);r(16,3,2,1,C)} // lança erguida ou em riste
     [[4,b?4:5],[7,b?5:4],[14,b?5:4],[17,b?4:5]].forEach(([a,n],k)=>{r(a,16,2,n,hc);if(k%2)r(a,16,2,n,sh);r(a,15+n,2,1,bk)});
@@ -68,9 +69,15 @@ function sprite(u,f,mine,fr){
     if(ati){r(12,12+b,11,1,wd);r(17,11+b,6,1,mtd);r(13,11+b,3,2,C);r(16,12+b,1,1,sk);if(atk){r(23,10,2,3,'#ffd23f');r(22,11,1,1,'#fff')}}
     else if(atk){r(15,10,4,2,C);r(18,10,2,2,sk);r(19,11,6,1,mt);r(18,10,1,3,gold)} // estocada
     else{r(15,10+b,2,3,C);r(16,13+b,2,1,sk);r(18,3+b,1,10,mt);r(17,13+b,3,1,gold)}
-    if(u.ld)g.drawImage(fhd[f],3,0,18,19,7,b,13,13)} // comandante: cabeça grande com o rosto, cabelo e chapéu do líder
-  const[o,og]=mk(26,24);[[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy])=>og.drawImage(t,dx,dy));
-  og.globalCompositeOperation='source-in';og.fillStyle=O;og.fillRect(0,0,26,24);og.globalCompositeOperation='source-over';og.drawImage(t,0,0);
+    if(u.ld)g.drawImage(fhd[f],6,0,36,38,14,b*2,26,26)} // comandante: cabeça grande com o rosto, cabelo e chapéu do líder
+  if(u.type=='inf'||u.type=='ati'){p(8,9+b,Cl,1,14);p(11.5,11+b,gold,2,2);p(11.5,13.5+b,gold,2,2);p(8+st,20,'#7a6a5a',4,1);p(13-st,20,'#7a6a5a',4,1); // brilho do casaco, botões, bota
+    if(!u.ld){p(12,5+b,'#3a2413',3,1);p(11.5,7.5+b,'#9a4a3a',3,1);p(10,7+b,'rgba(230,90,70,.4)',2,2);p(9.5,4+b,'rgba(255,255,255,.3)',5,1)} // sobrancelha, boca, bochecha, testa
+    if(u.type=='inf'&&!atk&&!u.ld)p(18,3+b,'#ffffff',1,20);if(u.type=='inf'&&!u.ld)p(9,1+b,'rgba(255,255,255,.25)',10,1); // fio da espada, brilho da barretina
+    if(u.type=='ati')p(17,11+b,'#c8d0d8',12,1)}
+  if(u.type=='cav'){p(20.5,5,'#fff');p(22.5,7,'#2a1a10');p(4,10,'rgba(255,255,255,.25)',30,1);p(11.5,4+b,'#9a4a3a',3,1);p(9,5+b,Cl,1,12);p(15.5,5,'rgba(255,255,255,.2)',1,12);p(8.5,9,'#ffd23f',2,2)}
+  if(u.type=='art'){p(8,10,'#c8c8d4',26,1);p(12,15,'#3a2413',2,10);p(10,17,'#3a2413',10,2);p(1,9+b,Cl,1,14)}
+  const[o,og]=mk(52,48);[[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy])=>og.drawImage(t,dx,dy)); // contorno fino de 1 px
+  og.globalCompositeOperation='source-in';og.fillStyle=O;og.fillRect(0,0,52,48);og.globalCompositeOperation='source-over';og.drawImage(t,0,0);
   SPR.set(key,o);return o}
 const hatch=col=>{const[c,g]=mk(9,9);g.fillStyle=col;for(let k=0;k<9;k++)g.fillRect(k,8-k,2,1);return x.createPattern(c,'repeat')};
 const HATCH=[hatch('rgba(255,246,200,.75)'),hatch('rgba(255,70,50,.85)')];
