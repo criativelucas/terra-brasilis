@@ -1,4 +1,25 @@
 {
-  "portraits": {},
-  "units": {}
+ "portraits": {},
+ "units": {
+  "inf": {
+   "src": "assets/units/inf.png",
+   "frames": 4
+  },
+  "cav": {
+   "src": "assets/units/cav.png",
+   "frames": 4
+  },
+  "ati": {
+   "src": "assets/units/ati.png",
+   "frames": 4
+  },
+  "art": {
+   "src": "assets/units/art.png",
+   "frames": 4
+  },
+  "ld": {
+   "src": "assets/units/ld.png",
+   "frames": 4
+  }
+ }
 }

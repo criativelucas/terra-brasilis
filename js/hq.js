@@ -145,13 +145,13 @@ function drawHQ(){
   x.drawImage(hqc,0,0,810,610);
   {const[fx_,fy]=P(-.35,-.35,62);for(let i=0;i<6;i++){const w=Math.sin(now/180+i*.9)*2.5;x.fillStyle=i%2?fc:`hsl(${hue(me)},80%,42%)`;x.fillRect(fx_+2+i*5,fy-36+w,5,14)}x.fillStyle='#ffd23f';x.fillRect(fx_+12,fy-32,6,6)} // bandeira ao vento
   {const[sx,sy]=P(9.45,-1.05,49);for(let i=0;i<5;i++){const t=(now/2400+i*.2)%1,s=8+t*18;x.fillStyle=`rgba(230,230,230,${(1-t)*.5})`;x.fillRect(sx-s/2+Math.sin(t*6+i)*8,sy-t*80-s/2,s,s)}} // fumaça da chaminé
-  [[4.4,2.3,11.5],[6.67,2.67,17.5],[6.67,4.37,17.5],[9.3,10.5,10]].forEach(([a,b,z],i)=>{const[cx,cy]=P(a,b,z),f=(now/110+i*3|0)%3; // chamas das velas
+  [[4.4,2.3,11.5],[6.67,2.67,17.5],[6.67,4.37,17.5],[9.3,10.5,10]].forEach(([a,b,z],i)=>{const[cx,cy]=P(a,b,z),f=Math.floor(now/110+i*3)%3; // chamas das velas
     x.fillStyle='rgba(255,200,80,.25)';x.fillRect(cx-8,cy-10,16,16);x.fillStyle='#ffb030';x.fillRect(cx-2,cy-4-f,4,4+f);x.fillStyle='#fff3c0';x.fillRect(cx-1,cy-2,2,2)});
   // figuras vivas: líder na sala de guerra, generais, uma unidade de cada tipo no quartel, escrivão, sentinelas na escada
   const fig=[[4.6,4.4,{type:'inf',ld:true,sk:'L'},me,1,3],[2.6,7.6,{type:'inf',sk:'T'},me,1,3],[4.2,8.6,{type:'cav',sk:'L'},me,-1,3],[2,9.3,{type:'ati',sk:'B'},me,1,3],
     [9.4,11.3,{type:'ati',sk:'T'},me,-1,3],[13.6,4.5,{type:'inf',sk:'D'},me,1,0],[13.6,7.5,{type:'inf',sk:'L'},me,1,0]];
   own.filter(i=>i!=me).slice(0,2).forEach((i,k)=>fig.push([8.2+k*1.5,2.6+k*.9,{type:'inf',ld:true,sk:'L'},i,k?-1:1,3]));
-  fig.sort((p,q)=>p[0]+p[1]-q[0]-q[1]).forEach(([a,b,u,f,dir,z],k)=>{const[sx,sy]=P(a,b,z),sp=sprite(u,f,true,((now/450+k*.3)|0)%2);
+  fig.sort((p,q)=>p[0]+p[1]-q[0]-q[1]).forEach(([a,b,u,f,dir,z],k)=>{const[sx,sy]=P(a,b,z),sp=sprite(u,f,true,Math.floor(now/450+k*.3)%2);
     x.fillStyle='rgba(0,0,0,.25)';x.fillRect(sx-18,sy-4,36,6);x.save();x.translate(sx-dir*39,sy-66);x.scale(dir,1);x.drawImage(sp,0,0,78,72);x.restore()});
   {const tod=turn%4,tint=TOD[tod][2],glow=(a,b,z,r,a0)=>{const[gx,gy]=P(a,b,z),gr=x.createRadialGradient(gx,gy,0,gx,gy,r);gr.addColorStop(0,`rgba(255,200,90,${a0})`);gr.addColorStop(1,'rgba(255,200,90,0)');x.fillStyle=gr;x.fillRect(gx-r,gy-r,r*2,r*2)};
     if(tint[3]){x.fillStyle=`rgba(${tint.slice(0,3)},${tint[3]})`;x.fillRect(0,0,810,610)} // período do dia

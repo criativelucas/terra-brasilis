@@ -93,11 +93,11 @@ function drawClash(now){ // dois quadros: corrida, golpe, queda e revide. Tempos
     x.fillStyle=tl=='r'||tl=='b'?'#c79a5e':B.bio.g[0];x.fillRect(bx,by+160,w,h-160);x.fillStyle=B.bio.gd;x.fillRect(bx,by+160,w,6);
     for(let k=0;k<14;k++){const v=hash(k,u.x+7);x.fillStyle=k%2?B.bio.gd:B.bio.gl;x.fillRect(bx+v%(w-12),by+172+(v>>>5)%118,12,4)}
     if(cover(u)){const q=(a,b,ww,hh,col)=>{x.fillStyle=col;x.fillRect(bx+a*5,by+b*5,ww*5,hh*5)};[[2,22],[52,23],[27,20]].forEach(([a,b],k)=>tree(q,B.bio.tree,a,b,k))}
-    let off=0,fr=(now/220|0)%2;
+    let off=0,fr=Math.floor(now/220)%2;
     if(acts&&p>s0&&p<hitT+.1){const q=(p-s0)/(hitT+.1-s0);
       if(ranged){fr=q>.6&&q<.9?4:0;if(q>.62)off=-dir*Math.max(0,8-(q-.62)*40)} // tiro: mira, dispara, recua
-      else{off=(q<.55?q/.55:Math.max(0,1-(q-.75)/.25))*95*dir;fr=q<.55?2+((now/80)|0)%2:4}} // carga: corre, golpeia, volta
-    const hurt=dmg>0&&p>myHit&&p<myHit+.1;if(dmg>0&&p>myHit&&p<myHit+.12)off-=dir*((now/40|0)%2?10:3);
+      else{off=(q<.55?q/.55:Math.max(0,1-(q-.75)/.25))*95*dir;fr=q<.55?2+Math.floor(now/80)%2:4}} // carga: corre, golpeia, volta
+    const hurt=dmg>0&&p>myHit&&p<myHit+.1;if(dmg>0&&p>myHit&&p<myHit+.12)off-=dir*(Math.floor(now/40)%2?10:3);
     SLOTS.slice(0,n0).forEach(([sx,sy],k)=>{const fallen=k>=n1&&p>myHit,fp=fallen?Math.min(1,(p-myHit)/.16):0,X=bx+(dir>0?sx:w-sx)+off,Y=by+sy,sp=sprite(u,f,mine,fallen?0:fr);
       x.fillStyle='rgba(0,0,0,.25)';x.fillRect(X-34,Y-8,68,10);
       x.save();x.globalAlpha=1-fp*.75;x.translate(X,Y);x.rotate(-fp*dir*1.45);x.scale(dir,1);x.drawImage(sp,-65,-120,130,120);
@@ -205,7 +205,7 @@ function drawUnit(u,now){
   if(an){const t=(now-an.start)/STEP,i=Math.floor(t);if(i>=an.pts.length-1)u.anim=null;
     else{const[a,b]=an.pts[i],[c,d]=an.pts[i+1],fr=t-i;vx=a+(c-a)*fr;vy=b+(d-b)*fr;hop=Math.sin(fr*Math.PI)*9;if(c!=a)face=c>a?1:-1}}
   const f=u.side?B.was:B.af,mine=u.side==B.ps,k=u.lunge&&u.lunge.until>now?16:0,
-    px_=OX+vx*CS+(k&&u.lunge.dx*k),py=OY+vy*CS+(k&&u.lunge.dy*k),sp=sprite(u,f,mine,k?4:u.anim?2+((now/110)|0)%2:u.done?0:((now/420+u.ph)|0)%2);
+    px_=OX+vx*CS+(k&&u.lunge.dx*k),py=OY+vy*CS+(k&&u.lunge.dy*k),sp=sprite(u,f,mine,k?4:u.anim?2+Math.floor(now/110)%2:u.done?0:Math.floor(now/420+u.ph)%2);
   if(an&&now-(u.dust||0)>90){u.dust=now;const tl=B.T[Math.round(vy)]?.[Math.round(vx)],wet=tl=='w'||tl=='b';puff(px_+CS/2,py+CS-8,wet?'rgba(150,205,255,A)':'rgba(214,190,140,A)',wet?4:2,wet?70:30)} // poeira ou respingo
   x.fillStyle='rgba(0,0,0,.28)';x.fillRect(px_+CS/2-18+hop/2,py+CS-9,36-hop,6);
   const dead=u.hp<=0?Math.max(0,(now-u.dead)/450):0;x.save();x.globalAlpha=u.hp<=0?Math.max(0,1-dead):u.done&&!u.anim?.6:1;
