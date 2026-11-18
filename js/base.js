@@ -16,6 +16,24 @@ function scriptT(g,t,X,Y,n,al='center',mw){g.font=`italic 800 ${n}px "Alegreya",
 CFG.q=2;CFG.big=0;CFG.cb=0;CFG.confirm=1;CFG.calm=matchMedia('(prefers-reduced-motion: reduce)').matches?1:0; // q: qualidade dos efeitos; calm: efeitos fortes reduzidos
 try{Object.assign(CFG,JSON.parse(localStorage.getItem('tb-cfg')||'{}'))}catch{}
 const applyCfg=()=>{document.body.classList.toggle('big',!!CFG.big)};applyCfg();
+// ícones em pixel 10x10 (no lugar dos emojis): O contorno, W branco, Y/y ouro, R vermelho, B/b madeira, G/g metal, U azul, S sol, K preto
+const PXI={scroll:['..OOOOOO..','.OWWWWWWO.','.OWbbbbWO.','..OWWWWO..','..OWbbWO..','..OWWWWO..','..OWbbWO..','.OWWWWWWO.','.OWWWWWWO.','..OOOOOO..'],
+  swords:['O........O','OGO....OGO','.OGO..OGO.','..OGOOGO..','...OGGO...','...OGGO...','..OYOOYO..','.OYO..OYO.','OBO....OBO','OO......OO'],
+  flag:['.OOOOOO...','.ORRRRRO..','.ORRRRRRO.','.ORRRRRO..','.OOOOOO...','.Ob.......','.Ob.......','.Ob.......','.Ob.......','OOOO......'],
+  menu:['..........','.OOOOOOOO.','.OWWWWWWO.','.OOOOOOOO.','.OWWWWWWO.','.OOOOOOOO.','.OWWWWWWO.','.OOOOOOOO.','..........','..........'],
+  coin:['...OOOO...','..OYYYYO..','.OYWYYyyO.','.OYYyYYyO.','.OYYyYYyO.','.OYYyYYyO.','.OYYYYyyO.','..OyyyyO..','...OOOO...','..........'],
+  star:['....OO....','....OYO...','...OYYO...','OOOOYYOOOO','OYYYYYYYYO','.OYYYYYYO.','..OYYYYO..','.OYYOOYYO.','.OYO..OYO.','.OO....OO.'],
+  sun:['....Y.....','.Y..Y..Y..','..YOOOOY..','..OSSSSO..','YYOSSSSOYY','..OSSSSO..','..YOOOOY..','.Y..Y..Y..','....Y.....','..........'],
+  moon:['...OOOO...','..OUUUO...','.OUUUO....','.OUUO.....','.OUUO.....','.OUUUO....','..OUUUOOO.','...OUUUUO.','....OOOO..','..........'],
+  shield:['.OOOOOOOO.','.OGGGGGGO.','.OGWGGGgO.','.OGWGGGgO.','.OGGGGGgO.','..OGGGgO..','..OGGGgO..','...OGgO...','....OO....','..........'],
+  anchor:['....OO....','...OGGO...','....OO....','..OOGGOO..','....GG....','....GG....','.O..GG..O.','.OG.GG.GO.','..OGGGGO..','...OOOO...'],
+  warn:['....OO....','...OYYO...','...OYYO...','..OYKKYO..','..OYKKYO..','.OYYKKYYO.','.OYYYYYYO.','OYYYKKYYYO','OOOOOOOOOO','..........'],
+  house:['....OO....','...ORRO...','..ORRRRO..','.ORRRRRRO.','OOOOOOOOOO','.OWWWWWWO.','.OWbbWWWO.','.OWbbWBWO.','.OWbbWWWO.','.OOOOOOOO.'],
+  boot:['..OOOO....','..OBBO....','..OBBO....','..OBBO....','..OBBO....','..OBBBOOO.','.OBBBBBBO.','.OBBBBBBO.','.OOOOOOOO.','..........'],
+  aim:['....OO....','..OOROOO..','.OR.RR.RO.','.O..RR..O.','ORRRRRRRRO','.O..RR..O.','.OR.RR.RO.','..OOROOO..','....OO....','..........']};
+const PXC={O:'#1a1220',W:'#f4f0e6',Y:'#f6c64a',y:'#b07a20',R:'#d4382c',B:'#9a6234',b:'#5e3a1e',G:'#c3ccd4',g:'#6d7680',U:'#6f8fff',S:'#ffd88a',K:'#2b2633'},PXU={};
+const pxIcon=n=>{if(!PXU[n]){const[c,g]=mk(10,10);PXI[n].forEach((r,y)=>[...r].forEach((ch,x_)=>{if(PXC[ch]){g.fillStyle=PXC[ch];g.fillRect(x_,y,1,1)}}));PXU[n]=c.toDataURL()}return PXU[n]};
+const I=n=>`<img class="ico" src="${pxIcon(n)}" alt="">`;
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
 // glossário: termos com data-g mostram a explicação ao passar o mouse ou ao focar pelo teclado
 const GLOSS={def:'Defesa: reduz o dano recebido quando este território é atacado. Somam o traço do líder, os fortes e a doutrina Guerrilha.',

@@ -84,13 +84,13 @@ button:disabled{opacity:.45;cursor:default;filter:grayscale(.6)}
 button.end{background:linear-gradient(180deg,#f2cf86 0,#dca85a 50%,#b47a34 100%);color:#2e1c0c;text-shadow:0 1px 0 rgba(255,240,200,.6);border-color:#6b4318}
 button.on,button.danger{background:linear-gradient(180deg,#d77a64 0,#b8432f 50%,#7a2418 100%)}
 /* listas de menu: faixa clara e luva apontando, como o cursor dos menus de crônica */
-#card>button,#menuBox>button,#room>button,#panel>button{text-align:left;padding-left:34px}
+#card>button,#menuBox>button,#room>button,#panel>button,#cmd>button{text-align:left;padding-left:34px}
 #card>button.end,#menuBox>button.end{text-align:center;padding-left:14px}
-#card>button::before,#menuBox>button::before,#room>button::before,#panel>button::before{content:"";position:absolute;left:9px;top:50%;width:18px;height:14px;margin-top:-7px;opacity:.35;
+#card>button::before,#menuBox>button::before,#room>button::before,#panel>button::before,#cmd>button::before{content:"";position:absolute;left:9px;top:50%;width:18px;height:14px;margin-top:-7px;opacity:.35;
   background:no-repeat center/contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 14'%3E%3Cpath d='M1 5.5h9l-1.6-2c-.7-1 .6-2 1.5-1.2l4.6 3.9 2 .3c.8.2 1 .8 1 1.5v2.4c0 1.6-1.2 2.6-2.8 2.6H8.6c-1 0-1.6-.6-1.6-1.2H5.4c-1.1 0-1.1-1.7 0-1.7H4.9c-1.1 0-1.1-1.7 0-1.7H1C-.3 8.4-.3 5.5 1 5.5z' fill='%23fff' stroke='%232a1d14' stroke-width='1' stroke-linejoin='round'/%3E%3C/svg%3E")}
 #card>button.end::before,#menuBox>button.end::before{display:none}
-#card>button:hover:not(:disabled)::before,#menuBox>button:hover:not(:disabled)::before,#room>button:hover:not(:disabled)::before,#panel>button:hover:not(:disabled)::before,
-#card>button:focus-visible::before,#menuBox>button:focus-visible::before,#panel>button:focus-visible::before{opacity:1;animation:nudge .6s ease-in-out infinite alternate}
+#card>button:hover:not(:disabled)::before,#menuBox>button:hover:not(:disabled)::before,#room>button:hover:not(:disabled)::before,#panel>button:hover:not(:disabled)::before,#cmd>button:hover:not(:disabled)::before,
+#card>button:focus-visible::before,#menuBox>button:focus-visible::before,#panel>button:focus-visible::before,#cmd>button:focus::before{opacity:1;animation:nudge .6s ease-in-out infinite alternate}
 @keyframes nudge{to{transform:translateX(3px)}}
 input[type=range]{flex:1;min-width:0;accent-color:var(--frame)}
 #card input,select{font:600 15px var(--body);padding:4px 8px;min-width:0;flex:1;border:1px solid var(--parch-edge);border-radius:6px;background:#fbf5e6;color:var(--ink);box-shadow:inset 0 1px 3px rgba(90,60,30,.25)}
@@ -233,3 +233,60 @@ body.big #roster button,body.big .ulist button,body.big .tabs button{font-size:1
 /* ---------- logo ---------- */
 h1 img{display:block;height:52px;width:auto;image-rendering:auto;filter:drop-shadow(2px 2px 0 rgba(0,0,0,.5))}
 .logo{display:block;width:min(420px,100%);height:auto;margin:-8px auto 0;image-rendering:auto;filter:drop-shadow(0 6px 4px rgba(60,30,10,.45))}
+
+/* ---------- ícones em pixel ---------- */
+.ico{width:20px;height:20px;image-rendering:pixelated;vertical-align:-4px;margin-right:5px;flex:none}
+button .ico{filter:drop-shadow(0 1px 0 rgba(0,0,0,.4))}
+/* ---------- menu de comando ao lado da unidade ---------- */
+#cmd{position:absolute;z-index:6;display:flex;flex-direction:column;gap:4px;padding:9px;min-width:178px;
+  background:var(--grain),linear-gradient(180deg,var(--parch),var(--parch2));border:2px solid var(--frame);border-radius:12px;
+  box-shadow:0 0 0 1px var(--frame2),inset 0 0 0 1px rgba(255,255,255,.55),0 8px 16px rgba(0,0,0,.55)}
+#cmd>button{font-size:15px;padding-top:6px;padding-bottom:6px;clip-path:none;border-radius:7px;background:linear-gradient(180deg,#f6eedb,#ddcaa2);color:var(--ink);text-shadow:none;border:1px solid var(--parch-edge);box-shadow:none}
+#cmd>button:hover:not(:disabled),#cmd>button:focus{background:linear-gradient(90deg,#fffaf0,#efe0bc 70%,#e2cfa6);outline:none;transform:none;filter:none;box-shadow:inset 0 0 0 1px var(--frame)}
+#cmd>button::before{opacity:0}
+@media (prefers-reduced-motion:no-preference){#cmd{animation:pop .14s ease-out}}
+/* ---------- barra de ajuda ---------- */
+#help{display:flex;gap:10px;align-items:baseline;padding:6px 14px 8px;min-height:24px;background:linear-gradient(180deg,var(--lac),var(--lac2));border-top:2px solid var(--gilt2);color:var(--lac-text);font-size:15px;line-height:1.3}
+#help>b{font:italic 800 18px var(--display);color:var(--script);text-shadow:1px 1px 0 var(--script-edge),-1px -1px 0 var(--script-edge),1px -1px 0 var(--script-edge),-1px 1px 0 var(--script-edge);flex:none}
+#help span{min-width:0}#help span b{color:#ffe2a8}
+body.hq #help{display:none}
+/* ---------- placa de turno ---------- */
+#plaque{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);z-index:5;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer}
+#plaque.ai{top:16%}
+#plaque .pl{display:flex;align-items:baseline;gap:12px;padding:10px 30px 12px;background:linear-gradient(180deg,var(--lac),var(--lac2));color:var(--lac-text);
+  border:2px solid var(--gilt);border-radius:14px;box-shadow:0 0 0 1px #140c0e,inset 0 0 0 3px rgba(0,0,0,.35),inset 0 0 0 4px rgba(255,230,180,.25),0 10px 24px rgba(0,0,0,.6)}
+#plaque em{font:italic 800 32px var(--display);color:var(--script);text-shadow:2px 2px 0 var(--script-edge),-1px -1px 0 var(--script-edge),1px -1px 0 var(--script-edge),-1px 1px 0 var(--script-edge)}
+#plaque .pl b{font:800 56px/1 var(--display);color:#fff6e0;text-shadow:0 3px 0 rgba(0,0,0,.5)}
+#plaque .pl span{font-weight:700;color:#d9c8a8}
+#plaque p{margin:0;max-width:560px;text-align:center;padding:5px 16px;background:linear-gradient(180deg,var(--parch),var(--parch2));color:var(--ink);border:1px solid var(--frame);border-radius:999px;font-weight:600;box-shadow:0 4px 10px rgba(0,0,0,.4)}
+@media (prefers-reduced-motion:no-preference){#plaque{animation:plq 2.3s ease both}#plaque.ai{animation-duration:1.3s}}
+@keyframes plq{0%{opacity:0;transform:translate(-50%,-50%) scale(.9)}10%{opacity:1;transform:translate(-50%,-50%) scale(1)}85%{opacity:1}100%{opacity:0}}
+/* ---------- painel de batalha ---------- */
+.obj{font-size:15px}
+.stat,.terr{display:flex;gap:10px;align-items:center;background:rgba(255,255,255,.35);border:1px solid var(--parch-edge);border-radius:10px;padding:8px;box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
+.stat .sp{width:78px;height:72px;flex:none;background:#2e2a3a;border:2px solid var(--frame);border-radius:8px;box-shadow:0 0 0 1px var(--gilt)}
+.sd{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}.sd small,.terr small{display:block;color:var(--ink2);font-size:13px}
+.hp{position:relative;height:16px;background:#5a2a22;border:1px solid var(--frame2);border-radius:5px;overflow:hidden}
+.hp i{display:block;height:100%;background:linear-gradient(180deg,#8fbaff,#3f6db0)}.hp.foe i{background:linear-gradient(180deg,#ff9a80,#b8432f)}
+.hp span{position:absolute;inset:0;text-align:center;font:800 12px/15px var(--display);color:#fff;text-shadow:0 1px 0 #000}
+.par{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-weight:800}.par span{display:flex;align-items:center;gap:1px}.par img{width:26px;height:24px}.par .ico{margin-right:3px}
+.terr img{width:48px;height:48px;flex:none;border:2px solid var(--frame);border-radius:6px;image-rendering:pixelated}
+.stars{color:#c8902e;letter-spacing:1px;font-size:15px;margin-left:6px;text-shadow:0 1px 0 rgba(255,255,255,.6)}
+.elite{font-size:14px}.helpbox{background:rgba(255,255,255,.35);border:1px dashed var(--parch-edge);border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+/* ---------- gaveta de cartas ---------- */
+body{padding-bottom:70px}
+#hand{position:fixed;z-index:9;left:50%;bottom:0;width:min(780px,calc(100vw - 24px));max-width:none;padding:0 14px 8px;transform:translate(-50%,calc(100% - 46px));transition:transform .25s ease;
+  background:var(--grain),linear-gradient(180deg,var(--parch),var(--parch2));border:2px solid var(--frame);border-bottom:0;border-radius:14px 14px 0 0;box-shadow:0 0 0 1px var(--frame2),0 -6px 18px rgba(0,0,0,.5)}
+#hand.open{transform:translate(-50%,0)}
+#hand .hhead{height:44px;align-items:center;cursor:pointer;user-select:none}#hand .hhead span{color:var(--ink2)}#hand .hhead em{margin-left:auto;font-style:normal;font-weight:700;color:var(--frame)}
+/* ---------- pausa em abas, salvamentos ---------- */
+#menuBox .tabs{margin-bottom:4px}#menuBox .tabs button{padding:6px 4px;font-size:14px}
+.mtab{display:flex;flex-direction:column;gap:9px;min-height:250px}.mtab>button{text-align:left;padding-left:34px}
+.keys{font-size:14px;line-height:1.8;text-align:left}
+.slot{display:flex;gap:12px;align-items:stretch;background:rgba(255,255,255,.35);border:1px solid var(--parch-edge);border-radius:10px;padding:8px}
+.slot .th{width:150px;height:113px;flex:none;object-fit:cover;border:2px solid var(--frame);border-radius:6px;background:#5a7d8c;display:grid;place-items:center;color:#e8f0f4;font-weight:700}
+.si{display:flex;flex-direction:column;gap:6px;min-width:0}.si p{display:flex;gap:8px;align-items:center;font-size:14px}.si p img{width:40px;height:40px;border-radius:6px;border:1px solid var(--frame)}
+/* ---------- título sobre o mapa envelhecido ---------- */
+#screen.title{backdrop-filter:sepia(.85) saturate(.7) brightness(.8) blur(1.5px);-webkit-backdrop-filter:sepia(.85) saturate(.7) brightness(.8) blur(1.5px);
+  background:radial-gradient(ellipse at center,rgba(70,45,20,.05),rgba(35,20,10,.6))}
+#screen.title #card{background:var(--grain),linear-gradient(180deg,rgba(241,230,204,.96),rgba(226,210,174,.96))}

@@ -20,14 +20,17 @@ const OPT={tac:['Batalhas',['Sempre táticas','Só nos ataques','Automáticas']]
   diff:['Dificuldade',['Fácil','Normal','Difícil']],clash:['Cenas de combate',['Desligadas','Ligadas']],shake:['Tremor de tela',['Desligado','Ligado']],
   q:['Qualidade dos efeitos',['Baixa','Média','Alta']],calm:['Efeitos fortes (clarão, confete)',['Ligados','Reduzidos']],big:['Texto grande',['Não','Sim']],
   cb:['Modo daltônico',['Desligado','Ligado']],confirm:['Confirmar fim do turno',['Não','Sim']]};
-let confirmNew=false;
+let confirmNew=false,menuTab='jogo';
+const MTABS={jogo:['Jogo',['tac','speed','diff','confirm']],som:['Som',[]],tela:['Tela',['clash','shake','q','calm']],acess:['Acessibilidade',['big','cb']]};
 function drawMenu(focus){
-  $('menuBox').innerHTML=`<h2>Pausa</h2>
-    <label class="opt" for="mus"><span>Música</span><input type="range" id="mus" min="0" max="1" step="0.1" value="${CFG.mus}"></label>
-    <label class="opt" for="vol"><span>Efeitos</span><input type="range" id="vol" min="0" max="1" step="0.1" value="${CFG.vol}"></label>`+
-    Object.entries(OPT).map(([k,[nome,vals]])=>`<div class="opt"><span>${nome}</span><button data-c="${k}">‹ ${vals[CFG[k]]} ›</button></div>`).join('')+
-    `<button data-c="close" class="end">Continuar</button>${me>=0?'<button data-c="saves">Salvamentos</button>':''}<button data-c="title">Salvar e sair ao título</button>
-     <button data-c="new" class="danger">${confirmNew?'Confirmar: apagar partida':'Nova partida'}</button>`;
+  const opt=k=>`<div class="opt"><span>${OPT[k][0]}</span><button data-c="${k}">‹ ${OPT[k][1][CFG[k]]} ›</button></div>`;
+  $('menuBox').innerHTML=`<h2>Pausa</h2><div class="tabs" role="tablist">${Object.entries(MTABS).map(([k,[n]])=>`<button role="tab" aria-selected="${menuTab==k}" data-c="tab-${k}" class="${menuTab==k?'on':''}">${n}</button>`).join('')}</div><div class="mtab">`+
+    (menuTab=='som'?`<label class="opt" for="mus"><span>Música</span><input type="range" id="mus" min="0" max="1" step="0.1" value="${CFG.mus}"></label>
+      <label class="opt" for="vol"><span>Efeitos sonoros</span><input type="range" id="vol" min="0" max="1" step="0.1" value="${CFG.vol}"></label>`:'')+
+    MTABS[menuTab][1].map(opt).join('')+
+    (menuTab=='acess'?`<p class="keys"><b>Teclado</b><br><kbd>E</kbd> fim do turno · <kbd>M</kbd> marchar · <kbd>R</kbd> recrutar · <kbd>F</kbd> fortificar · <kbd>Q</kbd> quartel · <kbd>Z</kbd> desfazer · <kbd>N</kbd> próximo · <kbd>Esc</kbd> pausa ou cancelar · setas e <kbd>Enter</kbd> no mapa e nos menus de comando</p>`:'')+
+    (menuTab=='jogo'?`${me>=0?'<button data-c="saves">Salvamentos</button>':''}<button data-c="title">Salvar e sair ao título</button><button data-c="new" class="danger">${confirmNew?'Confirmar: apagar partida':'Nova partida'}</button>`:'')+
+    `</div><button data-c="close" class="end">Continuar</button>`;
   $('menuBox').querySelector(`[data-c="${focus||'close'}"]`)?.focus()}
 function menu(open){confirmNew=false;$('menu').hidden=!open;if(open)drawMenu()}
 $('menuBtn').addEventListener('click',()=>menu(true));
@@ -35,6 +38,7 @@ document.addEventListener('keydown',e=>{if(e.key!='Escape')return;if(marching&&$
 $('menu').addEventListener('click',e=>{if(e.target.id=='menu')return menu(false);
   const k=e.target.closest('button')?.dataset.c;if(!k)return;sfx.sel();
   if(k=='close')return menu(false);
+  if(k.startsWith('tab-')){menuTab=k.slice(4);return drawMenu(k)}
   if(k=='saves'){menu(false);return showSaves('close')}
   if((k=='title'||(k=='new'&&confirmNew))&&HQ)closeHQ();
   if(k=='title'){B=null;raids=[];menu(false);if(me>=0)load();ui();return showTitle()} // batalha em curso é abandonada; volta ao último salvamento
@@ -47,13 +51,14 @@ const SAVE='tb-save'+(TKEY=='brasil'?'':'-'+TKEY),saveOf=k=>{try{return JSON.par
 const snap=()=>({hand,cmd,posts,boost,scn,owner,troops,gold,me,turn,logs,fort,stats,hq,xp,port,pact,ally,trib,angry,betray,moved:[...moved]});
 function save(){if(me<0||B||raids.length)return;try{over?localStorage.removeItem(SAVE):localStorage.setItem(SAVE,JSON.stringify(snap()))}catch{}}
 // salvamentos com nome: 3 espaços por modo de jogo, além do salvamento automático
+const mapThumb=()=>{if(B||HQ)return null;const[c,g]=mk(176,132);g.drawImage(cv,0,0,cv.width,cv.height,0,0,176,132);return c.toDataURL('image/jpeg',.72)};
 const SLOT=k=>SAVE+'-slot'+k,slotOf=k=>{try{return JSON.parse(localStorage.getItem(SLOT(k)))}catch{return null}};
 function showSaves(back){const can=me>=0&&!B&&!raids.length&&!over;
   scr(`<h2>Salvamentos</h2><p class="c">O jogo também salva sozinho a cada ação. Aqui você guarda partidas com nome.</p>`+
     (can?`<label class="opt" for="svname"><span>Nome</span><input id="svname" maxlength="30" value="${esc(S[me][4]+' · turno '+turn)}"></label>`:'')+
-    [1,2,3].map(k=>{const d=slotOf(k);return`<div class="ucard" style="flex-direction:column;align-items:stretch"><b>Espaço ${k}: ${d?esc(d.nome):'vazio'}</b>
-      ${d?`<p>${S[d.me][4]} · turno ${d.turn} · ${d.owner.filter(o=>o==d.me).length}/${N} ${TW} · ${new Date(d.quando).toLocaleString('pt-BR')}</p>`:''}
-      <div class="row">${can?`<button data-s="sv-${k}">Salvar aqui</button>`:''}${d?`<button data-s="ld-${k}">Carregar</button>`:''}</div></div>`}).join('')+
+    [1,2,3].map(k=>{const d=slotOf(k);return`<div class="slot">${d?.thumb?`<img class="th" src="${d.thumb}" alt="">`:`<div class="th">${d?'Sem imagem':'Vazio'}</div>`}<div class="si"><b>Espaço ${k}${d?': '+esc(d.nome):''}</b>
+      ${d?`<p>${img(d.me)}<span>${S[d.me][4]}<br>Turno ${d.turn} · ${d.owner.filter(o=>o==d.me).length}/${N} ${TW}<br><small>${new Date(d.quando).toLocaleString('pt-BR')}</small></span></p>`:''}
+      <div class="row">${can?`<button data-s="sv-${k}">Salvar aqui</button>`:''}${d?`<button data-s="ld-${k}">Carregar</button>`:''}</div></div></div>`}).join('')+
     `<button data-s="${back}" class="end">Voltar</button>`)}
 // visão geral do império: todos os seus territórios numa lista; clicar leva até ele
 function showArmy(){const own=owner.map((o,i)=>o==me?i:-1).filter(i=>i>=0).sort((a,b)=>danger(b)-danger(a)||troops[b]-troops[a]);
@@ -108,7 +113,7 @@ function dipHTML(f,where){ // cartão de diplomacia com um líder rival; where='
     bt('pact',`Pacto de não agressão (${dipCost('pact')} ouro, 5 turnos)`)+bt('ally',`Aliança (${dipCost('ally')} ouro, 8 turnos)`)+bt('trib','Exigir tributo')+
     (pact[f]>turn?'<p><i>Atacar agora é traição: rompe todos os pactos e enfurece os vizinhos.</i></p>':'')}
 const traitTxt=i=>({atk:`+${S[i][6]*100}% ataque`,def:`+${S[i][6]*100}% defesa`,gold:`+${S[i][6]} ouro por turno`,rec:'recrutamento pela metade'})[S[i][5]];
-const scr=h=>{$('screen').hidden=!h;if(h){$('card').innerHTML=h;$('card').scrollTop=0;$('card').querySelector('button.end,button')?.focus()}};
+const scr=h=>{$('screen').hidden=!h;$('screen').classList.remove('title');if(h){$('card').innerHTML=h;$('card').scrollTop=0;$('card').querySelector('button.end,button')?.focus()}};
 let pickI=ix.RJ,scnI=0,EVT=null;
 const goalTxt=(sc,f)=>{const g=SCN[sc].play?.[f];return g?`Domine ${g.map(i=>S[i][0]).join(', ')}`:`Unifique os ${N} ${TW}`};
 function showTitle(){const sv=savedInfo(),camp=TKEY!='brasil';
@@ -116,7 +121,7 @@ function showTitle(){const sv=savedInfo(),camp=TKEY!='brasil';
     ${sv?`<button data-s="cont" class="end">Continuar</button><p class="c">${sv}</p>`:''}
     <button data-s="setup" ${sv?'':'class="end"'}>${camp?'Nova partida desta campanha':'Dominação do Brasil: nova partida'}</button>
     <button data-s="camps">${camp?'Outras campanhas históricas':'Campanhas históricas'}</button>${[1,2,3].some(k=>slotOf(k))?'<button data-s="saves">Carregar partida salva</button>':''}
-    ${camp?'<button data-s="th-brasil">Voltar à Dominação do Brasil</button>':''}<button data-s="help">Como jogar</button>`)}
+    ${camp?'<button data-s="th-brasil">Voltar à Dominação do Brasil</button>':''}<button data-s="help">Como jogar</button>`);$('screen').classList.add('title')}
 function showCamps(){ // cada campanha abre num mapa próprio, só da região daquela guerra
   scr(`<h2>Campanhas históricas</h2><p class="c">Cada guerra tem mapa próprio, líderes da época e um objetivo para cada lado.</p>`+
     Object.entries(THEATERS).filter(([k])=>k!='brasil').map(([k,t])=>{const sv=saveOf(k),sc=t.SCN[0],sides=Object.keys(sc.play).map(c=>t.S.find(s=>s[0]==c)[4]).join(' ou ');
@@ -189,7 +194,7 @@ const onScr=e=>{const k=e.target.closest('button')?.dataset.s;if(!k)return;sfx.s
   else if(k=='go'){reset(scnI);startAs(pickI);sel=me;regionCheck(true);say(`${SCN[scnI].y}: ${S[me][4]} ergue a bandeira em ${S[me][1]}`);scr();tutStart();ui()}
   else if(k=='close')scr();
   else if(k=='bfree'){if(bCap!=null&&gold[me]>=10){gold[me]-=10;pact[bCap]=Math.max(pact[bCap]||0,turn+4);note(`${S[bCap][4]} libertado: pacto até o turno ${turn+4}`)}bCap=null;scr();ui()}
-  else if(k.startsWith('sv-')){try{localStorage.setItem(SLOT(k.slice(3)),JSON.stringify({...snap(),nome:$('svname').value.trim()||`Turno ${turn}`,quando:Date.now()}));note('Partida salva')}catch{note('Não foi possível salvar: armazenamento do navegador cheio ou bloqueado')}showSaves('close')}
+  else if(k.startsWith('sv-')){try{localStorage.setItem(SLOT(k.slice(3)),JSON.stringify({...snap(),nome:$('svname').value.trim()||`Turno ${turn}`,quando:Date.now(),thumb:mapThumb()}));note('Partida salva')}catch{note('Não foi possível salvar: armazenamento do navegador cheio ou bloqueado')}showSaves('close')}
   else if(k.startsWith('ld-')){const d=localStorage.getItem(SLOT(k.slice(3)));if(d){localStorage.setItem(SAVE,d);if(load()){regionCheck(true);scr();note('Partida carregada');ui()}}}
   else if(k.startsWith('cs-')){followCouncil(+k.slice(3));showCouncil();ui()}
   else if(k=='deleg'){CFG.deleg=CFG.deleg?0:1;saveCfg();showCouncil()}
@@ -218,6 +223,6 @@ document.addEventListener('keydown',e=>{ // atalhos: clicam o botão corresponde
       if(best>=0){if(marching)hov=best;else sel=best;sfx.sel();ui()}return}
     if(k=='enter'&&marching&&adj[sel].includes(hov)){e.preventDefault();act(hov);hov=-1;return ui()}}
   if(k=='q')return HQ?$('panel').querySelector('[data-a=hqexit]').click():openHQ();
-  const a=B?{e:'bend',a:'bauto',z:'bundo',w:'bwait'}[k]:{e:'end',m:'march',r:'rec',f:'fort',z:'undo',n:'next'}[k];
-  if(a)document.querySelector(`aside [data-a="${a}"]:not(:disabled)`)?.click()});
+  const a=B?{e:'bend',a:'bauto',z:'bcancel',w:'bwait'}[k]:{e:'end',m:'march',r:'rec',f:'fort',z:'undo',n:'next'}[k];
+  if(a)document.querySelector(`#cmd:not([hidden]) [data-a="${a}"]:not(:disabled), aside [data-a="${a}"]:not(:disabled)`)?.click()});
 

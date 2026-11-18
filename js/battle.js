@@ -153,7 +153,7 @@ async function bEnd(auto){
     if(B.ps==0)prCheck();roundEnd();
     B.round++;B.units.forEach(u=>u.moved=u.done=false);if(!auto&&!bOver())banner(`Rodada ${B.round}. É a sua vez.`);if(B.round==4&&!bOver())reinforce()}while(auto&&!bOver());
   B.busy=false;bOver()?bFinish():ui()}
-function bFinish(){tutEv('bdone');
+function bFinish(){tutEv('bdone');closeCmd();
   const{from,to,n,was,af,ps,kind}=B,a=total(0),d=total(1),won=(B.taken||!ld(1))&&ld(0),e=ps?af:was,wonP=ps?!won:won; // won = atacante venceu
   const loss=sd=>Math.max(0,B.units.filter(u=>u.side==sd).reduce((s,u)=>s+u.hp0,0)-total(sd)),lvUp=[],
     best=B.units.filter(u=>u.side==ps&&u.hits).sort((p,q)=>q.hits-p.hits)[0],vg=2*[...B.vil.values()].filter(v=>v==ps).length,
@@ -191,11 +191,12 @@ function bClick(e){
   const[gx,gy]=bCell(e),b0=B;let R;
   if(B.aim){const u=B.units.find(v=>v.hp>0&&v.side!=B.ps&&v.x==gx&&v.y==gy&&seen(v));if(u)playBattleCard(B.aim,u);else note('Ataque de fogo cancelado: clique numa unidade inimiga');B.aim=null;return ui()}
   const u=B.units.find(v=>v.hp>0&&v.x==gx&&v.y==gy&&seen(v)),s=B.selU;
-  if(u&&u.side==B.ps){B.selU=u.done?null:u;B.peek=null;sfx.sel()}
+  closeCmd();
+  if(u&&u.side==B.ps){if(u==s&&!u.done){battleCmd(u);return ui()}B.selU=u.done?null:u;B.peek=null;sfx.sel()}
   else if(s&&u&&inR(s,u)){hit(s,u);B.selU=B.undo=null}
   else if(s&&!u&&B.gate&&gx==B.gate.x&&gy==B.gate.y&&gateFor(s)){gateHit(s);B.selU=B.undo=null}
-  else if(s&&!u&&!s.moved&&(R=reach(s)).some(c=>c[0]==gx&&c[1]==gy)){B.undo={u:s,x:s.x,y:s.y};walk(s,gx,gy,R);s.moved=true;sfx.move();tutEv('bmove');
-    if(!alive(1-B.ps).some(f=>inR(s,f)&&seen(f))&&!gateFor(s)&&!(B.kind=='travessia'&&bridgeNear(s))){s.done=true;B.selU=null}}
+  else if(s&&!u&&!s.moved&&(R=reach(s)).some(c=>c[0]==gx&&c[1]==gy)){B.undo={u:s,x:s.x,y:s.y};const wd=walk(s,gx,gy,R);s.moved=true;sfx.move();tutEv('bmove');
+    setTimeout(()=>{if(B===b0&&B.selU===s&&!s.done&&!B.busy)battleCmd(s)},wd+60)} // depois de andar, o menu de comando abre ao lado
   else{B.selU=null;B.peek=u&&B.peek!=u?u:null;if(u)sfx.sel()} // inimigo fora de alcance: espia o movimento dele
   if(bOver()){B.busy=true;setTimeout(()=>B===b0&&bFinish(),700+clashLeft())}
   else if(alive(B.ps).every(v=>v.done))return bEnd(); // todas as unidades agiram: a rodada passa sozinha para o inimigo

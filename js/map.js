@@ -115,9 +115,10 @@ function draw(){
   if(marching)adj[sel].forEach(j=>{route(sel,j,owner[j]==me?'#7fd0ff':'#ff5a48',.86);const o=oddsC[j];if(!o)return; // chance de vitória em cada rota de ataque
     const[ax,ay]=proj(...px(sel)),[tx,ty]=proj(...px(j)),mx=ax+(tx-ax)*.6,my=ay+(ty-ay)*.6,t=`~${Math.round(o[0]*100)}%`,col=o[0]>.65?'#2f8a4a':o[0]>.35?'#b8891f':'#b3312a';
     x.font=FONT(10);const w=Math.ceil(x.measureText(t).width)+10;x.fillStyle='#22140c';x.fillRect(mx-w/2-2,my-11,w+4,22);x.fillStyle=col;x.fillRect(mx-w/2,my-9,w,18);x.fillStyle='#fff';x.textAlign='center';x.fillText(t,mx,my-8);x.textAlign='left'});
+  const LB=labelOffsets();
   S.map((_,i)=>i).sort((a,b)=>S[b][3]-S[a][3]).forEach(i=>{
     if(intro&&revealAt[i]>now-intro)return;
-    const TS=CFG.big?12:10,[fx_,fy]=proj(...px(i)),t=S[i][0]+troops[i],w=(x.font=FONT(TS),Math.ceil(x.measureText(t).width)+20),bx=Math.round(fx_),by=Math.round(fy)-30-(TS-10),
+    const TS=CFG.big?12:10,[fx_,fy]=proj(...px(i)),t=S[i][0]+troops[i],w=(x.font=FONT(TS),Math.ceil(x.measureText(t).width)+20),bx=Math.round(fx_),by0=Math.round(fy)-30-(TS-10),by=by0+LB[i],
       left=LEFT.has(S[i][0]),rx=left?bx-w-1:bx+1,f=owner[i];
     if(lastOwner[i]!==f){if(lastOwner[i]!=null)flagT[i]=now;lastOwner[i]=f} // bandeira desce e sobe na cor nova
     const fp=flagT[i]?(now-flagT[i])/900:1,fb=by+(fp<1?(fp<.45?fp/.45:1-(fp-.45)/.55)*20:0);
@@ -126,10 +127,10 @@ function draw(){
       ax=bx-14-k*11,ay=Math.round(fy)+(k%2)*3;x.fillStyle='rgba(0,0,0,.3)';x.fillRect(ax-9,ay-1,18,3);x.drawImage(sp,ax-13,ay-24,26,24)}
     if(burn[i]>=turn-1){for(let k=0;k<3;k++){const fl=CFG.calm?k:Math.floor(now/90+k*3)%3;x.fillStyle=['#ff5a1e','#ffb030','#ffe27a'][(k+fl)%3];x.fillRect(bx+6+k*4,Math.round(fy)-8-fl*2-k%2*2,4,7+fl*2)} // fogo e fumaça
       for(let k=0;k<4;k++){const q=(now/1700+k/4)%1,s=5+q*11;x.fillStyle=`rgba(80,80,80,${.5*(1-q)})`;x.fillRect(bx+10-s/2+Math.sin(q*6+k)*5,Math.round(fy)-12-q*50,s,s)}}
-    x.fillStyle='rgba(0,0,0,.4)';x.fillRect(bx-3,by+27,7,2);
-    x.fillStyle='#22140c';x.fillRect(bx-8,by+18,16,11);x.fillStyle='#f6ecc4';x.fillRect(bx-6,by+22,12,6);x.fillStyle='#b3312a';x.fillRect(bx-7,by+19,14,4);x.fillStyle='#3a2413';x.fillRect(bx-1,by+25,3,3); // capital
-    if(port[i]){const ax=bx+11,ay=by+16;x.fillStyle='#22140c';x.fillRect(ax-5,ay-2,11,13);x.fillStyle='#9fd0ff';x.fillRect(ax,ay,1,9);x.fillRect(ax-2,ay+1,5,1);x.fillRect(ax-3,ay+7,7,1);x.fillRect(ax-3,ay+6,1,1);x.fillRect(ax+3,ay+6,1,1)} // âncora
-    x.fillStyle='#120a1c';x.fillRect(bx-1,by,2,28);
+    x.fillStyle='rgba(0,0,0,.4)';x.fillRect(bx-3,by0+27,7,2);
+    x.fillStyle='#22140c';x.fillRect(bx-8,by0+18,16,11);x.fillStyle='#f6ecc4';x.fillRect(bx-6,by0+22,12,6);x.fillStyle='#b3312a';x.fillRect(bx-7,by0+19,14,4);x.fillStyle='#3a2413';x.fillRect(bx-1,by0+25,3,3); // capital
+    if(port[i]){const ax=bx+11,ay=by0+16;x.fillStyle='#22140c';x.fillRect(ax-5,ay-2,11,13);x.fillStyle='#9fd0ff';x.fillRect(ax,ay,1,9);x.fillRect(ax-2,ay+1,5,1);x.fillRect(ax-3,ay+7,7,1);x.fillRect(ax-3,ay+6,1,1);x.fillRect(ax+3,ay+6,1,1)} // âncora
+    x.fillStyle='#120a1c';x.fillRect(bx-1,by,2,by0+28-by);if(by<by0){x.fillStyle='rgba(255,240,200,.35)';x.fillRect(bx,by,1,by0-by)}
     const LH=Math.round(TS*1.45)+6,mineT=owner[i]==me;x.fillStyle='#2a1810';x.fillRect(rx-1,fb-1,w+2,LH+2);x.fillStyle=mineT?'#4d3238':'#efe3c6';x.fillRect(rx,fb,w,LH);x.fillStyle=mineT?'rgba(255,230,180,.18)':'rgba(255,255,255,.6)';x.fillRect(rx,fb,w,1); // plaquinha: pergaminho, ou laca se for sua
     x.fillStyle=`hsl(${hue(owner[i])},70%,${CFG.cb?40:55}%)`;x.fillRect(left?rx+w-11:rx,fb,11,LH);emblem(x,(left?rx+w-11:rx)+2,fb+(LH-7)/2|0,owner[i],'#fff'); // faixa com emblema da facção
     if(i==sel||i==hov){x.strokeStyle='#f08a3a';x.lineWidth=2;x.strokeRect(rx-1,fb-1,w+2,LH+2)}
@@ -137,7 +138,7 @@ function draw(){
     if(f==me&&danger(i)){const ax=rx-12,ay=fb+1,on=CFG.calm||Math.floor(now/400)%2;x.fillStyle='#22140c';x.beginPath();x.moveTo(ax+6,ay-2);x.lineTo(ax+14,ay+14);x.lineTo(ax-2,ay+14);x.fill(); // em perigo
       x.fillStyle=on?'#ff3b30':'#b3312a';x.beginPath();x.moveTo(ax+6,ay+1);x.lineTo(ax+12,ay+12);x.lineTo(ax,ay+12);x.fill();x.fillStyle='#fff';x.fillRect(ax+5,ay+4,2,5);x.fillRect(ax+5,ay+10,2,2)}
     for(let k=0;k<fort[i];k++){x.fillStyle='#22140c';x.fillRect(rx+1+k*9,fb-9,8,8);x.fillStyle='#ffd23f';x.fillRect(rx+2+k*9,fb-6,6,5);x.fillRect(rx+2+k*9,fb-8,2,2);x.fillRect(rx+6+k*9,fb-8,2,2)}
-    tags.push([Math.min(rx,bx-2),by,w+3,28+(TS-10),i])});
+    tags.push([Math.min(rx,bx-2),by,w+3,by0-by+28+(TS-10),i])});
   if(mfx){const p=(now-mfx.start)/700,[ax,ay]=proj(...px(mfx.a)),[bx,by]=proj(...px(mfx.b)),sp=sprite({type:'inf',sk:'T'},me,true,Math.floor(now/90)%2); // tropa marchando entre estados seus
     if(p<1)x.drawImage(sp,ax+(bx-ax)*p-26,ay+(by-ay)*p-44-Math.abs(Math.sin(p*18))*5,52,48)}
   if(aiShow){const T=now-aiShow.start,dur=aiShow.dur;
@@ -166,3 +167,13 @@ function pick(e){const r=cv.getBoundingClientRect(),mx=(e.clientX-r.left)*cv.wid
   const cx=Math.floor(u[0]/C),cy=Math.floor(u[1]/C);
   return cx>=0&&cx<W&&cy>=0&&cy<H?Math.max(-1,cell[cy*W+cx]):-1}
 
+
+function labelOffsets(){ /* bandeirinhas que se tocam sobem (mastro mais alto) até não se sobreporem */
+  const TS=CFG.big?12:10,LH=Math.round(TS*1.45)+6;x.font=FONT(TS);
+  const L=S.map((_,i)=>{const[fx_,fy]=proj(...px(i)),w=Math.ceil(x.measureText(S[i][0]+troops[i]).width)+20,bx=Math.round(fx_);return{x:LEFT.has(S[i][0])?bx-w-1:bx+1,y:Math.round(fy)-30-(TS-10),w,dy:0}});
+  for(let it=0;it<12;it++){let moved_=false;
+    for(let a=0;a<L.length;a++)for(let b=a+1;b<L.length;b++){const A=L[a],Q=L[b];if(A.x>=Q.x+Q.w+2||Q.x>=A.x+A.w+2)continue;
+      const ay=A.y+A.dy,qy=Q.y+Q.dy,ov=Math.min(ay,qy)+LH+2-Math.max(ay,qy);if(ov<=0)continue;
+      const up=ay<=qy?A:Q;if(up.dy>-64){up.dy=Math.max(-64,up.dy-ov);moved_=true}}
+    if(!moved_)break}
+  return L.map(l=>l.dy)}
