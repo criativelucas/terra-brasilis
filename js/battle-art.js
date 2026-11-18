@@ -81,7 +81,7 @@ const SPR=new Map,CUSTOM={units:{}}; // CUSTOM: folhas de sprite carregadas de a
 function sprite(u,f,mine,fr){
   const key=[u.type,f,mine,u.ld,u.sk,fr].join();if(SPR.has(key))return SPR.get(key);
   const cu=CUSTOM.units[u.ld?'ld':u.type]||CUSTOM.units[u.type];
-  if(cu){const n=cu.frames,i=n>=4?[0,0,1,2,3][fr]??0:Math.abs(fr)%n,fw=cu.im.width/n,ih=cu.im.height,[c,g]=mk(fw,ih);g.drawImage(cu.im,i*fw,0,fw,ih,0,0,fw,ih); // folha de 4: parado, passo A, passo B, golpe
+  if(cu){const n=cu.frames,i=(n>=5?[0,4,1,2,3]:n>=4?[0,0,1,2,3]:[])[fr]??Math.abs(fr)%n,fw=cu.im.width/n,ih=cu.im.height,[c,g]=mk(fw,ih);g.drawImage(cu.im,i*fw,0,fw,ih,0,0,fw,ih); // folha de 4: parado, passo A, passo B, golpe
     const d=g.getImageData(0,0,fw,ih),p=d.data,H=hue(f)/360,Sa=mine?.78:.52;
     for(let k=0;k<p.length;k+=4){if(!p[k+3])continue;const[hh,ss,ll]=rgb2hsl(p[k],p[k+1],p[k+2]);if(hh>.53&&hh<.74&&ss>.3){const q=hsl2rgb(H,Sa*Math.min(1,ss+.2),ll);p[k]=q[0];p[k+1]=q[1];p[k+2]=q[2]}}
     g.putImageData(d,0,0);if(u.ld&&fhd[f]){g.clearRect(10,0,22,18);g.drawImage(fhd[f],6,0,36,38,10,-3,28,30)} // comandante: rosto, cabelo e chapéu do líder

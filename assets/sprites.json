@@ -3,23 +3,23 @@
  "units": {
   "inf": {
    "src": "assets/units/inf.png",
-   "frames": 4
+   "frames": 5
   },
   "cav": {
    "src": "assets/units/cav.png",
-   "frames": 4
+   "frames": 5
   },
   "ati": {
    "src": "assets/units/ati.png",
-   "frames": 4
+   "frames": 5
   },
   "art": {
    "src": "assets/units/art.png",
-   "frames": 4
+   "frames": 5
   },
   "ld": {
    "src": "assets/units/ld.png",
-   "frames": 4
+   "frames": 5
   }
  }
 }
