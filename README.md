@@ -78,3 +78,13 @@ Edite `assets/sprites.json` para trocar a arte gerada por imagens suas. Coloque 
 - **Retratos**: chave é a sigla do estado. Imagem quadrada, qualquer tamanho; é desenhada sem suavização.
 - **Unidades**: tipos `inf`, `cav`, `ati`, `art` e `ld` (comandante). Cada imagem tem os quadros lado a lado, todos do mesmo tamanho, virados para a direita. A proporção ideal é 26x24 por quadro (ou múltiplos, como 52x48). O jogo pinta uma faixa de 2 px na base com a cor da facção.
 - Qualquer item ausente continua com a arte gerada por código.
+
+## Animações no Aseprite
+
+Cada unidade tem um arquivo em `assets/aseprite/` (inf, cav, ati, art, ld) com cinco etiquetas: **parado**, **andar**, **golpe**, **dano** e **queda**. O jogo toca cada etiqueta respeitando a duração de cada quadro.
+
+1. Abra o arquivo no Aseprite, edite ou acrescente quadros dentro das etiquetas (pode mudar a duração de cada quadro).
+2. Mantenha o uniforme em azul royal: o jogo troca esse azul pela cor de cada facção. No comandante (`ld`), a cabeça é substituída pelo rosto do líder.
+3. Rode `python3 tools/animar.py exportar` para gerar as folhas em `assets/units/` e atualizar `assets/sprites.json`.
+
+`python3 tools/animar.py gerar` recria os arquivos a partir dos desenhos de `tools/bonecos.py` e **apaga as edições feitas no Aseprite**.

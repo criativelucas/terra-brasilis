@@ -35,7 +35,7 @@ function spawn(sd,n,tot){ // regimentos novos entram pela borda do próprio lado
   return made}
 function usePower(sd){ // poder único do líder, uma vez por batalha, conforme a vocação dele
   const f=sd?B.was:B.af,k=S[f][5]||'atk';B.pw[sd]={k,until:B.round+1};
-  B.banner={t:`${S[f][4]}: ${POW[k][0]}!`,col:'#8a5ac8',start:Date.now(),f};sfx.fanfare();mood[f]={m:'angry',until:Date.now()+5000};
+  if(!B.auto)B.cut={f,k,start:Date.now()};sfx.fanfare();mood[f]={m:'angry',until:Date.now()+5000};
   if(k=='def')alive(sd).forEach(u=>{u.hp+=3;u.max=Math.max(u.max,u.hp);B.pops.push({x:u.x,y:u.y,txt:'+3',until:Date.now()+900})});
   if(k=='gold')alive(sd).forEach(u=>u.moved=u.done=false);
   if(k=='rec')spawn(sd,2,Math.max(4,Math.round(B.units.filter(u=>u.side==sd).reduce((s,u)=>s+u.hp0,0)*.25)));
@@ -44,7 +44,7 @@ const bridgeNear=u=>[[1,0],[-1,0],[0,1],[0,-1]].map(([dx,dy])=>[u.x+dx,u.y+dy]).
 function burnBridge(u,[bx,by]){B.T[by][bx]='w';B.bg=bake(B.T,B.bio);u.moved=u.done=true;banner('A ponte foi queimada!','#ff8a1e');sfx.hit();
   for(let k=0;k<4;k++)puff(OX+bx*CS+CS/2,OY+by*CS+CS/2,'rgba(255,'+(80+k*50)+',30,A)',10,100)}
 function gateHit(a){ // golpe no portão do cerco: canhão rende muito, cavalaria pouco
-  const g=B.gate,d=Math.max(1,Math.round(a.hp*.5*UT[a.type][3]*(a.type=='art'?2.5:a.type=='cav'?.6:1)*(B.rl[a.side]==B.round?1.4:1)));g.hp=Math.max(0,g.hp-d);a.done=a.moved=true;a.hits++;
+  const g=B.gate,d=Math.max(1,Math.round(a.hp*.5*UT[a.type][3]*(a.type=='art'?2.5:a.type=='cav'?.6:1)*(B.rl[a.side]==B.round?1.4:1)));g.hp=Math.max(0,g.hp-d);a.done=a.moved=true;a.hits++;a.atkT=Date.now();(B.rings=B.rings||[]).push({x:g.x,y:g.y,start:Date.now()});
   a.lunge={dx:Math.sign(g.x-a.x),dy:Math.sign(g.y-a.y),until:Date.now()+180};B.pops.push({x:g.x,y:g.y,txt:'-'+d,until:Date.now()+800});sfx.hit();B.shake=Date.now()+160;
   B.fxs.push({a:[a.x,a.y],t:[g.x,g.y],shot:dist(a,g)>1,start:Date.now()});puff(OX+g.x*CS+CS/2,OY+g.y*CS+CS/2,'rgba(160,110,60,A)',12,140);
   if(!g.hp){banner('O portão caiu!','#ff8a1e');for(let k=0;k<3;k++)puff(OX+g.x*CS+CS/2,OY+g.y*CS+CS/2,'rgba(214,190,140,A)',14,120)}}
@@ -72,7 +72,7 @@ function walk(u,gx,gy,R){ // move na lógica já; o desenho percorre o caminho c
   const m=new Map(R.map(c=>[c[0]+','+c[1],c])),pts=[];let c=m.get(gx+','+gy);while(c){pts.unshift([c[0],c[1]]);c=m.get(c[2])}
   u.x=gx;u.y=gy;u.anim={pts,start:Date.now()};const d=(pts.length-1)*STEP;B.lock=Date.now()+d;return d}
 function hit(a,t,back){ // aplica o dano na hora; a cena de combate é só a encenação do que já aconteceu
-  const ha0=a.hp,ht0=t.hp,d=Math.min(t.hp,Math.max(1,Math.round(est(a,t,back)*roll())));t.hp-=d;a.hits++;
+  const ha0=a.hp,ht0=t.hp,d=Math.min(t.hp,Math.max(1,Math.round(est(a,t,back)*roll())));t.hp-=d;a.hits++;a.atkT=t.hurtT=Date.now();(B.rings=B.rings||[]).push({x:t.x,y:t.y,start:Date.now()});
   a.lunge={dx:Math.sign(t.x-a.x),dy:Math.sign(t.y-a.y),until:Date.now()+180};t.flash=Date.now()+220;
   B.pops.push({x:t.x,y:t.y,txt:'-'+d,until:Date.now()+800});sfx.hit();
   B.fxs.push({a:[a.x,a.y],t:[t.x,t.y],shot:dist(a,t)>1,start:Date.now()});puff(OX+t.x*CS+CS/2,OY+t.y*CS+CS/2-6,'rgba(255,230,120,A)',8,150);if(t.hp<=0)puff(OX+t.x*CS+CS/2,OY+t.y*CS+CS-10,'rgba(214,190,140,A)',10,60);B.shake=Date.now()+160;if(t.hp<=0)t.dead=Date.now()+200;
@@ -93,14 +93,14 @@ function drawClash(now){ // dois quadros: corrida, golpe, queda e revide. Tempos
     x.fillStyle=tl=='r'||tl=='b'?'#c79a5e':B.bio.g[0];x.fillRect(bx,by+160,w,h-160);x.fillStyle=B.bio.gd;x.fillRect(bx,by+160,w,6);
     for(let k=0;k<14;k++){const v=hash(k,u.x+7);x.fillStyle=k%2?B.bio.gd:B.bio.gl;x.fillRect(bx+v%(w-12),by+172+(v>>>5)%118,12,4)}
     if(cover(u)){const q=(a,b,ww,hh,col)=>{x.fillStyle=col;x.fillRect(bx+a*5,by+b*5,ww*5,hh*5)};[[2,22],[52,23],[27,20]].forEach(([a,b],k)=>tree(q,B.bio.tree,a,b,k))}
-    let off=0,fr=Math.floor(now/220)%2;
+    let off=0,fr=Math.floor(now/220)%2,st=['parado',now+u.ph*1000];
     if(acts&&p>s0&&p<hitT+.1){const q=(p-s0)/(hitT+.1-s0);
-      if(ranged){fr=q>.6&&q<.9?4:0;if(q>.62)off=-dir*Math.max(0,8-(q-.62)*40)} // tiro: mira, dispara, recua
-      else{off=(q<.55?q/.55:Math.max(0,1-(q-.75)/.25))*95*dir;fr=q<.55?2+Math.floor(now/80)%2:4}} // carga: corre, golpeia, volta
-    const hurt=dmg>0&&p>myHit&&p<myHit+.1;if(dmg>0&&p>myHit&&p<myHit+.12)off-=dir*(Math.floor(now/40)%2?10:3);
-    SLOTS.slice(0,n0).forEach(([sx,sy],k)=>{const fallen=k>=n1&&p>myHit,fp=fallen?Math.min(1,(p-myHit)/.16):0,X=bx+(dir>0?sx:w-sx)+off,Y=by+sy,sp=sprite(u,f,mine,fallen?0:fr);
+      if(ranged){fr=q>.6&&q<.9?4:0;st=q>.45?['golpe',(q-.45)/.55*animLen(u,'golpe')]:st;if(q>.62)off=-dir*Math.max(0,8-(q-.62)*40)} // tiro: mira, dispara, recua
+      else{off=(q<.55?q/.55:Math.max(0,1-(q-.75)/.25))*95*dir;fr=q<.55?2+Math.floor(now/80)%2:4;st=q<.55?['andar',now]:['golpe',(q-.55)/.45*animLen(u,'golpe')]}} // carga: corre, golpeia, volta
+    const hurt=dmg>0&&p>myHit&&p<myHit+.1;if(dmg>0&&p>myHit&&p<myHit+.15)st=['dano',(p-myHit)*CLASH];if(dmg>0&&p>myHit&&p<myHit+.12)off-=dir*(Math.floor(now/40)%2?10:3);
+    SLOTS.slice(0,n0).forEach(([sx,sy],k)=>{const fallen=k>=n1&&p>myHit,fp=fallen?Math.min(1,(p-myHit)/.16):0,X=bx+(dir>0?sx:w-sx)+off,Y=by+sy,ql=animLen(u,'queda'),sp=sprite(u,f,mine,fallen?animFr(u,'queda',(p-myHit)*CLASH,0):animFr(u,st[0],st[1],fr));
       x.fillStyle='rgba(0,0,0,.25)';x.fillRect(X-34,Y-8,68,10);
-      x.save();x.globalAlpha=1-fp*.75;x.translate(X,Y);x.rotate(-fp*dir*1.45);x.scale(dir,1);x.drawImage(sp,-65,-120,130,120);
+      x.save();x.globalAlpha=1-fp*.75;x.translate(X,Y);x.rotate(ql?0:-fp*dir*1.45);x.scale(dir,1);x.drawImage(sp,-65,-120,130,120);
       if(hurt&&!fallen&&!CFG.calm){x.globalCompositeOperation='lighter';x.drawImage(sp,-65,-120,130,120)}x.restore();
       const t1=s0+(hitT-s0)*.6;
       if(acts&&ranged&&!fallen&&p>t1&&p<t1+(hitT-s0)*.2){x.fillStyle='#ffd23f';x.fillRect(X+dir*58-7,Y-72,14,14);x.fillStyle='#fff';x.fillRect(X+dir*58-3,Y-68,6,6)} // clarão do disparo
@@ -125,7 +125,7 @@ function drawClash(now){ // dois quadros: corrida, golpe, queda e revide. Tempos
       for(let i=0;i<10;i++){const an=i*.628,r=20+q*70;x.fillStyle=i%2?'#ffd23f':'#fff';x.fillRect(tx+Math.cos(an)*r-3,y+20+Math.sin(an)*r-3,6,6)}}})}
 async function aiSide(sd,ms){
   const b0=B,ldr=B.units.find(u=>u.side==sd&&u.ld),pk=S[sd?B.was:B.af][5],press=()=>B.round>=4||ldr.hp<ldr.max/2||(B.round>=2&&total(sd)<total(1-sd)),wait=()=>sleep(ms*SPD[CFG.speed]+clashLeft());
-  if(!B.pw[sd]&&sd!=B.ps&&pk!='gold'&&press()){usePower(sd);await sleep(B.auto?60:1100);if(B!==b0)return}
+  if(!B.pw[sd]&&sd!=B.ps&&pk!='gold'&&press()){usePower(sd);await sleep(B.auto?60:1750);if(B!==b0)return}
   if(!B.rl[sd]&&sd!=B.ps&&(B.round>=3||ldr.hp<ldr.max/2||(B.round>=2&&total(sd)<total(1-sd)))){B.rl[sd]=B.round; // a IA usa o brado quando aperta
     B.pops.push({x:ldr.x,y:ldr.y,txt:'BRADO!',until:Date.now()+1100});sfx.win();await sleep(500);if(B!==b0)return}
   for(const u of alive(sd)){
@@ -140,7 +140,7 @@ async function aiSide(sd,ms){
       const d=walk(u,c[0],c[1],R);await sleep(B.auto?40:d+80);if(B!==b0)return} // no automático não espera a caminhada
     if(inR(u,t))hit(u,t);else if(gateFor(u))gateHit(u);
     await wait()}
-  if(!B.pw[sd]&&sd!=B.ps&&pk=='gold'&&press()&&B===b0&&!bOver()){usePower(sd);await sleep(B.auto?60:1100);if(B===b0)return aiSide(sd,ms)}}
+  if(!B.pw[sd]&&sd!=B.ps&&pk=='gold'&&press()&&B===b0&&!bOver()){usePower(sd);await sleep(B.auto?60:1750);if(B===b0)return aiSide(sd,ms)}}
 async function bEnd(auto){
   if(B.busy)return;const b0=B;B.busy=true;B.selU=B.undo=null;B.auto=!!auto;ui();
   await sleep(Math.max(clashLeft(),(B.lock||0)-Date.now(),0)+150);if(B!==b0)return;
@@ -204,12 +204,14 @@ function drawUnit(u,now){
   let vx=u.x,vy=u.y,hop=0,face=u.side?-1:1;const an=u.anim;
   if(an){const t=(now-an.start)/STEP,i=Math.floor(t);if(i>=an.pts.length-1)u.anim=null;
     else{const[a,b]=an.pts[i],[c,d]=an.pts[i+1],fr=t-i;vx=a+(c-a)*fr;vy=b+(d-b)*fr;hop=Math.sin(fr*Math.PI)*9;if(c!=a)face=c>a?1:-1}}
-  const f=u.side?B.was:B.af,mine=u.side==B.ps,k=u.lunge&&u.lunge.until>now?16:0,
-    px_=OX+vx*CS+(k&&u.lunge.dx*k),py=OY+vy*CS+(k&&u.lunge.dy*k),sp=sprite(u,f,mine,k?4:u.anim?2+Math.floor(now/110)%2:u.done?0:Math.floor(now/420+u.ph)%2);
+  const f=u.side?B.was:B.af,mine=u.side==B.ps,k=u.lunge&&u.lunge.until>now?10:0,
+    px_=OX+vx*CS+(k&&u.lunge.dx*k),py=OY+vy*CS+(k&&u.lunge.dy*k),
+    st=u.hp<=0?['queda',now-u.dead+200]:u.atkT&&now-u.atkT<animLen(u,'golpe')?['golpe',now-u.atkT]:u.anim?['andar',now-u.anim.start]:u.hurtT&&now-u.hurtT<animLen(u,'dano')?['dano',now-u.hurtT]:['parado',u.done?0:now+u.ph*1000], // animação pela etiqueta
+    sp=sprite(u,f,mine,animFr(u,st[0],st[1],k?4:u.anim?2+Math.floor(now/110)%2:u.done?0:Math.floor(now/420+u.ph)%2));
   if(an&&now-(u.dust||0)>90){u.dust=now;const tl=B.T[Math.round(vy)]?.[Math.round(vx)],wet=tl=='w'||tl=='b';puff(px_+CS/2,py+CS-8,wet?'rgba(150,205,255,A)':'rgba(214,190,140,A)',wet?4:2,wet?70:30)} // poeira ou respingo
   x.fillStyle='rgba(0,0,0,.28)';x.fillRect(px_+CS/2-18+hop/2,py+CS-9,36-hop,6);
-  const dead=u.hp<=0?Math.max(0,(now-u.dead)/450):0;x.save();x.globalAlpha=u.hp<=0?Math.max(0,1-dead):u.done&&!u.anim?.6:1;
-  if(face<0){x.translate(px_+CS/2+39,py+CS-74-hop+dead*14);x.scale(-1,1)}else x.translate(px_+CS/2-39,py+CS-74-hop+dead*14);
+  const ql=animLen(u,'queda'),dead=u.hp<=0?Math.max(0,(now-u.dead-(ql?ql-200:0))/450):0;x.save();x.globalAlpha=u.hp<=0?Math.max(0,1-dead):u.done&&!u.anim?.6:1; // com animação de queda, só some depois de cair
+  if(face<0){x.translate(px_+CS/2+39,py+CS-74-hop+(ql?0:dead*14));x.scale(-1,1)}else x.translate(px_+CS/2-39,py+CS-74-hop+(ql?0:dead*14));
   x.drawImage(sp,0,0,78,72);
   if(u.flash>now){x.globalCompositeOperation='lighter';x.drawImage(sp,0,0,78,72);x.globalCompositeOperation='source-over'}
   x.restore();
@@ -276,7 +278,10 @@ function drawBattle(){
       [['#3a2413',18,24],['#f6ecc4',12,18]].forEach(([col,w,hd])=>{x.strokeStyle=x.fillStyle=col;x.lineWidth=w;x.lineJoin='miter';x.lineCap='butt';
         x.beginPath();pts.forEach((p,i)=>i?x.lineTo(...p):x.moveTo(...p));x.stroke();
         x.beginPath();x.moveTo(ex+dx*(hd-6),ey+dy*(hd-6));x.lineTo(ex-dx*12-dy*hd*.8,ey-dy*12+dx*hd*.8);x.lineTo(ex-dx*12+dy*hd*.8,ey-dy*12-dx*hd*.8);x.fill()})}}
-  B.units.filter(u=>(u.hp>0||u.dead>now-450)&&seen(u)).sort((a,b)=>a.y-b.y).forEach(u=>drawUnit(u,now));
+  B.units.filter(u=>(u.hp>0||u.dead>now-450-animLen(u,'queda'))&&seen(u)).sort((a,b)=>a.y-b.y).forEach(u=>drawUnit(u,now));
+  B.rings=(B.rings||[]).filter(r=>now-r.start<420);B.rings.forEach(r=>{const p=(now-r.start)/420,X=OX+r.x*CS+CS/2,Y=OY+r.y*CS+CS-10; // anel de impacto no chão e faíscas
+    x.strokeStyle=`rgba(255,240,200,${1-p})`;x.lineWidth=1+3*(1-p);x.beginPath();x.ellipse(X,Y,8+p*30,3+p*11,0,0,7);x.stroke();
+    for(let i=0;i<8;i++){const an=i*.785,r2=10+p*34;x.fillStyle=i%2?'#ffd23f':'#fff';x.fillRect(X+Math.cos(an)*r2-2,Y-16+Math.sin(an)*r2*.6-2,4,4)}});
   B.parts=B.parts.filter(q=>now-q.t<q.life);B.parts.forEach(q=>{const dt=(now-q.t)/1000;x.fillStyle=q.col.replace('A',(1-(now-q.t)/q.life).toFixed(2));x.fillRect(q.x+q.vx*dt,q.y+q.vy*dt+q.g*dt*dt,q.s,q.s)});
   B.fxs=B.fxs.filter(f=>now-f.start<320);
   B.fxs.forEach(f=>{const p=(now-f.start)/320,ax=OX+f.a[0]*CS+CS/2,ay=OY+f.a[1]*CS+CS/2-8,tx=OX+f.t[0]*CS+CS/2,ty=OY+f.t[1]*CS+CS/2-8; // golpe: tiro riscado ou corte, e estilhaço no alvo
@@ -314,6 +319,15 @@ function drawBattle(){
     x.font=FONT(13);x.textAlign='center';x.fillStyle='#3a2a1f';x.fillText(t,bx+w/2+(hasF?34:12),by+h/2-13,w-(hasF?110:70));
     const ay=by+h-22+Math.round(Math.sin(now/150)*2);x.fillStyle='#6b4a2e';x.beginPath();x.moveTo(bx+w-30,ay);x.lineTo(bx+w-16,ay);x.lineTo(bx+w-23,ay+8);x.fill();x.restore()}}
   x.restore();
+  if(B.cut){const T=now-B.cut.start;if(T>1700)B.cut=null;else{ // entrada do líder: campo escurece, faixa diagonal na cor da facção, rosto grande entra pela direita
+    const a=Math.min(1,T/200,(1700-T)/250),sl=T<260?1-T/260:T>1450?-(T-1450)/250:0,f=B.cut.f,ch=cv.height,cy=ch/2+20,h0=180,top=cy-h0/2;
+    x.save();x.fillStyle=`rgba(12,6,10,${.62*a})`;x.fillRect(0,0,cw,ch);x.globalAlpha=a;
+    x.fillStyle='#1a1220';x.beginPath();x.moveTo(-20,top+34);x.lineTo(cw+20,top-6);x.lineTo(cw+20,top+h0+6);x.lineTo(-20,top+h0+46);x.fill();
+    x.fillStyle=`hsl(${hue(f)},62%,36%)`;x.beginPath();x.moveTo(-20,top+40);x.lineTo(cw+20,top);x.lineTo(cw+20,top+h0);x.lineTo(-20,top+h0+40);x.fill();
+    x.fillStyle='rgba(255,255,255,.14)';for(let i=0;i<16;i++){const yy=top+16+(i*41)%(h0+10),ln=70+(i*53)%170;x.fillRect((i*131+T*1.8)%(cw+260)-260,yy,ln,2)} // linhas de velocidade
+    const px_=cw-290+sl*420;x.imageSmoothingEnabled=false;x.fillStyle='#1a1220';x.fillRect(px_-7,cy-132,262,262);x.fillStyle='#d8b878';x.fillRect(px_-4,cy-129,256,256);x.drawImage(fcv[f],px_,cy-125,248,248);
+    scriptT(x,POW[B.cut.k][0]+'!',56-sl*360,cy-46,58,'left');x.textAlign='left';x.font=FONT(11);x.fillStyle='#f3e7cf';x.fillText(S[f][4],62-sl*360,cy+24);
+    x.font=FONT(8);x.fillStyle='#e8dcc0';x.fillText(POW[B.cut.k][1],62-sl*360,cy+52,cw-380);x.restore()}}
   if(B.clash&&now<B.clash.until)drawClash(now);
   if(ent<1){x.fillStyle=`rgba(0,0,0,${1-ent})`;x.fillRect(0,0,cw,cv.height)}}
 const ICON=new Map, icon=(type,f,mine,ldr)=>{const k=[type,f,mine,ldr].join(); // sprite como imagem para os painéis

@@ -81,7 +81,7 @@ const SPR=new Map,CUSTOM={units:{}}; // CUSTOM: folhas de sprite carregadas de a
 function sprite(u,f,mine,fr){
   const key=[u.type,f,mine,u.ld,u.sk,fr].join();if(SPR.has(key))return SPR.get(key);
   const cu=CUSTOM.units[u.ld?'ld':u.type]||CUSTOM.units[u.type];
-  if(cu){const n=cu.frames,i=(n>=5?[0,4,1,2,3]:n>=4?[0,0,1,2,3]:[])[fr]??Math.abs(fr)%n,fw=cu.im.width/n,ih=cu.im.height,[c,g]=mk(fw,ih);g.drawImage(cu.im,i*fw,0,fw,ih,0,0,fw,ih); // folha de 4: parado, passo A, passo B, golpe
+  if(cu){const n=cu.frames,T=cu.tags,i=fr<0?-1-fr:T?{0:T.parado[0],1:T.parado[0]+1,2:T.andar[0],3:T.andar[0]+2,4:T.golpe[0]+2}[fr]??T.parado[0]:(n>=5?[0,4,1,2,3]:n>=4?[0,0,1,2,3]:[])[fr]??Math.abs(fr)%n,fw=cu.im.width/n,ih=cu.im.height,[c,g]=mk(fw,ih);g.drawImage(cu.im,i*fw,0,fw,ih,0,0,fw,ih); // folha de 4: parado, passo A, passo B, golpe
     const d=g.getImageData(0,0,fw,ih),p=d.data,H=hue(f)/360,Sa=mine?.78:.52;
     for(let k=0;k<p.length;k+=4){if(!p[k+3])continue;const[hh,ss,ll]=rgb2hsl(p[k],p[k+1],p[k+2]);if(hh>.53&&hh<.74&&ss>.3){const q=hsl2rgb(H,Sa*Math.min(1,ss+.2),ll);p[k]=q[0];p[k+1]=q[1];p[k+2]=q[2]}}
     g.putImageData(d,0,0);if(u.ld&&fhd[f]){g.clearRect(10,0,22,18);g.drawImage(fhd[f],6,0,36,38,10,-3,28,30)} // comandante: rosto, cabelo e chapéu do líder
@@ -123,5 +123,11 @@ function sprite(u,f,mine,fr){
   const[o,og]=mk(52,48);[[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy])=>og.drawImage(t,dx,dy)); // contorno fino de 1 px
   og.globalCompositeOperation='source-in';og.fillStyle=O;og.fillRect(0,0,52,48);og.globalCompositeOperation='source-over';og.drawImage(t,0,0);
   SPR.set(key,o);return o}
+// animações do Aseprite: etiqueta + tempo decorrido viram o quadro da folha (negativo = índice direto); sem etiquetas, usa o quadro antigo fb
+const cuOf=u=>CUSTOM.units[u.ld?'ld':u.type]||CUSTOM.units[u.type];
+const animLen=(u,st)=>{const cu=cuOf(u),T=cu?.tags?.[st];return T?cu.dur.slice(T[0],T[1]+1).reduce((s,v)=>s+v,0):0};
+function animFr(u,st,ms,fb){const cu=cuOf(u),T=cu?.tags?.[st];if(!T)return fb;
+  const[a,b]=T,tot=animLen(u,st);let t=st=='parado'||st=='andar'?((ms%tot)+tot)%tot:Math.max(0,Math.min(ms,tot-1));
+  for(let i=a;i<=b;i++){t-=cu.dur[i];if(t<0)return -1-i}return -1-b}
 const hatch=col=>{const[c,g]=mk(9,9);g.fillStyle=col;for(let k=0;k<9;k++)g.fillRect(k,8-k,2,1);return x.createPattern(c,'repeat')};
 const HATCH=[hatch('rgba(255,246,200,.75)'),hatch('rgba(255,70,50,.85)')];
