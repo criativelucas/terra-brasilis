@@ -130,10 +130,10 @@ function draw(){
     x.fillStyle='#22140c';x.fillRect(bx-8,by+18,16,11);x.fillStyle='#f6ecc4';x.fillRect(bx-6,by+22,12,6);x.fillStyle='#b3312a';x.fillRect(bx-7,by+19,14,4);x.fillStyle='#3a2413';x.fillRect(bx-1,by+25,3,3); // capital
     if(port[i]){const ax=bx+11,ay=by+16;x.fillStyle='#22140c';x.fillRect(ax-5,ay-2,11,13);x.fillStyle='#9fd0ff';x.fillRect(ax,ay,1,9);x.fillRect(ax-2,ay+1,5,1);x.fillRect(ax-3,ay+7,7,1);x.fillRect(ax-3,ay+6,1,1);x.fillRect(ax+3,ay+6,1,1)} // âncora
     x.fillStyle='#120a1c';x.fillRect(bx-1,by,2,28);
-    const LH=Math.round(TS*1.45)+6;x.fillStyle=owner[i]==me?'#1d3fa8':'#22140c';x.fillRect(rx,fb,w,LH);
+    const LH=Math.round(TS*1.45)+6,mineT=owner[i]==me;x.fillStyle='#2a1810';x.fillRect(rx-1,fb-1,w+2,LH+2);x.fillStyle=mineT?'#4d3238':'#efe3c6';x.fillRect(rx,fb,w,LH);x.fillStyle=mineT?'rgba(255,230,180,.18)':'rgba(255,255,255,.6)';x.fillRect(rx,fb,w,1); // plaquinha: pergaminho, ou laca se for sua
     x.fillStyle=`hsl(${hue(owner[i])},70%,${CFG.cb?40:55}%)`;x.fillRect(left?rx+w-11:rx,fb,11,LH);emblem(x,(left?rx+w-11:rx)+2,fb+(LH-7)/2|0,owner[i],'#fff'); // faixa com emblema da facção
-    if(i==sel||i==hov){x.strokeStyle='#fff';x.lineWidth=2;x.strokeRect(rx,fb,w,LH)}
-    x.font=FONT(TS);x.fillStyle=owner[i]==me&&moved.has(i)?'#9aa':'#fff';x.fillText(t,rx+(left?4:14),fb+2);
+    if(i==sel||i==hov){x.strokeStyle='#f08a3a';x.lineWidth=2;x.strokeRect(rx-1,fb-1,w+2,LH+2)}
+    x.font=FONT(TS);x.fillStyle=mineT?(moved.has(i)?'#a89880':'#f3e7cf'):'#3a2a1f';x.fillText(t,rx+(left?4:14),fb+2);
     if(f==me&&danger(i)){const ax=rx-12,ay=fb+1,on=CFG.calm||(now/400|0)%2;x.fillStyle='#22140c';x.beginPath();x.moveTo(ax+6,ay-2);x.lineTo(ax+14,ay+14);x.lineTo(ax-2,ay+14);x.fill(); // em perigo
       x.fillStyle=on?'#ff3b30':'#b3312a';x.beginPath();x.moveTo(ax+6,ay+1);x.lineTo(ax+12,ay+12);x.lineTo(ax,ay+12);x.fill();x.fillStyle='#fff';x.fillRect(ax+5,ay+4,2,5);x.fillRect(ax+5,ay+10,2,2)}
     for(let k=0;k<fort[i];k++){x.fillStyle='#22140c';x.fillRect(rx+1+k*9,fb-9,8,8);x.fillStyle='#ffd23f';x.fillRect(rx+2+k*9,fb-6,6,5);x.fillRect(rx+2+k*9,fb-8,2,2);x.fillRect(rx+6+k*9,fb-8,2,2)}

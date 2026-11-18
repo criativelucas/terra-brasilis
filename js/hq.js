@@ -165,17 +165,16 @@ function drawHQ(){
   x.textBaseline='top';x.textAlign='center';HQ.bub=[];
   if(!zm)SPOTS.forEach((sp,k)=>{const hot=HQ.hov==sp.k,[cx,cy]=P(...sp.at),bh=hot?34:20,by=cy-sp.up*2+Math.sin(now/400+k)*4-(hot?14:0),w=(x.font=FONT(8),Math.ceil(Math.max(x.measureText(sp.n.toUpperCase()).width,hot?x.measureText(sp.s).width:0))+18),R=ROOMS.find(r=>r.k==sp.k);
     if(hot&&R){x.strokeStyle='#ffd23f';x.lineWidth=4;x.beginPath();[[0,0],[6,0],[6,6],[0,6]].forEach(([da,db],i)=>{const p=P(R.a+da,R.b+db,3);i?x.lineTo(...p):x.moveTo(...p)});x.closePath();x.stroke()}
-    x.fillStyle='#070a1a';x.fillRect(cx-w/2-4,by-4,w+8,bh+8);x.fillStyle=hot?'#ffd23f':'#d4a640';x.fillRect(cx-w/2-2,by-2,w+4,bh+4);
-    const lg=x.createLinearGradient(0,by,0,by+bh);lg.addColorStop(0,hot?'#3e53a8':'#24326e');lg.addColorStop(1,hot?'#26346f':'#141c42');x.fillStyle=lg;x.fillRect(cx-w/2,by,w,bh);
-    x.fillStyle=hot?'#ffd23f':'#d4a640';x.beginPath();x.moveTo(cx-8,by+bh+2);x.lineTo(cx+8,by+bh+2);x.lineTo(cx,by+bh+13);x.fill();
-    x.fillStyle=hot?'#ffd23f':'#ffe9a8';x.font=FONT(8);x.fillText(sp.n.toUpperCase(),cx,by+3);if(hot){x.fillStyle='#c9d2f5';x.fillText(sp.s,cx,by+18)}
+    x.fillStyle='#3b2618';x.beginPath();x.moveTo(cx-9,by+bh);x.lineTo(cx+9,by+bh);x.lineTo(cx,by+bh+13);x.fill(); // balão de pergaminho com rabicho
+    parch(x,cx-w/2-4,by-4,w+8,bh+8,9);if(hot){x.strokeStyle='#f08a3a';x.lineWidth=2;rr(x,cx-w/2-4,by-4,w+8,bh+8,9);x.stroke()}
+    x.fillStyle='#3a2a1f';x.font=FONT(8);x.fillText(sp.n,cx,by+1);if(hot){x.fillStyle='#6e5843';x.fillText(sp.s,cx,by+17)}
     if(!zm)HQ.bub.push([sp.k,cx-w/2,by,w,bh+13])});
   x.restore();
   if(ip<.55){const o=ip/.55*420;[[-o,0],[405+o,1]].forEach(([dx,k])=>{x.fillStyle='#6b4524';x.fillRect(dx,0,405,610);x.fillStyle='#4a2c17'; // portão abrindo
     for(let t=0;t<405;t+=45)x.fillRect(dx+t,0,4,610);x.fillStyle='#2f2f36';x.fillRect(dx,120,405,16);x.fillRect(dx,470,405,16);
     x.fillStyle='#8a8f98';for(let t=20;t<405;t+=45){x.fillRect(dx+t,124,6,6);x.fillRect(dx+t,474,6,6)}x.fillStyle='#e0b030';x.fillRect(dx+(k?18:375),290,12,28)})}
-  {const lg=x.createLinearGradient(0,576,0,610);lg.addColorStop(0,'#24326e');lg.addColorStop(1,'#111939');x.fillStyle=lg;x.fillRect(0,576,cv.width,34);x.fillStyle='#d4a640';x.fillRect(0,576,cv.width,2)}x.fillStyle='#ffd23f';x.font=FONT(10);x.textAlign='center';x.textBaseline='top';
-  x.fillText('QUARTEL-GENERAL DE '+S[me][4].toUpperCase(),405,584)}
+  lac(x,-6,572,cv.width+12,44,0);x.textBaseline='top';
+  scriptT(x,'Quartel-general de '+S[me][4],405,578,22)}
 const hqSpot=e=>{ // balão clicado, senão sala sob o cursor, torre ou portão
   const r=cv.getBoundingClientRect(),mx=(e.clientX-r.left)*810/r.width,my=(e.clientY-r.top)*610/r.height,hb=(HQ.bub||[]).find(q=>mx>=q[1]&&mx<=q[1]+q[3]&&my>=q[2]&&my<=q[2]+q[4]);
   if(hb)return hb[0];

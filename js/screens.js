@@ -22,7 +22,7 @@ const OPT={tac:['Batalhas',['Sempre táticas','Só nos ataques','Automáticas']]
   cb:['Modo daltônico',['Desligado','Ligado']],confirm:['Confirmar fim do turno',['Não','Sim']]};
 let confirmNew=false;
 function drawMenu(focus){
-  $('menuBox').innerHTML=`<h2>◆ PAUSA ◆</h2>
+  $('menuBox').innerHTML=`<h2>Pausa</h2>
     <label class="opt" for="mus"><span>Música</span><input type="range" id="mus" min="0" max="1" step="0.1" value="${CFG.mus}"></label>
     <label class="opt" for="vol"><span>Efeitos</span><input type="range" id="vol" min="0" max="1" step="0.1" value="${CFG.vol}"></label>`+
     Object.entries(OPT).map(([k,[nome,vals]])=>`<div class="opt"><span>${nome}</span><button data-c="${k}">‹ ${vals[CFG[k]]} ›</button></div>`).join('')+
@@ -110,7 +110,7 @@ function dipHTML(f,where){ // cartão de diplomacia com um líder rival; where='
 const traitTxt=i=>({atk:`+${S[i][6]*100}% ataque`,def:`+${S[i][6]*100}% defesa`,gold:`+${S[i][6]} ouro por turno`,rec:'recrutamento pela metade'})[S[i][5]];
 const scr=h=>{$('screen').hidden=!h;if(h){$('card').innerHTML=h;$('card').scrollTop=0;$('card').querySelector('button.end,button')?.focus()}};
 let pickI=ix.RJ,scnI=0,EVT=null;
-const goalTxt=(sc,f)=>{const g=SCN[sc].play?.[f];return g?`Domine ${g.map(i=>S[i][0]).join(', ')}`:'Unifique os ${N} ${TW}'};
+const goalTxt=(sc,f)=>{const g=SCN[sc].play?.[f];return g?`Domine ${g.map(i=>S[i][0]).join(', ')}`:`Unifique os ${N} ${TW}`};
 function showTitle(){const sv=savedInfo(),camp=TKEY!='brasil';
   scr(`<img class="logo" src="assets/logo.png" alt="Terra Brasilis" width="880" height="579">${camp?`<h2>${TH.nome} · ${TH.ano}</h2>`:''}<p class="c">${TH.title}</p>
     ${sv?`<button data-s="cont" class="end">Continuar</button><p class="c">${sv}</p>`:''}

@@ -2,7 +2,17 @@
 const $=id=>document.getElementById(id),cv=$('map'),x=cv.getContext('2d');
 const hue=f=>f*137.508%360, px=i=>[(S[i][2]-X0)/D*C,(Y0-S[i][3])/D*C];
 const mk=(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');g.imageSmoothingEnabled=false;return[c,g]};
-const FONT=n=>`600 ${Math.round(n*1.45)}px "Pixelify Sans",sans-serif`; // fonte de pixel moderna; n segue a escala antiga
+const FONT=n=>`700 ${Math.round(n*1.6)}px "Alegreya",Georgia,serif`;
+// caixas no canvas no tema de crônica: pergaminho, laca escura e letreiro caligráfico
+const rr=(g,X,Y,w,h,r)=>{g.beginPath();g.roundRect(X,Y,w,h,Math.max(0,r))};
+function parch(g,X,Y,w,h,r=12){g.save();g.shadowColor='rgba(0,0,0,.45)';g.shadowBlur=10;g.shadowOffsetY=4;g.fillStyle='#3b2618';rr(g,X,Y,w,h,r);g.fill();g.restore();
+  const gr=g.createLinearGradient(0,Y,0,Y+h);gr.addColorStop(0,'#f6ecd4');gr.addColorStop(1,'#dcc9a2');g.fillStyle=gr;rr(g,X+2,Y+2,w-4,h-4,r-2);g.fill();
+  g.lineWidth=1;g.strokeStyle='#6b4a2e';rr(g,X+2.5,Y+2.5,w-5,h-5,r-2);g.stroke();g.strokeStyle='rgba(168,135,90,.6)';g.lineWidth=1.5;rr(g,X+6,Y+6,w-12,h-12,r-5);g.stroke()}
+function lac(g,X,Y,w,h,r=10){g.save();g.shadowColor='rgba(0,0,0,.5)';g.shadowBlur=8;g.shadowOffsetY=3;g.fillStyle='#140c0e';rr(g,X,Y,w,h,r);g.fill();g.restore();
+  const gr=g.createLinearGradient(0,Y,0,Y+h);gr.addColorStop(0,'#5a3a41');gr.addColorStop(1,'#2a1a1f');g.fillStyle=gr;rr(g,X+1,Y+1,w-2,h-2,r-1);g.fill();
+  g.strokeStyle='#b8955a';g.lineWidth=1.5;rr(g,X+3.5,Y+3.5,w-7,h-7,r-3);g.stroke()}
+function scriptT(g,t,X,Y,n,al='center',mw){g.font=`italic 800 ${n}px "Alegreya",Georgia,serif`;g.textAlign=al;g.lineJoin='round';g.lineWidth=Math.max(3,n/5);g.strokeStyle='#3a1a0c';g.strokeText(t,X,Y,mw);
+  const gr=g.createLinearGradient(0,Y,0,Y+n*1.1);gr.addColorStop(0,'#ffd88a');gr.addColorStop(.75,'#f08a3a');g.fillStyle=gr;g.fillText(t,X,Y,mw)} // fonte de pixel moderna; n segue a escala antiga
 CFG.q=2;CFG.big=0;CFG.cb=0;CFG.confirm=1;CFG.calm=matchMedia('(prefers-reduced-motion: reduce)').matches?1:0; // q: qualidade dos efeitos; calm: efeitos fortes reduzidos
 try{Object.assign(CFG,JSON.parse(localStorage.getItem('tb-cfg')||'{}'))}catch{}
 const applyCfg=()=>{document.body.classList.toggle('big',!!CFG.big)};applyCfg();
