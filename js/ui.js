@@ -26,7 +26,7 @@ function ui(){
   if(over)h+=`<h2>${over}</h2><button data-a="new">Novo jogo</button>`;
   else if(me<0)h+=`<p>Escolha no mapa ou na galeria o líder da sua partida. Cada ${TW1} tem vantagem própria.</p>`;
   if(sel>=0){const i=sel,f=owner[i],mine=f==me&&!over;
-    h+=`<div class="who">${img(i,S[i][4])}<div><h2>${S[i][1]}</h2><p><b>${S[i][4]}</b></p><p>${S[i][7]}: ${traitTxt(i)}</p></div></div>
+    h+=`<div class="who">${img(i,S[i][4])}<div><h2>${S[i][1]}</h2><p><b>${S[i][4]}</b></p><p>${S[i][7]}: ${traitTxt(i)}</p><button data-a="enc" data-i="${i}" class="mini" data-help="Quem foi ${esc(S[i][4])} de verdade, e por que tem essa vantagem">Ficha histórica</button></div></div>
       <div class="chips"><span>${I('swords')}Tropas ${cnt('t'+i,troops[i])}</span><span>${gl('renda',I('coin')+'Renda '+inc(i))}</span><span>${gl('def',I('shield')+'Defesa +'+Math.round(defOf(i)*100)+'%')}</span>
         <span>${gl('recruta','Recruta: '+cost(i)+' ouro')}</span><span>${BIO[BOF[i]].nome}</span>${xp[i].some(v=>lvl(v))?`<span>${gl('xp','Regimentos '+xp[i].map(lvl).join('·'))}</span>`:''}${port[i]?`<span>${gl('porto',I('anchor')+'Porto')}</span>`:''}${ELITE[S[i][0]]?`<span>${gl('elite','★ '+ELITE[S[i][0]][0])}</span>`:''}${fort[i]?`<span>${gl('forte','Forte nível '+fort[i])}</span>`:''}${danger(i)?`<span class="warn">${gl('perigo',I('warn')+'Em perigo')}</span>`:''}</div>
       <div class="own">${img(f)}<span>Domínio: ${f==me?'você':S[f][4]+' ('+S[f][0]+')'}</span></div>`;
@@ -97,7 +97,8 @@ const onPanel=e=>{const b=e.target.closest('button');if(!b||cam||aiShow)return;c
   if(a=='bundo'&&B.undo){const{u,x:ux,y:uy}=B.undo;u.x=ux;u.y=uy;u.moved=u.done=false;B.selU=u;B.undo=null}
   if(a=='start'){me=sel;say(`${S[me][4]} ergue a bandeira em ${S[me][1]}`);scr()}
   if(a=='rec'){tutEv('rec');pushU();const n=+b.dataset.n;troops[sel]+=n;gold[me]-=n*cost(sel)}
-  if(a=='dip'){dipAct(b.dataset.k,+b.dataset.f)?sfx.win():sfx.lose()}
+  if(a=='dip'){const ok=dipAct(b.dataset.k,+b.dataset.f);ok?sfx.win():sfx.lose();if(ok&&b.dataset.k=='ally')storyAlly(+b.dataset.f)}
+  if(a=='enc')return showEnc(+b.dataset.i);
   if(a=='port'){pushU();gold[me]-=5;buildPort(sel);note(`Porto construído em ${S[sel][1]}`)}
   if(a=='fort'){pushU();gold[me]-=fcost();fort[sel]++;note(`Forte nível ${fort[sel]} em ${S[sel][1]}`)}
   if(a=='march'){marching=!marching;if(marching)tutEv('march')}
@@ -144,8 +145,8 @@ function battleCmd(s){if(!B||B.busy||!s||s.done||s.hp<=0)return;const tg=alive(1
     ...(!B.pw[B.ps]?[[POW[pk][0],'bpow','',false,`Poder do líder, uma vez por batalha: ${POW[pk][1]}`]]:[]),
     ...(!B.rl[B.ps]?[['Brado','brally','',false,'+40% de dano em todas as suas unidades nesta rodada']]:[]),
     ['Esperar','bwait','',false,'Encerra a vez desta unidade'],
-    ['Cancelar','bcancel','',false,s.moved&&B.undo?'Volta a unidade para onde estava':'Fecha o menu']],OX+s.x*CS+CS,OY+s.y*CS+CS/2,tg?'batk':'bwait')}
-function mapCmd(i){const c=cost(i),g=gold[me],can=!moved.has(i)&&troops[i]>1,[px0,py0]=proj(...px(i));
+    ['Cancelar','bcancel','',false,s.moved&&B.undo?'Volta a unidade para onde estava':'Fecha o menu']],OX+s.x*CS+CS,OY+s.y*CS+CS/2,tg?'batk':'bwait');tutEv('bcmd')}
+function mapCmd(i){tutEv('menu');const c=cost(i),g=gold[me],can=!moved.has(i)&&troops[i]>1,[px0,py0]=proj(...px(i));
   openCmd([['Marchar / Atacar','march','',!can,can?'Escolha um vizinho para onde as tropas vão':'Estas tropas já marcharam, ou só resta a guarnição'],
     [`Recrutar +1 · ${c} ouro`,'rec','data-n="1"',g<c,`Uma tropa a mais em ${S[i][1]}`],
     [`Recrutar máximo · +${Math.floor(g/c)}`,'rec',`data-n="${Math.floor(g/c)}"`,g<c,'Gasta todo o ouro em tropas aqui'],
@@ -155,12 +156,12 @@ function mapCmd(i){const c=cost(i),g=gold[me],can=!moved.has(i)&&troops[i]>1,[px
     ['Fechar','mclose','',false,'']],px0,py0)}
 cmdEl.addEventListener('click',onPanel);
 document.addEventListener('keydown',e=>{if(cmdEl.hidden)return;const bs=[...cmdEl.querySelectorAll('button:not(:disabled)')],i=bs.indexOf(document.activeElement);
-  if(e.key=='ArrowDown'||e.key=='ArrowUp'){e.preventDefault();e.stopImmediatePropagation();bs[(i+(e.key=='ArrowDown'?1:bs.length-1))%bs.length]?.focus();sfx.sel()}
+  if(e.key=='ArrowDown'||e.key=='ArrowUp'){e.preventDefault();e.stopImmediatePropagation();bs[(i+(e.key=='ArrowDown'?1:bs.length-1))%bs.length]?.focus();sfx.tick()}
   else if(e.key=='Escape'){e.preventDefault();e.stopImmediatePropagation();const c=cmdEl.querySelector('[data-a=bcancel],[data-a=mclose]');c?c.click():closeCmd()}
   else if(e.key=='Enter')e.stopImmediatePropagation()},true);
 
 // ---------- painel de batalha: ficha da unidade e do terreno ----------
-function statCard(u){const f=u.side?B.was:B.af,mine=u.side==B.ps,weakT=Object.keys(BEATS).find(k=>BEATS[k]==u.type),strT=BEATS[u.type];
+function statCard(u){const f=u.side?B.was:B.af,mine=u.side==B.ps,weakT=Object.keys(BEATS).find(k=>BEATS[k]==CL(u.type)),strT=BEATS[CL(u.type)];
   return`<div class="stat"><img class="sp" src="${icon(u.type,f,mine,u.ld)}" alt=""><div class="sd"><b>${nmOf(u)}${u.ld?' · Comandante':''}</b>
     <small>${mine?'Sua tropa':'Tropa inimiga'}${u.lv?` · nível ${u.lv}`:''}${u.done&&mine?' · já agiu':''}</small>
     <div class="hp ${mine?'me':'foe'}" data-help="Vida: cada ponto é uma tropa"><i style="width:${Math.round(u.hp/u.max*100)}%"></i><span>${u.hp}/${u.max}</span></div>
@@ -199,4 +200,9 @@ function plaque(kind){const el=$('plaque');if(!el||me<0)return;
   el.hidden=false;el.style.animation='none';void el.offsetWidth;el.style.animation='';clearTimeout(plaque.t);plaque.t=setTimeout(()=>el.hidden=true,kind=='ai'?1300:2300)}
 $('plaque').addEventListener('click',()=>$('plaque').hidden=true);
 [['councilBtn','scroll','Conselho','Conselho: conselheiros sugerem ações para este turno (V)'],['armyBtn','swords','Exército','Visão geral de todos os seus territórios (X)'],['campBtn','flag','Campanha','Objetivos e andamento da campanha (C)'],['menuBtn','menu','Menu','Pausa, opções e salvamentos (Esc)']]
-  .forEach(([id,ic,t,h])=>{$(id).innerHTML=I(ic)+t;$(id).dataset.help=h});
+  .forEach(([id,ic,t,h])=>{$(id).innerHTML=I(ic)+'<span>'+t+'</span>';$(id).dataset.help=h});
+// toque: segurar o dedo mostra a informação (como passar o mouse) sem agir
+let lpT=null,lpOn=false;
+cv.addEventListener('touchstart',e=>{const t=e.touches[0];lpOn=false;clearTimeout(lpT);lpT=setTimeout(()=>{lpOn=true;cv.dispatchEvent(new MouseEvent('mousemove',{clientX:t.clientX,clientY:t.clientY}))},450)},{passive:true});
+cv.addEventListener('touchmove',()=>clearTimeout(lpT),{passive:true});
+cv.addEventListener('touchend',e=>{clearTimeout(lpT);if(lpOn){e.preventDefault();lpOn=false}},{passive:false});

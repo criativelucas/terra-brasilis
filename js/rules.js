@@ -11,7 +11,7 @@ const inc=i=>3+trait(i,'gold')+(gs(i)[2]>70?1:0)+(port[i]?1:0)+(boost[i]||0), co
 const DOC=[['log','Logística','Recrutar custa 1 de ouro em todos os seus estados',12],['eng','Engenharia','Fortes custam 2 de ouro',8],['gue','Guerrilha','+15% de defesa em todos os seus estados',10]];
 const roll=()=>.7+Math.random()*.6;
 const AGG=[[1.6,.45],[1.3,.6],[1.1,.8]],TRUCE=[8,6,4]; // por dificuldade: vantagem exigida, chance de atacar, turnos de trégua com o jogador
-let owner,troops,gold,me,sel,moved,turn,over,marching,logs,onFight=()=>{},onMarch=()=>{},tactical=null,raids=[]; // raids: ataques da IA ao jogador, à espera da defesa tática
+let owner,troops,gold,me,sel,moved,turn,over,marching,logs,onStory=()=>{},onFight=()=>{},onMarch=()=>{},tactical=null,raids=[]; // raids: ataques da IA ao jogador, à espera da defesa tática
 // cartas de estratégia: id -> [nome, tipo, custo em Comando, alvo, descrição, ícone]
 const CARDS={marcha:['Marcha forçada','mapa',1,'own','Um território seu que já marchou pode marchar de novo neste turno.','horse'],
   requis:['Requisição','mapa',1,'none','Ouro de guerra: +4, mais 1 por território seu.','coin'],
@@ -117,7 +117,7 @@ function closeTurn(){
   {const g=income(me);gold[me]+=g;onNote(`Turno ${turn+1}: +${g} ouro`)}moved.clear();turn++;marching=false;check();if(!over)onTurn()}
 function act(to){ // marcha de sel para to
   const n=+(document.getElementById('n')?.value||troops[sel]-1),from=sel;
-  if(owner[to]!=me&&pact[owner[to]]>turn){pact={};ally={};betray=turn+5;note('Traição! Pactos rompidos, vizinhos enfurecidos')}
+  if(owner[to]!=me&&pact[owner[to]]>turn){const vf=owner[to];pact={};ally={};betray=turn+5;note('Traição! Pactos rompidos, vizinhos enfurecidos');onStory('betray',vf)}
   if(owner[to]==me){troops[from]-=n;troops[to]+=n;onMarch(from,to)}
   else if(tactical&&CFG.tac<2){marching=false;return tactical(from,to,n)}
   else{const was=owner[to],won=fight(from,to,n);

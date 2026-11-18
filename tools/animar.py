@@ -1,6 +1,6 @@
 """Animações dos bonecos no Aseprite.
 
-  python3 tools/animar.py gerar      # cria assets/aseprite/<unidade>.aseprite a partir de tools/bonecos.py (sobrescreve!)
+  python3 tools/animar.py gerar [unidades]   # cria assets/aseprite/<unidade>.aseprite a partir de tools/bonecos.py (sobrescreve!)
   python3 tools/animar.py exportar   # lê os .aseprite (editados por você ou não) e gera as folhas do jogo + assets/sprites.json
 
 Cada arquivo tem uma camada e cinco etiquetas: parado, andar, golpe, dano, queda.
@@ -62,15 +62,16 @@ def anim(t):
         'andar':  [(wa, 110), (moved(idle, 0, -1), 90), (wb, 110), (moved(idle, 0, -1), 90)],
         'golpe':  [(moved(idle, -2), 150), (moved(atk, -1), 60), (spark(atk), 130), (atk, 120), (moved(idle, -1), 120)],
         'dano':   [(moved(idle, -2), 90), (moved(idle, -1), 150)],
-        'queda':  [(moved(idle, 0, 1), 120), (fallen(idle, True), 140), (fallen(idle), 260), (fallen(idle), 500)] if t not in ('cav', 'art') else
+        'queda':  [(moved(idle, 0, 1), 120), (fallen(idle, True), 140), (fallen(idle), 260), (fallen(idle), 500)] if t not in ('cav', 'art', 'lan', 'can') else
                   [(moved(idle, 0, 1), 120), (fallen(idle, True), 200), (moved(fallen(idle, True), 0, 2), 600)],  # cavalo e canhão não tombam de costas
     }
 
 
-def gerar():
+def gerar(only=None):
+    """Recria os .aseprite; com nomes (ex.: gerar can lan), só esses, sem tocar nos outros."""
     os.makedirs(ASE_DIR, exist_ok=True)
     tmp = tempfile.mkdtemp()
-    for t in BN.UNITS:
+    for t in (only or BN.UNITS):
         A = anim(t); files, durs, tags, i = [], [], [], 0
         for name in TAGS:
             a = i
@@ -110,4 +111,5 @@ def exportar():
 
 
 if __name__ == '__main__':
-    {'gerar': gerar, 'exportar': exportar}.get((sys.argv[1:] or [''])[0], lambda: sys.exit(__doc__))()
+    cmd = (sys.argv[1:] or [''])[0]
+    gerar(sys.argv[2:] or None) if cmd == 'gerar' else exportar() if cmd == 'exportar' else sys.exit(__doc__)

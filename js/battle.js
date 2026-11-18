@@ -4,12 +4,12 @@ function nextRaid(){
   const r=raids.shift();if(!r){closeTurn();return ui()}
   if(over||owner[r.to]!=me||owner[r.from]!=r.f||troops[r.from]<2)return nextRaid(); // situação mudou desde a ordem
   tactical(r.from,r.to,troops[r.from]-1,1);ui()}
-tactical=(from,to,n,ps=0)=>zoomTo(from,to,()=>{startBattle(from,to,n,ps);ui()}); // câmera fecha no alvo, depois abre o campo
+tactical=(from,to,n,ps=0)=>zoomTo(from,to,()=>capTalk(from,to,()=>{startBattle(from,to,n,ps);ui()})); // ataque a capital abre com diálogo // câmera fecha no alvo, depois abre o campo
 const startBattle=(from,to,n,ps)=>{tutEv('battle'); // ps: lado do jogador (0 ataca pela esquerda, 1 defende pela direita)
   const af=owner[from],was=owner[to],bio=BIO[BOF[to]],rnd=Math.random(),
     kind=fort[to]||to==was&&Math.random()<.35?'cerco':rnd<(bio.river?.5:.12)?'travessia':rnd>(bio.f>=18?.75:.9)?'emboscada':'campo',T=genMap(bio,kind);
-  const side=(sd,tot)=>{const k=Math.min(6,Math.ceil(tot/4)),f=sd?was:af,E=ELITE[S[sd?to:from][0]],TY=['inf','cav','ati','inf','cav','art'];
-    return Array.from({length:k},(_,j)=>({side:sd,type:TY[j],el:E&&E[1]==TY[j]?E:null,x:sd?GW-1:0,y:Math.floor((j+.5)*GH/k),
+  const side=(sd,tot)=>{const k=Math.min(6,Math.ceil(tot/4)),f=sd?was:af,E=ELITE[S[sd?to:from][0]],TY=['inf','cav','ati','inf','cav','art'],rb=RU[BOF[sd?to:from]];if(rb)TY[rb[0]]=rb[1];
+    return Array.from({length:k},(_,j)=>({side:sd,type:TY[j],el:E&&E[1]==CL(TY[j])?E:null,x:sd?GW-1:0,y:Math.floor((j+.5)*GH/k),
       j,lv:lvl(xp[sd?to:from][j]),hits:0,hp:Math.floor(tot/k)+(j<tot%k?1:0),hp0:Math.floor(tot/k)+(j<tot%k?1:0),max:Math.floor(tot/k)+(j<tot%k?1:0),moved:false,done:false,ld:!j,sk:j?'LTBDT'[(f+j)%5]:L[f][0],ph:j*.37}))};
   const bg=bake(T,bio);
   B={from,to,n,ps,af,was,T,bg,bio,kind,rl:[0,0],pw:[null,null],vil:new Map,wx:BOF[to]=='ama'&&Math.random()<.5?'rain':BOF[to]=='ser'&&Math.random()<.5?'dry':null,units:[...side(0,n),...side(1,troops[to])],round:1,selU:null,pops:[],fxs:[],parts:[],busy:false,hov:null,t0:Date.now(),nextBolt:Date.now()+2500};
@@ -35,7 +35,7 @@ function spawn(sd,n,tot){ // regimentos novos entram pela borda do próprio lado
   return made}
 function usePower(sd){ // poder único do líder, uma vez por batalha, conforme a vocação dele
   const f=sd?B.was:B.af,k=S[f][5]||'atk';B.pw[sd]={k,until:B.round+1};
-  if(!B.auto)B.cut={f,k,start:Date.now()};sfx.fanfare();mood[f]={m:'angry',until:Date.now()+5000};
+  if(!B.auto)B.cut={f,k,start:Date.now()};sfx.cut();mood[f]={m:'angry',until:Date.now()+5000};
   if(k=='def')alive(sd).forEach(u=>{u.hp+=3;u.max=Math.max(u.max,u.hp);B.pops.push({x:u.x,y:u.y,txt:'+3',until:Date.now()+900})});
   if(k=='gold')alive(sd).forEach(u=>u.moved=u.done=false);
   if(k=='rec')spawn(sd,2,Math.max(4,Math.round(B.units.filter(u=>u.side==sd).reduce((s,u)=>s+u.hp0,0)*.25)));
@@ -60,7 +60,7 @@ function reach(u){ // casas alcançáveis: [x,y,chave da casa anterior,passos]; 
   const mv=mvOf(u),best=new Map([[u.x+','+u.y,[u.x,u.y,null,0]]]),q=[[u.x,u.y,0]],occ=new Set(B.units.filter(v=>v.hp>0&&v!=u).map(v=>v.x+','+v.y));
   while(q.length){const[cx,cy,d]=q.shift();if(d>=mv)continue;
     [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy])=>{const nx=cx+dx,ny=cy+dy,k=nx+','+ny;
-      if(nx<0||ny<0||nx>=GW||ny>=GH||occ.has(k)||!pass(nx,ny))return;const nd=d+('ha'.includes(B.T[ny][nx])?2:1);
+      if(nx<0||ny<0||nx>=GW||ny>=GH||occ.has(k)||!pass(nx,ny,u))return;const nd=d+('ha'.includes(B.T[ny][nx])?2:1);
       if(nd>mv&&d>0||best.has(k)&&best.get(k)[3]<=nd)return;best.set(k,[nx,ny,cx+','+cy,nd]);q.push([nx,ny,nd])})}
   return[...best.values()]}
 const banner=(t,col='#e2a83c')=>{if(B&&!B.auto)B.banner={t,col,start:Date.now()}}; // faixa que atravessa o campo no início de cada vez
@@ -70,11 +70,11 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms)), clashLeft=()=>B&&B.clash?Math.
 const STEP=120; // ms por casa andada
 function walk(u,gx,gy,R){ // move na lógica já; o desenho percorre o caminho casa a casa
   const m=new Map(R.map(c=>[c[0]+','+c[1],c])),pts=[];let c=m.get(gx+','+gy);while(c){pts.unshift([c[0],c[1]]);c=m.get(c[2])}
-  u.x=gx;u.y=gy;u.anim={pts,start:Date.now()};const d=(pts.length-1)*STEP;B.lock=Date.now()+d;return d}
+  u.x=gx;u.y=gy;u.anim={pts,start:Date.now()};if(pts.length>1&&(u.type=='cav'||u.type=='lan'))sfx.hooves();const d=(pts.length-1)*STEP;B.lock=Date.now()+d;return d}
 function hit(a,t,back){ // aplica o dano na hora; a cena de combate é só a encenação do que já aconteceu
   const ha0=a.hp,ht0=t.hp,d=Math.min(t.hp,Math.max(1,Math.round(est(a,t,back)*roll())));t.hp-=d;a.hits++;a.atkT=t.hurtT=Date.now();(B.rings=B.rings||[]).push({x:t.x,y:t.y,start:Date.now()});
   a.lunge={dx:Math.sign(t.x-a.x),dy:Math.sign(t.y-a.y),until:Date.now()+180};t.flash=Date.now()+220;
-  B.pops.push({x:t.x,y:t.y,txt:'-'+d,until:Date.now()+800});sfx.hit();
+  B.pops.push({x:t.x,y:t.y,txt:'-'+d,until:Date.now()+800});sfx.strike(a.type,dist(a,t)>1);
   B.fxs.push({a:[a.x,a.y],t:[t.x,t.y],shot:dist(a,t)>1,start:Date.now()});puff(OX+t.x*CS+CS/2,OY+t.y*CS+CS/2-6,'rgba(255,230,120,A)',8,150);if(t.hp<=0)puff(OX+t.x*CS+CS/2,OY+t.y*CS+CS-10,'rgba(214,190,140,A)',10,60);B.shake=Date.now()+160;if(t.hp<=0)t.dead=Date.now()+200;
   if(back)return d;
   a.done=true;const d1=t.hp>0&&t.type!='art'&&dist(a,t)<=rgOf(t)?hit(t,a,true):0;
@@ -130,11 +130,14 @@ async function aiSide(sd,ms){
     B.pops.push({x:ldr.x,y:ldr.y,txt:'BRADO!',until:Date.now()+1100});sfx.win();await sleep(500);if(B!==b0)return}
   for(const u of alive(sd)){
     if(B!==b0||bOver())return;
-    const pri=p=>dist(u,p)-(BEATS[u.type]==p.type?1.5:0)-(p.ld?.5:0),t=alive(1-sd).sort((p,q)=>pri(p)-pri(q))[0]; if(u.hp<=0||!t)continue; // prefere quem ela vence e o comandante
+    const pri=p=>dist(u,p)*.9-(beats(u,p)?1.5:0)-(p.ld?2:0)-(est(u,p)>=p.hp?3:0)-(1-p.hp/p.max)*2,t=alive(1-sd).sort((p,q)=>pri(p)-pri(q))[0]; if(u.hp<=0||!t)continue; // prefere quem ela vence e o comandante
     const br=sd==1&&B.kind=='travessia'&&!inR(u,t)?bridgeNear(u):null;
     if(br&&alive(0).some(e=>e.x<br[0])){burnBridge(u,br);await wait();continue} // defensor corta a passagem
     if(!inR(u,t)&&gateFor(u)){gateHit(u);await wait();continue} // atacante arromba o portão
-    const goal=sd==0&&B.gate?.hp>0&&!inR(u,t)?B.gate:t,rg=rgOf(u),far=c=>Math.abs(Math.abs(c[0]-goal.x)+Math.abs(c[1]-goal.y)-(rg>1&&goal==t?2:1))-('fvh'.includes(B.T[c[1]][c[0]])?.6:0); // fica à distância de tiro e busca abrigo
+    if(u.ld&&u.hp<u.max*.6&&alive(1-sd).some(e=>dist(u,e)<=3)&&!(inR(u,t)&&est(u,t)>=t.hp)){ /* comandante ferido recua para longe e para o abrigo */
+      const R=reach(u),safe=c=>Math.min(...alive(1-sd).map(e=>Math.abs(e.x-c[0])+Math.abs(e.y-c[1])))+('fvh'.includes(B.T[c[1]][c[0]])?1:0),c=[...R].sort((p,q)=>safe(q)-safe(p))[0];
+      const d=walk(u,c[0],c[1],R);await sleep(B.auto?40:d+80);if(B!==b0)return;if(inR(u,t))hit(u,t);await wait();continue}
+    const goal=sd==0&&B.gate?.hp>0&&!inR(u,t)?B.gate:t,rg=rgOf(u),far=c=>{const tl=B.T[c[1]][c[0]];return Math.abs(Math.abs(c[0]-goal.x)+Math.abs(c[1]-goal.y)-(rg>1&&goal==t?2:1))-('fvh'.includes(tl)?.9:0)-(tl=='v'&&B.vil.get(c[0]+','+c[1])!==sd?1.2:0)+(rg>1?alive(1-sd).filter(e=>rgOf(e)<2&&Math.abs(e.x-c[0])+Math.abs(e.y-c[1])<=2).length*.7:0)}; // fica à distância de tiro e busca abrigo
     if(!inR(u,t)&&(!u.ld||dist(u,t)<=4)){ // comandante só se mexe com o inimigo perto
      const R=reach(u),pr=sd==0&&B.pr&&!(B.gate?.hp>0)&&R.find(c=>c[0]==B.pr.x&&c[1]==B.pr.y),c=pr||[...R].sort((p,q)=>far(p)-far(q))[0]; // corre para a praça se puder
       const d=walk(u,c[0],c[1],R);await sleep(B.auto?40:d+80);if(B!==b0)return} // no automático não espera a caminhada
@@ -153,7 +156,7 @@ async function bEnd(auto){
     if(B.ps==0)prCheck();roundEnd();
     B.round++;B.units.forEach(u=>u.moved=u.done=false);if(!auto&&!bOver())banner(`Rodada ${B.round}. É a sua vez.`);if(B.round==4&&!bOver())reinforce()}while(auto&&!bOver());
   B.busy=false;bOver()?bFinish():ui()}
-function bFinish(){tutEv('bdone');closeCmd();
+function bFinish(){tutEv('bdone');closeCmd();const stg=$('stage');stg.classList.remove('fade');void stg.offsetWidth;stg.classList.add('fade');
   const{from,to,n,was,af,ps,kind}=B,a=total(0),d=total(1),won=(B.taken||!ld(1))&&ld(0),e=ps?af:was,wonP=ps?!won:won; // won = atacante venceu
   const loss=sd=>Math.max(0,B.units.filter(u=>u.side==sd).reduce((s,u)=>s+u.hp0,0)-total(sd)),lvUp=[],
     best=B.units.filter(u=>u.side==ps&&u.hits).sort((p,q)=>q.hits-p.hits)[0],vg=2*[...B.vil.values()].filter(v=>v==ps).length,
@@ -295,7 +298,7 @@ function drawBattle(){
     if(s&&t&&inR(s,t)){ // previsão: dano médio e revide
       const d0=Math.min(t.hp,Math.max(1,Math.round(est(s,t)))),left=t.hp-d0,
         d1=left>0&&t.type!='art'&&dist(s,t)<=rgOf(t)?Math.max(1,Math.round(est({...t,hp:left},s,true))):0,
-        adv=BEATS[s.type]==t.type?' ▲':'',txt=`-${d0}${adv}  revide -${d1}`,w=(x.font=FONT(8),Math.ceil(x.measureText(txt).width)+48),bx=Math.min(cw-w-6,Math.max(6,X+CS/2-w/2)),by=Math.max(4,Y-50);
+        adv=beats(s,t)?' ▲':'',txt=`-${d0}${adv}  revide -${d1}`,w=(x.font=FONT(8),Math.ceil(x.measureText(txt).width)+48),bx=Math.min(cw-w-6,Math.max(6,X+CS/2-w/2)),by=Math.max(4,Y-50);
       parch(x,bx-3,by-3,w+6,36,10);
       x.drawImage(fcv[s.side?B.was:B.af],bx+3,by+3,24,24);
       x.fillStyle='#3a2a1f';x.font=FONT(8);x.textAlign='left';x.fillText(txt,bx+34,by+7)}}

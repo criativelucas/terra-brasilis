@@ -29,16 +29,17 @@ function drawMenu(focus){
       <label class="opt" for="vol"><span>Efeitos sonoros</span><input type="range" id="vol" min="0" max="1" step="0.1" value="${CFG.vol}"></label>`:'')+
     MTABS[menuTab][1].map(opt).join('')+
     (menuTab=='acess'?`<p class="keys"><b>Teclado</b><br><kbd>E</kbd> fim do turno · <kbd>M</kbd> marchar · <kbd>R</kbd> recrutar · <kbd>F</kbd> fortificar · <kbd>Q</kbd> quartel · <kbd>Z</kbd> desfazer · <kbd>N</kbd> próximo · <kbd>Esc</kbd> pausa ou cancelar · setas e <kbd>Enter</kbd> no mapa e nos menus de comando</p>`:'')+
-    (menuTab=='jogo'?`${me>=0?'<button data-c="saves">Salvamentos</button>':''}<button data-c="title">Salvar e sair ao título</button><button data-c="new" class="danger">${confirmNew?'Confirmar: apagar partida':'Nova partida'}</button>`:'')+
+    (menuTab=='jogo'?`${me>=0?'<button data-c="saves">Salvamentos</button>':''}<button data-c="enc">Enciclopédia</button><button data-c="title">Salvar e sair ao título</button><button data-c="new" class="danger">${confirmNew?'Confirmar: apagar partida':'Nova partida'}</button>`:'')+
     `</div><button data-c="close" class="end">Continuar</button>`;
   $('menuBox').querySelector(`[data-c="${focus||'close'}"]`)?.focus()}
-function menu(open){confirmNew=false;$('menu').hidden=!open;if(open)drawMenu()}
+function menu(open){confirmNew=false;if(open&&$('menu').hidden)sfx.page();$('menu').hidden=!open;if(open)drawMenu()}
 $('menuBtn').addEventListener('click',()=>menu(true));
 document.addEventListener('keydown',e=>{if(e.key!='Escape')return;if(marching&&$('menu').hidden&&$('screen').hidden){marching=false;return ui()}menu($('menu').hidden)});
 $('menu').addEventListener('click',e=>{if(e.target.id=='menu')return menu(false);
   const k=e.target.closest('button')?.dataset.c;if(!k)return;sfx.sel();
   if(k=='close')return menu(false);
   if(k.startsWith('tab-')){menuTab=k.slice(4);return drawMenu(k)}
+  if(k=='enc'){menu(false);return showEnc(me>=0?me:0)}
   if(k=='saves'){menu(false);return showSaves('close')}
   if((k=='title'||(k=='new'&&confirmNew))&&HQ)closeHQ();
   if(k=='title'){B=null;raids=[];menu(false);if(me>=0)load();ui();return showTitle()} // batalha em curso é abandonada; volta ao último salvamento
@@ -94,13 +95,15 @@ const savedInfo=()=>{try{const d=JSON.parse(localStorage.getItem(SAVE));return d
 
 // ---------- telas: título, nova campanha, campanha, ajuda, evento, fim ----------
 // tutorial do primeiro jogo: cada passo avança quando o jogador faz a ação dele
-const TUT=[['rec',`Bem-vindo! Seu ${TW1} está no painel. Recrute tropas com +1, +5 ou Máx; cada tropa custa ouro.`],
-  ['march','Clique em Marchar / Atacar. As setas vermelhas mostram os vizinhos que você pode atacar.'],
-  ['battle',`Clique num ${TW1} com seta vermelha. Passe o mouse antes: o balão diz se o ataque é favorável.`],
-  ['bmove','Na batalha, clique numa unidade sua e depois numa casa hachurada para mover. Clique num inimigo para ver até onde ele vai.'],
-  ['bdone','Derrube o comandante inimigo (retrato dourado). Quando todas agirem, a rodada passa sozinha. Automático resolve rápido.'],
-  ['end','Clique em Fim do turno: a IA joga e você recebe ouro.'],
-  ['hq','Abra o Quartel-General para treinar tropas, adotar doutrinas e fazer diplomacia. Bom jogo!']];
+const TUT=[['menu',`Bem-vindo! Clique no seu ${TW1} no mapa (plaquinha escura) para abrir o menu de comandos.`,()=>cenOf(me)],
+  ['rec','No menu, escolha Recrutar: cada tropa custa ouro. A barra de Ajuda, embaixo do mapa, explica tudo o que estiver sob o mouse.','#cmd [data-a=rec]'],
+  ['march',`Abra o menu de novo e escolha Marchar / Atacar. As rotas mostram a chance de vitória contra cada vizinho.`,()=>cenOf(me)],
+  ['battle',`Clique num ${TW1} vizinho inimigo para atacar.`,null],
+  ['bmove','Na batalha, clique numa unidade sua e depois numa casa hachurada para andar.','.ulist button:not(.done)'],
+  ['bcmd','Depois de andar, o menu ao lado da unidade pede a ação: Atacar, Esperar ou o poder do líder.','#cmd button:not(:disabled)'],
+  ['bdone','Derrube o comandante inimigo (retrato dourado). Quando todas as suas unidades agirem, a rodada passa sozinha.','[data-a=bend]'],
+  ['end','Clique em Fim do turno: a IA joga e você recebe ouro.','[data-a=end]'],
+  ['hq','Abra o Quartel-General para doutrinas, generais e diplomacia. A Ficha histórica de cada líder conta quem ele foi. Bom jogo!','[data-a=hq]']];
 let tut=-1;
 const tutStart=()=>{let seen=false;try{seen=localStorage.getItem('tb-tut')}catch{}if(!seen)tut=0};
 function tutEv(ev){if(tut<0)return;const k=TUT.findIndex((s,i)=>i>=tut&&s[0]==ev);if(k<0)return;tut=k+1;
@@ -109,11 +112,11 @@ function tutBox(){const el=$('tut');el.hidden=tut<0||!!HQ;if(tut>=0)el.innerHTML
 function dipHTML(f,where){ // cartão de diplomacia com um líder rival; where='hq' para os botões da Chancelaria
   const st=pact[f]>turn?(ally[f]>turn?`Aliado até o turno ${ally[f]}`:`Pacto até o turno ${pact[f]}`):angry[f]>turn?'Hostil: recusou tributo':betray>turn?'Desconfia de você: traidor':border(f).length?'Vizinho sem acordo':'Sem fronteira com você';
   const bt=(k,label)=>{const why=dipState(k,f);return`<button ${where=='hq'?'data-s="hq-dip"':'data-a="dip"'} data-k="${k}" data-f="${f}" ${why?'disabled':''} title="${why}">${why&&why!='Ouro insuficiente'?why:label}</button>`};
-  return`<div class="own">${img(f)}<span><b>${S[f][4]}</b> · ${nOwn(f)} ${TW}<br>${st}</span></div>`+
+  return`<div class="own">${img(f)}<span><b>${S[f][4]}</b> · ${nOwn(f)} ${TW}<br>${st}</span></div><button ${where=='hq'?`data-s="enc-${f}"`:`data-a="enc" data-i="${f}"`} class="mini">Ficha histórica</button>`+
     bt('pact',`Pacto de não agressão (${dipCost('pact')} ouro, 5 turnos)`)+bt('ally',`Aliança (${dipCost('ally')} ouro, 8 turnos)`)+bt('trib','Exigir tributo')+
     (pact[f]>turn?'<p><i>Atacar agora é traição: rompe todos os pactos e enfurece os vizinhos.</i></p>':'')}
 const traitTxt=i=>({atk:`+${S[i][6]*100}% ataque`,def:`+${S[i][6]*100}% defesa`,gold:`+${S[i][6]} ouro por turno`,rec:'recrutamento pela metade'})[S[i][5]];
-const scr=h=>{$('screen').hidden=!h;$('screen').classList.remove('title');if(h){$('card').innerHTML=h;$('card').scrollTop=0;$('card').querySelector('button.end,button')?.focus()}};
+const scr=h=>{if(h&&$('screen').hidden)sfx.page();$('screen').hidden=!h;$('screen').classList.remove('title');if(h){$('card').innerHTML=h;$('card').scrollTop=0;$('card').querySelector('button.end,button')?.focus()}};
 let pickI=ix.RJ,scnI=0,EVT=null;
 const goalTxt=(sc,f)=>{const g=SCN[sc].play?.[f];return g?`Domine ${g.map(i=>S[i][0]).join(', ')}`:`Unifique os ${N} ${TW}`};
 function showTitle(){const sv=savedInfo(),camp=TKEY!='brasil';
@@ -163,10 +166,10 @@ function showCampaign(){
     `<h3>CRÔNICA</h3><p>Turno ${turn} · ${stats.won} vitórias · ${stats.lost} derrotas · ${stats.taken} ${TW} tomados · renda ${income(me)} por turno</p>
     <button data-s="close" class="end">Voltar ao mapa</button><button data-s="help">Como jogar</button>`)}
 function showEnd(){const win=victory;win?sfx.fanfare():sfx.lose();if(win){cele={i:me,start:Date.now(),dur:6000,n:180};mood[me]={m:'smile',until:Date.now()+6e4}}
-  scr(`<h2 class="big">${win?(goal&&!owner.every(o=>o==me)?'OBJETIVO CUMPRIDO':'BRASIL UNIFICADO'):'FIM DA CAMPANHA'}</h2><div class="row c"><img class="hero" src="${face[me]}" alt=""></div>
+  scr(`<h2 class="big">${win?(goal&&!owner.every(o=>o==me)?'OBJETIVO CUMPRIDO':'BRASIL UNIFICADO'):'FIM DA CAMPANHA'}</h2>${win?`<img class="ending" src="${endCard()}" alt="">`:`<div class="row c"><img class="hero" src="${face[me]}" alt=""></div>`}
     <p class="c">${win?(goal&&!owner.every(o=>o==me)?`${S[me][4]} vence a ${SCN[scn].n}.`:`${S[me][4]} reúne ${TKEY=='brasil'?'as 27 províncias':'todos os '+TW} sob uma só bandeira.`):`O domínio de ${S[me][4]} caiu.`}</p>
-    <p class="c">${turn} turnos · ${stats.won} vitórias · ${stats.lost} derrotas · ${stats.taken} ${TW} tomados</p>
-    <button data-s="setup" class="end">Nova partida</button><button data-s="camps">Campanhas históricas</button><button data-s="close">Ver o mapa</button>`)}
+    ${win?`<p class="c endtxt">${endText()}</p>`:''}<p class="c">${turn} turnos · ${stats.won} vitórias · ${stats.lost} derrotas · ${stats.taken} ${TW} tomados</p>
+    <button data-s="setup" class="end">Nova partida</button><button data-s="camps">Campanhas históricas</button><button data-s="enc-${me}">Ficha de ${S[me][4]}</button><button data-s="close">Ver o mapa</button>`)}
 function showEvent(){ // escolha de início de turno: [título, texto, [[opção, custo em ouro, efeito]]]
   const own=owner.map((o,i)=>o==me?i:-1).filter(i=>i>=0),st=own[Math.random()*own.length|0],n=S[st][1],no=()=>{};
   const E=[['Safra de café',`Colheita farta em ${n}.`,[['Vender a safra (+6 ouro)',0,()=>gold[me]+=6],['Alimentar as tropas (+3 tropas)',0,()=>troops[st]+=3]]],
@@ -191,8 +194,9 @@ const onScr=e=>{const k=e.target.closest('button')?.dataset.s;if(!k)return;sfx.s
   else if(k=='rand'){const pl=SCN[scnI].play?Object.keys(SCN[scnI].play).map(Number):S.map((_,j)=>j);pickI=pl[Math.random()*pl.length|0];showSetup()}
   else if(k=='scn'){scnI=(scnI+1)%SCN.length;showSetup()}
   else if(k=='diff'){CFG.diff=(CFG.diff+1)%3;saveCfg();showSetup()}
-  else if(k=='go'){reset(scnI);startAs(pickI);sel=me;regionCheck(true);say(`${SCN[scnI].y}: ${S[me][4]} ergue a bandeira em ${S[me][1]}`);scr();tutStart();ui()}
+  else if(k=='go'){reset(scnI);startAs(pickI);sel=me;regionCheck(true);setTimeout(storyIntro,400);say(`${SCN[scnI].y}: ${S[me][4]} ergue a bandeira em ${S[me][1]}`);scr();tutStart();ui()}
   else if(k=='close')scr();
+  else if(k.startsWith('enc-'))showEnc(+k.slice(4));
   else if(k=='bfree'){if(bCap!=null&&gold[me]>=10){gold[me]-=10;pact[bCap]=Math.max(pact[bCap]||0,turn+4);note(`${S[bCap][4]} libertado: pacto até o turno ${turn+4}`)}bCap=null;scr();ui()}
   else if(k.startsWith('sv-')){try{localStorage.setItem(SLOT(k.slice(3)),JSON.stringify({...snap(),nome:$('svname').value.trim()||`Turno ${turn}`,quando:Date.now(),thumb:mapThumb()}));note('Partida salva')}catch{note('Não foi possível salvar: armazenamento do navegador cheio ou bloqueado')}showSaves('close')}
   else if(k.startsWith('ld-')){const d=localStorage.getItem(SLOT(k.slice(3)));if(d){localStorage.setItem(SAVE,d);if(load()){regionCheck(true);scr();note('Partida carregada');ui()}}}

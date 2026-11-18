@@ -69,6 +69,16 @@ const beep=(f,d=.08,type='square',when=0)=>{if(!CFG.vol)return;try{AC=AC||new Au
 const sfx={sel:()=>beep(660,.05),move:()=>beep(330,.07,'triangle'),hit:()=>{beep(140,.12,'sawtooth');beep(90,.16,'square',.03)},
   win:()=>[523,659,784,1047].forEach((f,i)=>beep(f,.16,'square',i*.11)),lose:()=>[392,330,262,196].forEach((f,i)=>beep(f,.22,'triangle',i*.14)),
   thunder:()=>{beep(55,.7,'sawtooth');beep(41,.9,'square',.06)},fanfare:()=>[523,659,784,1047,784,1047,1319].forEach((f,i)=>beep(f,.2,'square',i*.12))};
+// ruído filtrado: papel, lâmina, pólvora, cascos
+let NB=null;const noise=(d,f,q=1,type='bandpass',vol=.25,when=0,f2)=>{if(!CFG.vol)return;try{AC=AC||new AudioContext;if(!NB){NB=AC.createBuffer(1,AC.sampleRate,AC.sampleRate);const c=NB.getChannelData(0);for(let i=0;i<c.length;i++)c[i]=Math.random()*2-1}
+  const s=AC.createBufferSource(),fl=AC.createBiquadFilter(),g=AC.createGain(),t=AC.currentTime+when;s.buffer=NB;fl.type=type;fl.frequency.setValueAtTime(f,t);if(f2)fl.frequency.exponentialRampToValueAtTime(f2,t+d);fl.Q.value=q;
+  g.gain.setValueAtTime(CFG.vol*vol,t);g.gain.exponentialRampToValueAtTime(.001,t+d);s.connect(fl).connect(g).connect(AC.destination);s.start(t,Math.random()*.4);s.stop(t+d)}catch{}};
+Object.assign(sfx,{page:()=>{noise(.2,1400,.8,'bandpass',.22,0,500);noise(.1,3500,1,'highpass',.08,.07)},tick:()=>{beep(1400,.025,'square');beep(900,.02,'triangle',.02)},
+  sword:()=>{noise(.12,4200,6,'bandpass',.32);beep(1760,.16,'triangle');beep(2490,.12,'sine',.01)},musket:()=>{noise(.3,1100,.7,'lowpass',.55,0,180);noise(.05,3200,1,'highpass',.35)},
+  cannon:()=>{noise(.7,380,.6,'lowpass',.8,0,50);beep(55,.55,'sine');beep(41,.6,'triangle',.05)},bow:()=>{noise(.18,2200,2,'bandpass',.2,0,800);beep(330,.06,'triangle')},
+  hooves:()=>[0,.1,.24,.34,.48,.58].forEach(w=>noise(.05,650,3,'bandpass',.4,w)),
+  cut:()=>{noise(.5,300,.8,'bandpass',.3,0,3500);[392,523,659,784,1047].forEach((f,i)=>beep(f,.22,'square',.15+i*.07))},
+  strike:(t,far)=>{if(t=='art')sfx.cannon();else if(far)t=='can'?sfx.bow():sfx.musket();else{sfx.sword();if(t=='cav'||t=='lan')sfx.hooves()}beep(110,.1,'sawtooth',.02)}});
 // contadores: números de ouro e tropas sobem ou descem até o valor novo
 const CNT={},cnt=(k,v)=>`<b class="cnt" data-cnt="${k}" data-v="${v}">${CNT[k]??v}</b>`;
 setInterval(()=>document.querySelectorAll('[data-cnt]').forEach(el=>{const k=el.dataset.cnt,v=+el.dataset.v,c=CNT[k]??v;

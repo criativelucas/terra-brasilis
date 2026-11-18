@@ -24,6 +24,7 @@ PAL = {
     'C': '#d39a5c', 'B': '#9a6234', 'b': '#5e3a1e',   # madeira, couro
     'Y': '#c8844a', 'X': '#8f5428', 'Z': '#4e2c14',   # cavalo
     'F': '#fff6b0', 'f': '#ffb03a',                   # clarão
+    'Q': '#9a6540', 'E': '#b88058', 'q': '#6b4228',   # pele escura (lanceiros negros)
 }
 W, H = 26, 24  # quadro em pixels de arte (no jogo vira 52x48)
 
@@ -350,7 +351,82 @@ def ld_frames():
     return five(up, atk, LEGS)
 
 
-UNITS = {'inf': inf_frames, 'cav': cav_frames, 'ati': ati_frames, 'art': art_frames, 'ld': ld_frames}
+# ---------------------------------------------------------------- jagunço (Sertão): chapéu de couro com tachas, gibão
+JAG_HEAD = [
+    "", "",
+    "..........OOO",
+    "........OOCCBOO",
+    ".......OCBBBBBbO",
+    "......OCBGBGBGBbO",
+    ".....OOBBBBBBBBbOO",
+    "....OCBBBBBBBBBBBbO",
+    "......OHsssssssO",
+] + FACE[1:]
+JAG_BODY = [
+    "......OBUbUUUBBO",
+    ".....OBBUUbUUUBBO",
+    ".....OBUUUUbUUBBO",
+    ".....OBbUUUUbUBbO",
+    "......ObbbGbbbbO",
+]
+JAG_ATK = JAG_HEAD[:9] + ATI_ATK[9:13] + JAG_BODY
+
+
+def jag_frames():
+    return five(over(grid(JAG_HEAD + JAG_BODY), grid(ATI_GUN)), grid(JAG_ATK), LEGS_B)
+
+
+# ---------------------------------------------------------------- lanceiro (Pampa): poncho com faixa, cavalo escuro, flâmula maior
+DARK = str.maketrans('STsP', 'QEqq')
+HORSE_L = [r.translate(str.maketrans('YXZ', 'XZK')) for r in HORSE]
+RIDER_L = [r.translate(DARK) for r in RIDER]
+RIDER_L[10] = "....OVRRRRRRREO"
+LANCE_L = ["...............O", "..............OMO", "..............OMO", "..............OmRRRRO", "..............OBRRRO", "..............OBRRO", "..............OBOO"] + ["..............OBO"] * 10 + ["..............OOO"]
+RIDER_L_ATK = [r.translate(DARK) for r in RIDER_ATK]
+
+
+def lan_frames():
+    def fr(legs, dy=0, atk=False):
+        horse = over(grid(['.' * W] * 19 + legs), shift(grid(HORSE_L), 0, dy))
+        return over(horse, shift(grid(RIDER_L_ATK if atk else over(grid(RIDER_L), grid(LANCE_L))), 0, dy))
+    return [fr(HLEGS['stand']), fr(HLEGS['a']), fr(HLEGS['b'], 1), fr(HLEGS['a'], 0, True), fr(HLEGS['stand'], 1)]
+
+
+# ---------------------------------------------------------------- canoeiro (Amazônia): canoa, remo e arco
+CANOE = [''] * 14 + [
+    "..OO..............OO",
+    "..OCOOOOOOOOOOOOOOCO",
+    "...OCCCCCCCCCCCCCCO",
+    "....OBBBBBBBBBBBBO",
+    ".....ObbbbbbbbbbO",
+    "......OOOOOOOOOO",
+]
+PADDLER = [
+    "", "", "",
+    "...........OR",
+    "..........ORYO",
+    ".........OHHHHO",
+    "........OHHTSSSO",
+    "........OHSSSOSO",
+    "........OHSSSSSO",
+    ".........OsSSrO",
+    "........OVUUUUUO",
+    ".......OVUUUUUUSO",
+    ".......OuUUUUUUSO",
+    "........OuUUUUO",
+]
+PADDLE_A = [''] * 9 + ["..............OBO", "...............OBO", "................OBO", ".................OBO", "..................OBO", "...................OCO", "...................OCCO", "....................OO"]
+PADDLE_B = [''] * 9 + ["...............OBO", "...............OBO", "...............OBO", "...............OBO", "...............OBO", "...............OCO", "..............OCCO", "...............OO"]
+BOW = [''] * 7 + ["................OBO", ".................OBO", "...............SSOBmmmmMO", ".................OBO", "................OBO"]
+
+
+def can_frames():
+    def fr(paddle, dy=0):
+        return shift(over(over(grid(CANOE), grid(PADDLER)), grid(paddle)), 0, dy)
+    return [fr(PADDLE_A), fr(PADDLE_A, 1), fr(PADDLE_B), fr(BOW), fr(PADDLE_B, 1)]
+
+
+UNITS = {'inf': inf_frames, 'cav': cav_frames, 'ati': ati_frames, 'art': art_frames, 'ld': ld_frames, 'jag': jag_frames, 'lan': lan_frames, 'can': can_frames}
 
 
 def to_img(rows, scale=1):

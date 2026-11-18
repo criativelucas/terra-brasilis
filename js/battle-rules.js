@@ -1,8 +1,9 @@
 // batalha tática: grade, unidades, elite, alcance e dano
 // ---------- batalha tática: grade 14x9, atacante à esquerda ----------
 const GW=16,GH=10,CS=48,OX=21,OY=112,MAXR=14,SPD=[1.8,1,.45];
-const UT={inf:['Infantaria',3,1,1],cav:['Cavalaria',5,1,1.1],ati:['Atiradores',3,3,.7],art:['Artilharia',2,4,.9]}; // artilharia não atira em casa vizinha nem revida // nome, passos, alcance, dano
-const BEATS={inf:'cav',cav:'ati',ati:'inf'},strong=t=>BEATS[t]?UT[BEATS[t]][0]:'ninguém em especial';
+const UT={inf:['Infantaria',3,1,1],cav:['Cavalaria',5,1,1.1],ati:['Atiradores',3,3,.7],art:['Artilharia',2,4,.9],can:['Canoeiros',4,2,.8],lan:['Lanceiros',5,1,1.25],jag:['Jagunços',4,3,.75]}; // artilharia não atira em casa vizinha nem revida // nome, passos, alcance, dano
+const BEATS={inf:'cav',cav:'ati',ati:'inf'},CL=t=>({can:'ati',lan:'cav',jag:'ati'})[t]||t,beats=(a,t)=>BEATS[CL(a.type)]==CL(t.type),strong=t=>BEATS[CL(t)]?UT[BEATS[CL(t)]][0]:'ninguém em especial';
+const RU={ama:[2,'can'],pampa:[4,'lan'],sul:[4,'lan'],ser:[2,'jag']}; // tropa regional: canoeiros na Amazônia (andam na água), lanceiros no Pampa, jagunços no Sertão
 // tropa de elite de cada estado: nome, tipo que ela substitui, bônus
 const ELITE=TH.ELITE||{};
 const elTxt=e=>e[2].rng?'+1 alcance':e[2].mov?'+1 movimento':e[2].dmg?`+${Math.round(e[2].dmg*100-100)}% dano`:`+${Math.round(e[2].def*100-100)}% defesa`;
@@ -14,12 +15,12 @@ const dist=(a,b)=>Math.abs(a.x-b.x)+Math.abs(a.y-b.y), alive=s=>B.units.filter(u
 const total=s=>alive(s).reduce((a,u)=>a+u.hp,0), ld=s=>B.units.find(u=>u.side==s&&u.ld).hp>0;
 const bOver=()=>!ld(0)||!ld(1)||B.round>MAXR||!!B.taken; // B.taken: praça tomada no cerco // comandante caiu = exército debanda
 const cover=t=>'fv'.includes(B.T[t.y][t.x]);
-const est=(a,t,back)=>a.hp*.5*UT[a.type][3]*(back?.5:1)*(BEATS[a.type]==t.type?1.5:1)*(a.side?1:1+trait(B.from,'atk'))*(a.side==B.ps?1+.1*hq.tech[a.type]:1)
+const est=(a,t,back)=>a.hp*.5*UT[a.type][3]*(back?.5:1)*(beats(a,t)?1.5:1)*(a.side?1:1+trait(B.from,'atk'))*(a.side==B.ps?1+.1*hq.tech[a.type]:1)
   /(t.side?1+defOf(B.to):1)/(cover(t)?1.3:1)/(t.el?.[2].def||1)*(a.el?.[2].dmg||1)*(1+(gs(stOf(a))[0]-40)/400)*(1+.08*a.lv)
   *(B.rl[a.side]==B.round?1.4:1)*(B.amb==B.round&&a.side==B.ps&&cover(a)?1.4:1)*(a.side!=B.ps?1+.1*Math.min(3,turn/8|0):1)*(pwOn(a.side,'atk')?1.3:1)/(pwOn(t.side,'def')?1.3:1)/(B.T[t.y]?.[t.x]=='h'?1.2:1); // elite, general, nível do regimento, brado, treino da IA
 const TN={g:'Campo aberto',r:'Estrada',w:'Água',b:'Ponte: pode ser queimada',f:'Mata: +30% defesa',m:'Serra: bloqueia',v:'Vila: +30% defesa, cura 2 por rodada',
   h:'Morro baixo: custa 2 passos, +20% defesa, tiro +1',a:'Vau: custa 2 passos',W:'Muralha',D:'Portão',P:'Praça: o atacante vence se ficar nela'};
-const pass=(px_,py)=>{const t=B.T[py][px_];return!'mwW'.includes(t)&&!(t=='D'&&B.gate?.hp>0)}; // casa transitável
+const pass=(px_,py,u)=>{const t=B.T[py][px_];if(t=='w'&&u?.type=='can')return true;return!'mwW'.includes(t)&&!(t=='D'&&B.gate?.hp>0)}; // casa transitável
 const pwOn=(sd,k)=>!!B.pw?.[sd]&&B.pw[sd].k==k&&B.round<=B.pw[sd].until; // poder do líder ativo
 const POW={atk:['Carga','+2 de movimento e +30% de dano por 2 rodadas'],def:['Resistência','+3 de vida e +30% de defesa por 2 rodadas'],
   gold:['Reorganizar','todas as unidades agem de novo'],rec:['Reforços','2 regimentos novos entram no campo']};

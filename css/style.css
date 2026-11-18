@@ -213,7 +213,7 @@ body.hq canvas{width:min(100vw,calc(100vh*810/610));height:auto}
 @media (prefers-reduced-motion:no-preference){
   .shake{animation:shake .35s steps(6)}
   #vs figure:first-child{animation:inL .25s ease-out} #vs figure:last-child{animation:inR .25s ease-out}
-  #menuBox,#card{animation:pop .18s ease-out}
+  #menuBox,#card{animation:unroll .34s cubic-bezier(.2,.8,.3,1)}
   #room{animation:slide .25s ease-out}
   .toast{animation:tin .25s ease-out,tout .3s ease-in 2.35s forwards}
   #card h2.big{animation:drop .6s cubic-bezier(.3,1.4,.5,1)}
@@ -290,3 +290,50 @@ body{padding-bottom:70px}
 #screen.title{backdrop-filter:sepia(.85) saturate(.7) brightness(.8) blur(1.5px);-webkit-backdrop-filter:sepia(.85) saturate(.7) brightness(.8) blur(1.5px);
   background:radial-gradient(ellipse at center,rgba(70,45,20,.05),rgba(35,20,10,.6))}
 #screen.title #card{background:var(--grain),linear-gradient(180deg,rgba(241,230,204,.96),rgba(226,210,174,.96))}
+
+/* ---------- transições ---------- */
+@keyframes unroll{from{clip-path:inset(0 0 100% 0 round 14px);transform:translateY(-8px)}to{clip-path:inset(0 0 0 0 round 14px)}}
+#stage.fade::after{content:'';position:absolute;inset:0;z-index:8;background:#0a0608;pointer-events:none;animation:fadeout .55s ease forwards}
+@keyframes fadeout{to{opacity:0}}
+/* ---------- diálogo ---------- */
+#talk{position:absolute;inset:0;z-index:7;display:flex;flex-direction:column;justify-content:flex-end;gap:8px;padding:18px 18px 64px;background:linear-gradient(180deg,rgba(10,6,8,0) 35%,rgba(10,6,8,.62));cursor:pointer}
+.tbox{position:relative;display:flex;gap:16px;align-items:flex-start;padding:18px 22px 22px;min-height:84px;background:var(--grain),linear-gradient(180deg,var(--parch),var(--parch2));color:var(--ink);
+  border:2px solid var(--frame);border-radius:16px;box-shadow:0 0 0 1px var(--frame2),inset 0 0 0 1px rgba(255,255,255,.55),inset 0 0 0 5px rgba(168,135,90,.25),0 10px 24px rgba(0,0,0,.6)}
+.tbox.r{flex-direction:row-reverse}
+.tp{width:104px;height:104px;flex:none;margin-top:-56px;border:3px solid var(--gilt);border-radius:12px;background:#2e2a3a;image-rendering:pixelated;box-shadow:0 0 0 2px var(--frame2),0 6px 12px rgba(0,0,0,.5)}
+.tn{position:absolute;top:-18px;left:142px;padding:3px 16px;background:linear-gradient(180deg,var(--lac),var(--lac2));border:1px solid var(--gilt2);border-radius:999px;
+  font:italic 800 18px var(--display);color:var(--script);text-shadow:1px 1px 0 var(--script-edge),-1px -1px 0 var(--script-edge),1px -1px 0 var(--script-edge),-1px 1px 0 var(--script-edge)}
+.tbox.r .tn{left:auto;right:142px}
+.tt{margin:0;flex:1;font-size:19px;line-height:1.45;font-weight:600;min-height:2.9em}
+.nar .tt{font-style:italic;text-align:center}
+.tc{position:absolute;right:18px;bottom:6px;font-style:normal;color:var(--frame)}
+.tskip{align-self:center;color:#e8dcc0;font-size:13px;text-shadow:0 1px 0 #000}
+@media (prefers-reduced-motion:no-preference){.tbox{animation:pop .18s ease-out}.tc{animation:bob .6s ease-in-out infinite alternate}}
+@keyframes bob{to{transform:translateY(3px)}}
+/* ---------- ponteiro do tutorial ---------- */
+#tutPtr{position:fixed;z-index:30;width:36px;height:28px;pointer-events:none;background:no-repeat center/contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 14'%3E%3Cpath d='M1 5.5h9l-1.6-2c-.7-1 .6-2 1.5-1.2l4.6 3.9 2 .3c.8.2 1 .8 1 1.5v2.4c0 1.6-1.2 2.6-2.8 2.6H8.6c-1 0-1.6-.6-1.6-1.2H5.4c-1.1 0-1.1-1.7 0-1.7H4.9c-1.1 0-1.1-1.7 0-1.7H1C-.3 8.4-.3 5.5 1 5.5z' fill='%23fff' stroke='%232a1d14' stroke-width='1' stroke-linejoin='round'/%3E%3C/svg%3E");filter:drop-shadow(0 2px 2px rgba(0,0,0,.7))}
+@media (prefers-reduced-motion:no-preference){#tutPtr{animation:nudge .45s ease-in-out infinite alternate}}
+/* ---------- enciclopédia e final ---------- */
+.enc{display:flex;gap:14px;align-items:flex-start}.enc .hero{width:120px;height:120px;flex:none}
+#card .enc h3{margin:0;font:italic 800 24px var(--display);color:var(--frame);border:0;letter-spacing:0}
+.quote{font-size:15px;color:var(--ink2)}
+.encg{display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:4px;max-height:150px;overflow:auto;padding:3px}
+.encg button{padding:2px;clip-path:none;border-radius:6px;background:var(--parch2);border:1px solid var(--parch-edge);box-shadow:none;text-shadow:none}
+.encg button.on{box-shadow:0 0 0 2px var(--script)}.encg img{width:36px;height:36px;display:block;border-radius:4px}
+.ending{display:block;width:100%;height:auto;border:2px solid var(--frame);border-radius:10px;box-shadow:0 0 0 1px var(--gilt),0 6px 14px rgba(0,0,0,.4);image-rendering:auto}
+.endtxt{font-size:17px;font-style:italic}
+.mini{padding:3px 12px;font-size:13px;align-self:flex-start}
+/* ---------- celular e toque ---------- */
+canvas{touch-action:manipulation}
+@media (max-width:900px){
+  main{flex-direction:column}#stage{flex:none;width:100%;max-width:none;box-sizing:border-box}
+  aside{max-width:none;width:100%;box-sizing:border-box;position:static;max-height:none}
+  #bar{order:3;flex-basis:100%}header>button{padding:6px 10px;font-size:13px}
+  #act{position:static;margin:0;padding:10px 0 0;background:none;border-radius:0}
+  #cmd>button{min-height:42px}.ulist button{min-width:54px}
+  .tp{width:76px;height:76px;margin-top:-40px}.tn{left:110px}.tbox.r .tn{right:110px}.tt{font-size:16px}#talk{padding:10px 10px 56px}}
+@media (max-width:560px){
+  body{font-size:15px;padding-left:8px;padding-right:8px}header>button span{display:none}header>button .ico{margin-right:0}
+  #help{font-size:13px}#card,#menuBox{padding:14px}.slot{flex-direction:column}.slot .th{width:100%;height:auto}
+  #card h2.big{font-size:34px}.enc{flex-direction:column;align-items:center}}
+@media (pointer:coarse){button{min-height:40px}#cmd>button{min-height:46px;font-size:16px}}
