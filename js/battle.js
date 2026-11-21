@@ -52,7 +52,7 @@ function gateHit(a){ // golpe no portão do cerco: canhão rende muito, cavalari
 const gateFor=u=>u.side==0&&B.gate?.hp>0&&inR(u,B.gate);
 function prCheck(){if(B.pr&&!B.taken&&B.units.some(u=>u.side==0&&u.hp>0&&u.x==B.pr.x&&u.y==B.pr.y)){B.taken=true;banner('A praça foi tomada!','#e2a83c')}} // vale ao fim da vez do defensor
 function roundEnd(){ // vilas: quem está nela toma a vila e cura 2
-  B.vil.forEach((o,k)=>{const[gx,gy]=k.split(',').map(Number),u=B.units.find(v=>v.hp>0&&v.x==gx&&v.y==gy);if(!u)return;B.vil.set(k,u.side);
+  B.vil.forEach((o,k)=>{const[gx,gy]=k.split(',').map(Number),u=B.units.find(v=>v.hp>0&&v.x==gx&&v.y==gy);if(!u)return;if(B.vil.get(k)!==u.side){B.pops.push({x:gx,y:gy,txt:'Vila tomada!',until:Date.now()+1100});if(u.side==B.ps)sfx.win()}B.vil.set(k,u.side);
     if(u.hp<u.max){const h=Math.min(2,u.max-u.hp);u.hp+=h;B.pops.push({x:gx,y:gy,txt:'+'+h,until:Date.now()+900})}})}
 function reinforce(){ // na 4ª rodada, um vizinho do defensor manda reforços
   if(B.rf)return;B.rf=-1;const nb=adj[B.to].filter(j=>owner[j]==B.was&&j!=B.from&&troops[j]>=4).sort((a,b)=>troops[b]-troops[a])[0];if(nb==null)return;
@@ -76,7 +76,7 @@ function hit(a,t,back){ // aplica o dano na hora; a cena de combate é só a enc
   const ha0=a.hp,ht0=t.hp,d=Math.min(t.hp,Math.max(1,Math.round(est(a,t,back)*roll())));t.hp-=d;a.hits++;a.atkT=t.hurtT=Date.now();(B.rings=B.rings||[]).push({x:t.x,y:t.y,start:Date.now()});
   a.lunge={dx:Math.sign(t.x-a.x),dy:Math.sign(t.y-a.y),until:Date.now()+180};t.flash=Date.now()+220;
   B.pops.push({x:t.x,y:t.y,txt:'-'+d,until:Date.now()+800});sfx.strike(a.type,dist(a,t)>1);
-  B.fxs.push({a:[a.x,a.y],t:[t.x,t.y],shot:dist(a,t)>1,start:Date.now()});puff(OX+t.x*CS+CS/2,OY+t.y*CS+CS/2-6,'rgba(255,230,120,A)',8,150);if(t.hp<=0)puff(OX+t.x*CS+CS/2,OY+t.y*CS+CS-10,'rgba(214,190,140,A)',10,60);B.shake=Date.now()+160;if(t.hp<=0)t.dead=Date.now()+200;
+  B.fxs.push({a:[a.x,a.y],t:[t.x,t.y],shot:dist(a,t)>1,start:Date.now()});puff(OX+t.x*CS+CS/2,OY+t.y*CS+CS/2-6,'rgba(255,230,120,A)',8,150);if(t.hp<=0)puff(OX+t.x*CS+CS/2,OY+t.y*CS+CS-10,'rgba(214,190,140,A)',10,60);if(t.hp<=0&&t.ld)banner(`O comandante de ${S[t.side?B.was:B.af][4]} caiu!`,t.side==B.ps?'#d0452f':'#e2a83c');B.shake=Date.now()+160;if(t.hp<=0)t.dead=Date.now()+200;
   if(back)return d;
   a.done=true;const d1=t.hp>0&&t.type!='art'&&dist(a,t)<=rgOf(t)?hit(t,a,true):0;
   if(CFG.clash&&!B.auto)B.clash={a,t,ha0,ht0,d0:d,d1,shot:dist(a,t)>1,start:Date.now(),until:Date.now()+CLASH}}
@@ -206,6 +206,8 @@ function bClick(e){
   else if(s&&!u&&B.gate&&gx==B.gate.x&&gy==B.gate.y&&gateFor(s)){gateHit(s);B.selU=B.undo=null}
   else if(s&&!u&&!s.moved&&(R=reach(s)).some(c=>c[0]==gx&&c[1]==gy)){B.undo={u:s,x:s.x,y:s.y};const wd=walk(s,gx,gy,R);s.moved=true;sfx.move();tutEv('bmove');
     setTimeout(()=>{if(B===b0&&B.selU===s&&!s.done&&!B.busy)battleCmd(s)},wd+60)} // depois de andar, o menu de comando abre ao lado
+  else if(s&&!u&&!s.done&&gx>=0&&gy>=0&&gx<GW&&gy<GH){const t=B.T[gy][gx],why=s.moved?'Esta unidade já andou: ataque um alvo vermelho ou escolha Esperar no menu.':!pass(gx,gy,s)||(t=='D'&&B.gate?.hp>0)?`${TN[t].split(':')[0]}: não dá para entrar nesta casa.`:`Longe demais: ${nmOf(s)} anda ${mvOf(s)} casas por rodada.`; /* movimento inválido: X vermelho e o motivo */
+    B.bad={x:gx,y:gy,until:Date.now()+700,why};help(why);beep(180,.08,'square')}
   else{B.selU=null;B.peek=u&&B.peek!=u?u:null;if(u)sfx.sel()} // inimigo fora de alcance: espia o movimento dele
   if(bOver()){B.busy=true;setTimeout(()=>B===b0&&bFinish(),700+clashLeft())}
   else if(alive(B.ps).every(v=>v.done))return bEnd(); // todas as unidades agiram: a rodada passa sozinha para o inimigo
@@ -219,16 +221,19 @@ function drawUnit(u,now){
     st=u.hp<=0?['queda',now-u.dead+200]:u.atkT&&now-u.atkT<animLen(u,'golpe')?['golpe',now-u.atkT]:u.anim?['andar',now-u.anim.start]:u.hurtT&&now-u.hurtT<animLen(u,'dano')?['dano',now-u.hurtT]:['parado',u.done?0:now+u.ph*1000], // animação pela etiqueta
     sp=sprite(u,f,mine,animFr(u,st[0],st[1],k?4:u.anim?2+Math.floor(now/110)%2:u.done?0:Math.floor(now/420+u.ph)%2));
   if(an&&now-(u.dust||0)>90){u.dust=now;const tl=B.T[Math.round(vy)]?.[Math.round(vx)],wet=tl=='w'||tl=='b';puff(px_+CS/2,py+CS-8,wet?'rgba(150,205,255,A)':'rgba(214,190,140,A)',wet?4:2,wet?70:30)} // poeira ou respingo
-  x.fillStyle='rgba(0,0,0,.28)';x.fillRect(px_+CS/2-18+hop/2,py+CS-9,36-hop,6);
-  const ql=animLen(u,'queda'),dead=u.hp<=0?Math.max(0,(now-u.dead-(ql?ql-200:0))/450):0;x.save();x.globalAlpha=u.hp<=0?Math.max(0,1-dead):u.done&&!u.anim?.6:1; // com animação de queda, só some depois de cair
+  {const fc=`hsl(${hue(f)},${mine?70:55}%,${CFG.cb?35:45}%)`,bx_=px_+CS/2,by_=py+CS-7;x.fillStyle='rgba(0,0,0,.32)';x.beginPath();x.ellipse(bx_,by_+1,20-hop/3,7,0,0,7);x.fill(); /* base na cor da facção */
+    if(u.hp>0){x.globalAlpha=.5;x.fillStyle=fc;x.beginPath();x.ellipse(bx_,by_,18-hop/3,6,0,0,7);x.fill();x.globalAlpha=1;x.strokeStyle=fc;x.lineWidth=2;x.beginPath();x.ellipse(bx_,by_,18-hop/3,6,0,0,7);x.stroke()}
+    if(mine&&!u.done&&u.hp>0&&!B.busy&&!B.prep){const p=(Math.sin(now/260+u.ph*3)+1)/2;x.strokeStyle=`rgba(255,240,170,${.35+.55*p})`;x.lineWidth=2;x.beginPath();x.ellipse(bx_,by_,21+p*2,8+p,0,0,7);x.stroke()}}
+  const ql=animLen(u,'queda'),dead=u.hp<=0?Math.max(0,(now-u.dead-(ql?ql-200:0))/450):0;x.save();x.globalAlpha=u.hp<=0?Math.max(0,1-dead):u.done&&!u.anim&&!('filter' in x)?.6:1;if(u.done&&!u.anim&&u.hp>0&&'filter' in x)x.filter='saturate(.2) brightness(.85)'; // com animação de queda, só some depois de cair
   if(face<0){x.translate(px_+CS/2+39,py+CS-74-hop+(ql?0:dead*14));x.scale(-1,1)}else x.translate(px_+CS/2-39,py+CS-74-hop+(ql?0:dead*14));
   x.drawImage(sp,0,0,78,72);
   if(u.flash>now){x.globalCompositeOperation='lighter';x.drawImage(sp,0,0,78,72);x.globalCompositeOperation='source-over'}
   x.restore();
   if(u.hp<=0)return;
   if(u.ld){const bx=u.side?px_+CS-24:px_-2;x.fillStyle='#22140c';x.fillRect(bx-3,py-23,30,30);x.fillStyle='#ffd23f';x.fillRect(bx-2,py-22,28,28);x.drawImage(fcv[f],bx,py-20,24,24)}
-  x.font=FONT(8);const t=''+u.hp,w=Math.ceil(x.measureText(t).width)+8,hx=u.side?px_+1:px_+CS-w-1;x.fillStyle='#fff';x.fillRect(hx-1,py+CS-17,w+2,15);
-  x.fillStyle=mine?'#1d3fa8':'#22140c';x.fillRect(hx,py+CS-16,w,13);x.fillStyle='#fff';x.textAlign='left';x.fillText(t,hx+4,py+CS-16);
+  x.font=FONT(8);const t=''+u.hp,w=Math.max(18,Math.ceil(x.measureText(t).width)+10),hx=u.side?px_+2:px_+CS-w-2,hy=py+CS-18; /* vida: pílula na cor da facção, igual para os dois lados */
+  x.fillStyle='#1a1220';x.beginPath();x.roundRect(hx-1,hy-1,w+2,16,8);x.fill();x.fillStyle=`hsl(${hue(f)},65%,${mine?42:30}%)`;x.beginPath();x.roundRect(hx,hy,w,14,7);x.fill();
+  x.fillStyle='rgba(255,255,255,.3)';x.fillRect(hx+4,hy+1,w-8,1);x.fillStyle='#fff';x.textAlign='center';x.fillText(t,hx+w/2,hy-2);x.textAlign='left';
   if(u.el){x.fillStyle='#22140c';x.fillRect(hx+w-4,py+CS-24,9,9);x.fillStyle='#ffd23f';x.fillRect(hx+w-3,py+CS-23,7,7)} // selo de elite
   for(let k=0;k<u.lv;k++){const cx_=u.side?px_+CS-8:px_+6,cy_=py+CS-26-k*5;x.fillStyle='#22140c';x.fillRect(cx_-4,cy_-1,9,5);x.fillStyle='#ffd23f';x.fillRect(cx_-3,cy_,3,2);x.fillRect(cx_,cy_+1,1,2);x.fillRect(cx_+1,cy_,3,2)}} // divisas de nível
 function drawBattle(){
@@ -236,7 +241,7 @@ function drawBattle(){
   {const bgr=x.createRadialGradient(cw/2,0,40,cw/2,0,cv.height);bgr.addColorStop(0,'#3d2b31');bgr.addColorStop(1,'#1a1215');x.fillStyle=bgr;x.fillRect(0,0,cw,cv.height)}x.textBaseline='top';
   const ent=Math.min(1,(now-B.t0)/550),es=1+.3*Math.pow(1-ent,2); // entrada: o campo cresce e clareia
   x.save();if(es>1){x.translate(cw/2,cv.height/2);x.scale(es,es);x.translate(-cw/2,-cv.height/2)}if(B.shake>now&&CFG.shake&&!CFG.calm)x.translate((Math.random()-.5)*8,(Math.random()-.5)*8);
-  [[B.af,OX,0],[B.was,cw-OX-252,1]].forEach(([f,X,sd])=>{const L=!sd,al=L?'left':'right'; // placas dos dois lados: retrato, papel, líder e tropas
+  [[B.af,OX,0],[B.was,cw-OX-252,1]].forEach(([f,X,sd])=>{const L=!sd,al=L?'left':'right',su=[B.selU,B.peek].find(u=>u&&u.hp>0&&u.side==sd&&seen(u));if(su)return unitPlate(su,X,sd); // placas dos dois lados: retrato, papel, líder e tropas
     lac(x,X,8,252,94,12);const px_=L?X+10:X+252-10-76;x.fillStyle='#140c0e';x.fillRect(px_-3,14,82,82);x.fillStyle=sd==ps?'#e2a83c':'#9c7a44';x.fillRect(px_-2,15,80,80);x.drawImage(fcv[f],px_,17,76,76);
     const tx=L?X+98:X+252-98;scriptT(x,sd?'Defensor':'Atacante',tx,13,19,al);
     x.textAlign=al;x.font=FONT(9);x.fillStyle='#f3e7cf';x.fillText(S[f][4],tx,40,146);
@@ -274,6 +279,9 @@ function drawBattle(){
     if(s){x.strokeStyle='#fff';x.lineWidth=3;x.strokeRect(OX+s.x*CS+1.5,OY+s.y*CS+1.5,CS-3,CS-3)}}
   R.forEach(([gx,gy])=>{if(gx==s.x&&gy==s.y)return;cellBox(gx,gy,'rgba(255,246,200,.3)');cellBox(gx,gy,HATCH[0]);
     x.strokeStyle='rgba(255,246,200,.9)';x.lineWidth=1;x.strokeRect(OX+gx*CS+.5,OY+gy*CS+.5,CS-1,CS-1)});
+  if(s&&!B.prep&&!s.done){const base=R.length?R:[[s.x,s.y]],mv=new Set(base.map(c=>c[0]+','+c[1])),rg=rgOf(s),at=new Set; /* onde ela pode atacar depois de andar */
+    base.forEach(([cx,cy])=>{for(let dx=-rg;dx<=rg;dx++)for(let dy=-rg+Math.abs(dx);dy<=rg-Math.abs(dx);dy++){const ax=cx+dx,ay=cy+dy;if(ax>=0&&ay>=0&&ax<GW&&ay<GH&&!mv.has(ax+','+ay))at.add(ax+','+ay)}});
+    x.strokeStyle='rgba(255,90,60,.5)';x.lineWidth=1;at.forEach(k=>{const[gx,gy]=k.split(',').map(Number);cellBox(gx,gy,'rgba(255,80,50,.13)');x.strokeRect(OX+gx*CS+2.5,OY+gy*CS+2.5,CS-5,CS-5)})}
   const pk=B.peek&&B.peek.hp>0?B.peek:null;
   if(pk){const PR=reach(pk),rg=rgOf(pk),key=new Set(PR.map(c=>c[0]+','+c[1])); // laranja: onde o inimigo chega; contorno: onde ele alcança atirando ou golpeando
     for(let gy=0;gy<GH;gy++)for(let gx=0;gx<GW;gx++)if(!key.has(gx+','+gy)&&PR.some(c=>Math.abs(c[0]-gx)+Math.abs(c[1]-gy)<=rg)){x.strokeStyle='rgba(255,90,40,.55)';x.lineWidth=2;x.setLineDash([4,4]);x.strokeRect(OX+gx*CS+3,OY+gy*CS+3,CS-6,CS-6);x.setLineDash([])}
@@ -281,7 +289,7 @@ function drawBattle(){
     x.strokeStyle='#fff';x.lineWidth=3;x.strokeRect(OX+pk.x*CS+1.5,OY+pk.y*CS+1.5,CS-3,CS-3)}
   if(s&&!B.prep){alive(1-ps).filter(f=>inR(s,f)&&seen(f)).forEach(f=>{cellBox(f.x,f.y,'rgba(255,60,40,.25)');cellBox(f.x,f.y,HATCH[1]);
       x.strokeStyle='#ff3b30';x.lineWidth=3;x.strokeRect(OX+f.x*CS+1.5,OY+f.y*CS+1.5,CS-3,CS-3)});
-    x.strokeStyle='#fff';x.lineWidth=3;x.strokeRect(OX+s.x*CS+1.5,OY+s.y*CS+1.5,CS-3,CS-3)}
+    x.strokeStyle=`rgba(255,214,90,${.65+.35*Math.sin(now/200)})`;x.lineWidth=3;x.strokeRect(OX+s.x*CS+1.5,OY+s.y*CS+1.5,CS-3,CS-3)}
   const hv=B.hov&&!B.busy&&B.hov[0]>=0&&B.hov[1]>=0&&B.hov[0]<GW&&B.hov[1]<GH?B.hov:null;
   if(hv&&R.length){ // seta do caminho até a casa sob o cursor
     const m=new Map(R.map(c=>[c[0]+','+c[1],c]));let c=m.get(hv.join());
@@ -291,6 +299,8 @@ function drawBattle(){
         x.beginPath();pts.forEach((p,i)=>i?x.lineTo(...p):x.moveTo(...p));x.stroke();
         x.beginPath();x.moveTo(ex+dx*(hd-6),ey+dy*(hd-6));x.lineTo(ex-dx*12-dy*hd*.8,ey-dy*12+dx*hd*.8);x.lineTo(ex-dx*12+dy*hd*.8,ey-dy*12-dx*hd*.8);x.fill()})}}
   B.units.filter(u=>(u.hp>0||u.dead>now-450-animLen(u,'queda'))&&seen(u)).sort((a,b)=>a.y-b.y).forEach(u=>drawUnit(u,now));
+  if(s&&s.hp>0&&!s.anim){const bob=Math.round(Math.sin(now/180)*3),ax=OX+s.x*CS+CS/2,ay=OY+s.y*CS-(s.ld?46:32)+bob;x.fillStyle='#1a1220';x.beginPath();x.moveTo(ax-10,ay-2);x.lineTo(ax+10,ay-2);x.lineTo(ax,ay+10);x.fill();x.fillStyle='#ffd23f';x.beginPath();x.moveTo(ax-6,ay);x.lineTo(ax+6,ay);x.lineTo(ax,ay+6);x.fill()} /* seta sobre a unidade escolhida */
+  if(B.bad&&B.bad.until>now){const X=OX+B.bad.x*CS,Y=OY+B.bad.y*CS,a=(B.bad.until-now)/700;x.strokeStyle=`rgba(255,60,40,${a})`;x.lineWidth=5;x.beginPath();x.moveTo(X+12,Y+12);x.lineTo(X+CS-12,Y+CS-12);x.moveTo(X+CS-12,Y+12);x.lineTo(X+12,Y+CS-12);x.stroke()}
   B.rings=(B.rings||[]).filter(r=>now-r.start<420);B.rings.forEach(r=>{const p=(now-r.start)/420,X=OX+r.x*CS+CS/2,Y=OY+r.y*CS+CS-10; // anel de impacto no chão e faíscas
     x.strokeStyle=`rgba(255,240,200,${1-p})`;x.lineWidth=1+3*(1-p);x.beginPath();x.ellipse(X,Y,8+p*30,3+p*11,0,0,7);x.stroke();
     for(let i=0;i<8;i++){const an=i*.785,r2=10+p*34;x.fillStyle=i%2?'#ffd23f':'#fff';x.fillRect(X+Math.cos(an)*r2-2,Y-16+Math.sin(an)*r2*.6-2,4,4)}});
@@ -345,3 +355,13 @@ function drawBattle(){
 const ICON=new Map, icon=(type,f,mine,ldr)=>{const k=[type,f,mine,ldr].join(); // sprite como imagem para os painéis
   if(!ICON.has(k))ICON.set(k,sprite({type,ld:ldr,sk:L[f][0]},f,mine,0).toDataURL());return ICON.get(k)};
 
+
+function unitPlate(u,X,sd){ /* ficha da unidade escolhida na placa do lado dela: retrato, vida, movimento e alcance */
+  const L=!sd,f=u.side?B.was:B.af,mine=u.side==B.ps,al=L?'left':'right';lac(x,X,8,252,94,12);
+  const ix_=L?X+8:X+252-86;x.fillStyle='#2e2a3a';x.fillRect(ix_,15,78,80);x.fillStyle=`hsl(${hue(f)},60%,40%)`;x.fillRect(ix_,89,78,6);
+  x.save();if(L)x.drawImage(sprite(u,f,mine,0),ix_,20,78,72);else{x.translate(ix_+78,0);x.scale(-1,1);x.drawImage(sprite(u,f,mine,0),0,20,78,72)}x.restore();
+  const tx=L?X+96:X+252-96,bw=146,bx=L?tx:tx-bw;scriptT(x,nmOf(u)+(u.ld?' ★':''),tx,12,18,al,148);
+  x.fillStyle='#1a1220';x.fillRect(bx-1,39,bw+2,14);x.fillStyle='#5a2a22';x.fillRect(bx,40,bw,12);x.fillStyle=mine?'#6f9fff':'#e0583f';x.fillRect(bx,40,bw*u.hp/u.max,12);
+  x.font=FONT(7.5);x.fillStyle='#fff';x.textAlign='center';x.fillText(`${u.hp}/${u.max}`,bx+bw/2,39);
+  x.textAlign=al;x.font=FONT(8);x.fillStyle='#f3e7cf';x.fillText(`Anda ${mvOf(u)} · Alcance ${rgOf(u)}`,tx,57,148);
+  x.fillStyle='#d9c8a8';x.fillText(`${mine?'Sua tropa':'Inimiga'}${u.lv?' · nível '+u.lv:''}${u.done&&mine?' · já agiu':''}`,tx,75,148)}

@@ -31,7 +31,15 @@ const PXI={scroll:['..OOOOOO..','.OWWWWWWO.','.OWbbbbWO.','..OWWWWO..','..OWbbWO
   house:['....OO....','...ORRO...','..ORRRRO..','.ORRRRRRO.','OOOOOOOOOO','.OWWWWWWO.','.OWbbWWWO.','.OWbbWBWO.','.OWbbWWWO.','.OOOOOOOO.'],
   boot:['..OOOO....','..OBBO....','..OBBO....','..OBBO....','..OBBO....','..OBBBOOO.','.OBBBBBBO.','.OBBBBBBO.','.OOOOOOOO.','..........'],
   aim:['....OO....','..OOROOO..','.OR.RR.RO.','.O..RR..O.','ORRRRRRRRO','.O..RR..O.','.OR.RR.RO.','..OOROOO..','....OO....','..........']};
-const PXC={O:'#1a1220',W:'#f4f0e6',Y:'#f6c64a',y:'#b07a20',R:'#d4382c',B:'#9a6234',b:'#5e3a1e',G:'#c3ccd4',g:'#6d7680',U:'#6f8fff',S:'#ffd88a',K:'#2b2633'},PXU={};
+Object.assign(PXI,{r_caf:['...OOOO...','..ObbbbO..','.ObbBbbbO.','.ObbBbbbO.','.ObbbBbbO.','.ObbbBbbO.','.ObbbbBbO.','..ObbbbO..','...OOOO...','..........'],
+  r_acu:['....O.....','...ONO....','..ONnO.O..','..ONnOONO.','..ONnONnO.','..ONnONnO.','..ONnONnO.','..ONnONnO.','..ONnONnO.','..OOOOOOO.'],
+  r_bor:['....OO....','...OWWO...','..OWWWWO..','..OWWWWO..','.OWWWWWWO.','.OWWWWWwO.','.OWWWWWwO.','..OWWWwO..','...OOOO...','..........'],
+  r_our:['..........','...OOOO...','..OYYYyO..','.OYWYYYyO.','.OYYYYyyO.','.OYYYyyyO.','..OyyyyO..','...OOOO...','..........','..........'],
+  r_gad:['.O......O.','OWO....OWO','.OOBBBBOO.','..OBBBBO..','..OKBBKO..','..OBBBBO..','...ObbO...','...ObbO...','....OO....','..........'],
+  r_alg:['...OOOO...','..OWWWWO..','.OWWWWWWO.','.OWWWWWWO.','..OWWWWO..','..OnOOnO..','...OnnO...','....On....','....On....','....OO....'],
+  r_erv:['......OOO.','....OONNO.','...ONNNnO.','..ONNNnO..','.ONNNnO...','.ONNnO....','.OnnO.....','.OnO......','O.O.......','O.........'],
+  r_cac:['....O.....','...OOO....','..OyYYO...','.OyYYYYO..','.OyYRYYO..','.OyYRYYO..','.OyYRYYO..','..OyYYO...','...OOO....','..........']});
+const PXC={N:'#7fc65a',n:'#3f7a34',w:'#b9b3a8',O:'#1a1220',W:'#f4f0e6',Y:'#f6c64a',y:'#b07a20',R:'#d4382c',B:'#9a6234',b:'#5e3a1e',G:'#c3ccd4',g:'#6d7680',U:'#6f8fff',S:'#ffd88a',K:'#2b2633'},PXU={};
 const pxIcon=n=>{if(!PXU[n]){const[c,g]=mk(10,10);PXI[n].forEach((r,y)=>[...r].forEach((ch,x_)=>{if(PXC[ch]){g.fillStyle=PXC[ch];g.fillRect(x_,y,1,1)}}));PXU[n]=c.toDataURL()}return PXU[n]};
 const I=n=>`<img class="ico" src="${pxIcon(n)}" alt="">`;
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);

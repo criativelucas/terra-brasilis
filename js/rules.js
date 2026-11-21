@@ -6,7 +6,7 @@ const trait=(i,t)=>S[i][5]==t?S[i][6]:0;
 const nOwn=f=>owner.reduce((a,o)=>a+(o==f),0);
 // a IA ganha doutrinas conforme cresce: Guerrilha com 4 estados, Logística com 7
 const docOn=(f,id)=>f==me?!!hq.doc[id]:id=='gue'?nOwn(f)>=4:id=='log'?nOwn(f)>=7:false;
-const inc=i=>3+trait(i,'gold')+(gs(i)[2]>70?1:0)+(port[i]?1:0)+(boost[i]||0), cost=i=>S[i][5]=='rec'||docOn(owner[i],'log')?1:2, fcost=()=>hq.doc.eng?2:3;
+const inc=i=>3+trait(i,'gold')+(gs(i)[2]>70?1:0)+(port[i]?1:0)+(boost[i]||0)+resInc(i), cost=i=>S[i][5]=='rec'||docOn(owner[i],'log')?1:2, fcost=()=>hq.doc.eng?2:3;
 // doutrinas do quartel-general: id, nome, efeito, custo
 const DOC=[['log','Logística','Recrutar custa 1 de ouro em todos os seus estados',12],['eng','Engenharia','Fortes custam 2 de ouro',8],['gue','Guerrilha','+15% de defesa em todos os seus estados',10]];
 const roll=()=>.7+Math.random()*.6;
@@ -47,10 +47,10 @@ function playCard(id,t){const c=CARDS[id];cmd-=c[2];hand.splice(hand.indexOf(id)
   if(id=='embax'){pact[owner[t]]=Math.max(pact[owner[t]]||0,turn+4);note(`Embaixada: pacto com ${S[owner[t]][4]} até o turno ${turn+4}`)}
   if(id=='correio'){drawCards(2);note('Correio a cavalo: 2 cartas novas')}
   check()}
-let evts=[],burn=[],lastLoss=-9,onNote=()=>{},scn=0,goal=null,victory=false,fort,stats,endShown,hq,xp,port,pact,ally,trib,angry,betray,perk={},tld=[],onTurn=()=>{}; // xp: experiência dos 6 regimentos de cada estado; pact/ally/trib/angry: facção -> turno em que acaba // hq: treino por tipo de unidade, doutrinas, turno do último imposto // fort: nível do forte por estado (0-2), +20% defesa cada
+let evts=[],burn=[],lastLoss=-9,onNote=()=>{},scn=0,goal=null,victory=false,fort,stats,endShown,hq,xp,port,pact,ally,trib,angry,betray,perk={},tld=[],price={},priceOld={},onTurn=()=>{}; // xp: experiência dos 6 regimentos de cada estado; pact/ally/trib/angry: facção -> turno em que acaba // hq: treino por tipo de unidade, doutrinas, turno do último imposto // fort: nível do forte por estado (0-2), +20% defesa cada
 function reset(sc=0){scn=sc;hand=[];cmd=0;posts={com:-1,mil:-1,est:-1,dip:-1};boost=S.map(()=>0);evts=[];burn=S.map(()=>-9);lastLoss=-9;goal=null;victory=false;owner=S.map((_,i)=>i);troops=S.map(()=>4+Math.floor(Math.random()*5));gold=S.map(()=>6);
   const own=SCN[sc].own||{},bon=SCN[sc].bonus||{};for(const f in own)own[f].forEach(i=>{owner[i]=+f;troops[i]+=3+(bon[f]||0)});
-  me=-1;sel=-1;moved=new Set;turn=1;over='';marching=false;logs=[];raids=[];fort=S.map(()=>0);stats={won:0,lost:0,taken:0};endShown=false;hq={tech:{inf:0,cav:0,ati:0,art:0},doc:{},tax:0};xp=S.map(()=>[0,0,0,0,0,0]);port=S.map(()=>0);pact={};ally={};trib={};angry={};betray=0;perk={};tld=[];linkPorts()}
+  me=-1;sel=-1;moved=new Set;turn=1;over='';marching=false;logs=[];raids=[];fort=S.map(()=>0);stats={won:0,lost:0,taken:0};endShown=false;hq={tech:{inf:0,cav:0,ati:0,art:0},doc:{},tax:0};xp=S.map(()=>[0,0,0,0,0,0]);port=S.map(()=>0);pact={};ally={};trib={};angry={};betray=0;perk={};tld=[];price=Object.fromEntries(Object.keys(RESN).map(r=>[r,1]));priceOld={...price};linkPorts()}
 const lvl=v=>Math.min(3,v/2|0); // nível do regimento: a cada 2 de experiência, até 3
 function linkPorts(){portLinks=[];adj.forEach((a,i)=>{a.length=0;a.push(...ADJ0[i])});
   COAST.forEach((i,p)=>COAST.forEach((j,q)=>{if(q>p&&q-p<=4&&(port[i]||port[j])&&!adj[i].includes(j)){adj[i].push(j);adj[j].push(i);portLinks.push([i,j])}}))}
@@ -108,7 +108,17 @@ function check(){const n=owner.filter(o=>o==me).length;
 function endTurn(){evts=[];
   for(let f=0;f<N;f++)if(f!=me&&owner.includes(f))ai(f);
   if(!raids.length)closeTurn()} // com raids, a UI joga as defesas e depois fecha o turno
-function closeTurn(){
+// recursos: cada território produz um; o preço muda a cada turno; três ou mais do mesmo dono formam monopólio
+const RESN={caf:['Café',1.5,'do café'],acu:['Açúcar',1.5,'do açúcar'],bor:['Borracha',1.5,'da borracha'],our:['Ouro',2,'do ouro'],gad:['Gado e charque',1,'do charque'],alg:['Algodão',1,'do algodão'],erv:['Erva-mate',1,'da erva-mate'],cac:['Cacau',1.2,'do cacau']};
+const RES_BY={AC:'bor',AM:'bor',RR:'gad',RO:'bor',PA:'cac',AP:'our',TO:'gad',MA:'alg',PI:'gad',CE:'alg',RN:'alg',PB:'alg',PE:'acu',AL:'acu',SE:'acu',BA:'cac',MT:'gad',GO:'our',DF:'',MS:'gad',MG:'our',ES:'caf',RJ:'caf',SP:'caf',PR:'erv',SC:'erv',RS:'gad'},
+  BIO_RES={ama:'bor',ser:'gad',cer:'gad',sud:'caf',sul:'erv',mata:'acu',pampa:'gad'};
+const resOf=i=>{const c=S[i][0];return c in RES_BY?RES_BY[c]:BIO_RES[BOF[i]]||''};
+const mono=(f,r)=>owner.filter((o,j)=>o==f&&resOf(j)==r).length>=3;
+const resInc=i=>{const r=resOf(i);if(!r||!price[r])return 0;return Math.round(RESN[r][1]*price[r]*(port[i]?1.25:1))+(mono(owner[i],r)?1:0)};
+function updPrices(){priceOld={...price};for(const r in RESN){let p=price[r]||1;p+=(1-p)*.12+(Math.random()-.5)*.22;
+  if(Math.random()<.06){const up=Math.random()<.5;p*=up?1.45:.65;if(me>=0&&owner.some((o,j)=>o==me&&resOf(j)==r))note(`${up?'Alta':'Queda'} no preço ${RESN[r][2]}`)}
+  price[r]=Math.round(Math.max(.5,Math.min(2.2,p))*100)/100}}
+function closeTurn(){updPrices();
   for(const k in posts)if(posts[k]>=0&&owner[posts[k]]!=me){note(`${S[posts[k]][4]} deixou o cargo de ${POSTS[k][0]}: ${TW1} perdido`);posts[k]=-1} // cargo vago quando o território cai
   {const t=postTroops();if(t){const own=owner.map((o,i)=>o==me?i:-1).filter(i=>i>=0),b=own.find(danger)??own.find(i=>adj[i].some(j=>owner[j]!=me))??own[0];if(b!=null){troops[b]+=t;onNote(`Guerra: +${t} tropas em ${S[b][1]}`)}}}
   cmd=cmdMax();drawCards(1+(postOk('est')&&gs(posts.est)[1]>=60?1:0));
