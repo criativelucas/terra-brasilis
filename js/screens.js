@@ -49,7 +49,7 @@ $('menu').addEventListener('input',e=>{if(e.target.id=='mus'){CFG.mus=+e.target.
 
 // ---------- salvar ----------
 const SAVE='tb-save'+(TKEY=='brasil'?'':'-'+TKEY),saveOf=k=>{try{return JSON.parse(localStorage.getItem('tb-save'+(k=='brasil'?'':'-'+k)))}catch{return null}};
-const snap=()=>({hand,cmd,posts,boost,scn,owner,troops,gold,me,turn,logs,fort,stats,hq,xp,port,pact,ally,trib,angry,betray,moved:[...moved]});
+const snap=()=>({perk,tld,hand,cmd,posts,boost,scn,owner,troops,gold,me,turn,logs,fort,stats,hq,xp,port,pact,ally,trib,angry,betray,moved:[...moved]});
 function save(){if(me<0||B||raids.length)return;try{over?localStorage.removeItem(SAVE):localStorage.setItem(SAVE,JSON.stringify(snap()))}catch{}}
 // salvamentos com nome: 3 espaços por modo de jogo, além do salvamento automático
 const mapThumb=()=>{if(B||HQ)return null;const[c,g]=mk(176,132);g.drawImage(cv,0,0,cv.width,cv.height,0,0,176,132);return c.toDataURL('image/jpeg',.72)};
@@ -89,7 +89,7 @@ function showCouncil(){const c=councilNow(),postOf=i=>Object.keys(posts).find(k=
     `<div class="opt"><span>Delegar ao conselho</span><button data-s="deleg">‹ ${CFG.deleg?'Sim: escolhe sozinho':'Não'} ›</button></div><button data-s="close" class="end">Voltar ao mapa</button>`)}
 function showLog(){scr(`<h2>Crônica</h2><div class="loglist">${logs.map(l=>`<p>› ${esc(l)}</p>`).join('')||'<p>Nada aconteceu ainda.</p>'}</div><button data-s="close" class="end">Voltar</button>`)}
 function load(){try{const d=JSON.parse(localStorage.getItem(SAVE));undoS=[];summ=null;if(!d||d.owner.length!=N)return false;
-  reset(d.scn||0);({owner,troops,gold,me,turn,logs,fort,stats}=d);setGoal();moved=new Set(d.moved);sel=me;if(d.hq)hq=d.hq;hq.tech.art??=0;if(d.xp)xp=d.xp;if(d.hand){hand=d.hand;cmd=d.cmd;posts=d.posts;boost=d.boost}council=null;if(d.port)port=d.port;pact=d.pact||{};ally=d.ally||{};trib=d.trib||{};angry=d.angry||{};betray=d.betray||0;linkPorts();return true}catch{return false}}
+  reset(d.scn||0);({owner,troops,gold,me,turn,logs,fort,stats}=d);setGoal();moved=new Set(d.moved);sel=me;if(d.hq)hq=d.hq;hq.tech.art??=0;if(d.xp)xp=d.xp;if(d.hand){hand=d.hand;cmd=d.cmd;posts=d.posts;boost=d.boost}council=null;if(d.port)port=d.port;pact=d.pact||{};ally=d.ally||{};trib=d.trib||{};angry=d.angry||{};betray=d.betray||0;perk=d.perk||{};tld=d.tld||[];linkPorts();return true}catch{return false}}
 const wipe=()=>{try{localStorage.removeItem(SAVE)}catch{}};
 const savedInfo=()=>{try{const d=JSON.parse(localStorage.getItem(SAVE));return d&&`${SCN[d.scn||0].n} · ${S[d.me][4]} · turno ${d.turn} · ${d.owner.filter(o=>o==d.me).length}/${N} ${TW}`}catch{return''}};
 
@@ -181,7 +181,7 @@ function showEvent(){ // escolha de início de turno: [título, texto, [[opção
   EVT=E[Math.random()*E.length|0];sel=st;
   scr(`<h2>${EVT[0]}</h2><div class="row c"><img class="hero" src="${face[me]}" alt=""></div><p class="c">${EVT[1]}</p>`+
     EVT[2].map(([l,c],k)=>`<button data-s="ev${k}" ${gold[me]<c?'disabled':''}>${l}</button>`).join(''))}
-onTurn=()=>{if(Math.random()<.35){if(aiShow)evtDue=true;else showEvent()}}; // durante a reencenação da IA, o evento espera
+onTurn=()=>{if(storyTurn())return;if(Math.random()<.35){if(aiShow)evtDue=true;else showEvent()}}; // durante a reencenação da IA, o evento espera
 $('campBtn').addEventListener('click',()=>{if(me>=0&&!B)showCampaign()});
 const onScr=e=>{const k=e.target.closest('button')?.dataset.s;if(!k)return;sfx.sel();
   if(k=='cont'){if(load()){regionCheck(true);scr();ui()}else showSetup()}
@@ -197,6 +197,7 @@ const onScr=e=>{const k=e.target.closest('button')?.dataset.s;if(!k)return;sfx.s
   else if(k=='go'){reset(scnI);startAs(pickI);sel=me;regionCheck(true);setTimeout(storyIntro,400);say(`${SCN[scnI].y}: ${S[me][4]} ergue a bandeira em ${S[me][1]}`);scr();tutStart();ui()}
   else if(k=='close')scr();
   else if(k.startsWith('enc-'))showEnc(+k.slice(4));
+  else if(k.startsWith('perk-')){const[,kk,id]=k.split('-'),p=lastRes.perks[+kk];(perk[p.st+'-'+p.j]=perk[p.st+'-'+p.j]||[]).push(id);note(`${p.n}: ${PERKS.find(q=>q[0]==id)[1]}`);lastRes.perks.splice(+kk,1);showBRes(lastRes)}
   else if(k=='bfree'){if(bCap!=null&&gold[me]>=10){gold[me]-=10;pact[bCap]=Math.max(pact[bCap]||0,turn+4);note(`${S[bCap][4]} libertado: pacto até o turno ${turn+4}`)}bCap=null;scr();ui()}
   else if(k.startsWith('sv-')){try{localStorage.setItem(SLOT(k.slice(3)),JSON.stringify({...snap(),nome:$('svname').value.trim()||`Turno ${turn}`,quando:Date.now(),thumb:mapThumb()}));note('Partida salva')}catch{note('Não foi possível salvar: armazenamento do navegador cheio ou bloqueado')}showSaves('close')}
   else if(k.startsWith('ld-')){const d=localStorage.getItem(SLOT(k.slice(3)));if(d){localStorage.setItem(SAVE,d);if(load()){regionCheck(true);scr();note('Partida carregada');ui()}}}

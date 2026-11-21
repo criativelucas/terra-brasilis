@@ -16,6 +16,7 @@ const startBattle=(from,to,n,ps)=>{tutEv('battle'); // ps: lado do jogador (0 at
   B.forest=[];B.puddles=[];T.forEach((row,y)=>row.forEach((t,c)=>{const h=hash(c,y);if(t=='f')B.forest.push([c,y,h]);else if(t=='g'&&B.wx=='rain'&&h%6==0)B.puddles.push([c,y,h]);
     if(t=='v')B.vil.set(c+','+y,-1);if(t=='D')B.gate={x:c,y,hp:10+6*fort[to]+(to==was?4:0),max:10+6*fort[to]+(to==was?4:0)};if(t=='P')B.pr={x:c,y}}));
   banner(`${KIND[kind][0]}: ${ps?'defenda':'ataque'} ${S[to][1]}.`,ps?'#d0452f':'#e2a83c');
+  B.prep=true; /* preparação: o jogador posiciona as tropas antes da rodada 1 */
   const b0=B;let lf=0;(function loop(t){if(B!==b0)return;requestAnimationFrame(loop);if(document.hidden||t-lf<1000/[15,40,60][CFG.q]-2)return;lf=t;drawBattle()})(performance.now())};
 function bake(T,bio){ // fundo fixo do campo; refeito quando uma ponte queima
   const[bg,g]=mk(GW*CS,GH*CS);for(let y=0;y<GH;y++)for(let c=0;c<GW;c++)tile(g,T,c,y,bio);
@@ -145,7 +146,7 @@ async function aiSide(sd,ms){
     await wait()}
   if(!B.pw[sd]&&sd!=B.ps&&pk=='gold'&&press()&&B===b0&&!bOver()){usePower(sd);await sleep(B.auto?60:1750);if(B===b0)return aiSide(sd,ms)}}
 async function bEnd(auto){
-  if(B.busy)return;const b0=B;B.busy=true;B.selU=B.undo=null;B.auto=!!auto;ui();
+  if(B.busy)return;B.prep=false;const b0=B;B.busy=true;B.selU=B.undo=null;B.auto=!!auto;ui();
   await sleep(Math.max(clashLeft(),(B.lock||0)-Date.now(),0)+150);if(B!==b0)return;
   do{if(auto)await aiSide(B.ps,140);
     if(B!==b0)return;
@@ -160,25 +161,26 @@ function bFinish(){tutEv('bdone');closeCmd();const stg=$('stage');stg.classList.
   const{from,to,n,was,af,ps,kind}=B,a=total(0),d=total(1),won=(B.taken||!ld(1))&&ld(0),e=ps?af:was,wonP=ps?!won:won; // won = atacante venceu
   const loss=sd=>Math.max(0,B.units.filter(u=>u.side==sd).reduce((s,u)=>s+u.hp0,0)-total(sd)),lvUp=[],
     best=B.units.filter(u=>u.side==ps&&u.hits).sort((p,q)=>q.hits-p.hits)[0],vg=2*[...B.vil.values()].filter(v=>v==ps).length,
-    R={to,kind,e,win:wonP,l0:loss(ps),l1:loss(1-ps),vg,lv:lvUp,best:best&&`${nmOf(best)}${best.ld?' (comandante)':''}, ${best.hits} golpe${best.hits>1?'s':''}`};
+    R={perks:[],to,kind,e,win:wonP,l0:loss(ps),l1:loss(1-ps),vg,lv:lvUp,best:best&&`${nmOf(best)}${best.ld?' (comandante)':''}, ${best.hits} golpe${best.hits>1?'s':''}`};
   troops[from]-=n;
   // experiência: regimento que sobreviveu ganha 1, mais 1 se acertou golpes, mais 1 se o lado venceu
-  for(const sd of[0,1]){const st=sd?to:from,win=sd?!won:won;B.units.filter(u=>u.side==sd&&u.j>=0).forEach(u=>{if(u.hp>0){xp[st][u.j]+=1+(u.hits>0)+win;if(sd==ps&&lvl(xp[st][u.j])>u.lv)lvUp.push(`${nmOf(u)} nível ${lvl(xp[st][u.j])}`)}})}
+  for(const sd of[0,1]){const st=sd?to:from,win=sd?!won:won;B.units.filter(u=>u.side==sd&&u.j>=0).forEach(u=>{if(u.hp>0){xp[st][u.j]+=1+(u.hits>0)+win;if(sd==ps&&lvl(xp[st][u.j])>u.lv){lvUp.push(`${nmOf(u)} nível ${lvl(xp[st][u.j])}`);R.perks.push({st:sd==0&&won?to:st,j:u.j,n:nmOf(u)})}}})}
   gold[me]+=vg;bCap=null;
   if(wonP&&!ld(1-ps)){gold[me]+=10;bCap=e;R.cap=1} // general inimigo preso: resgate
   if(!ld(ps)){R.paid=Math.min(gold[me],8);gold[me]-=R.paid}
-  if(won)xp[to]=[...xp[from]];
+  if(won){xp[to]=[...xp[from]];for(let j=0;j<6;j++){const p=perk[from+'-'+j];if(p)perk[to+'-'+j]=[...p]}}
   if(won){burn[to]=turn;if(ps)lastLoss=turn;fort[to]=0;owner[to]=af;troops[to]=Math.max(1,a)}else{troops[to]=Math.max(1,d);troops[from]+=a}
   if(ps)say(won?`${S[af][4]} tomou ${S[to][0]} de você!`:`Você repeliu ${S[af][4]} em ${S[to][0]}`);
   else{say(won?`Você conquistou ${S[to][1]} de ${S[was][4]}`:a?`Recuo em ${S[to][1]}`:`Derrota em ${S[to][1]}`);moved.add(from).add(to)}
   sel=to;B=null;check();onFight(af,was,to,won);
   setTimeout(()=>{if(!over&&!B&&$('screen').hidden)showBRes(R)},1300); // depois do painel de confronto
   ps?nextRaid():ui()}
-function showBRes(R){
+let lastRes=null;
+function showBRes(R){lastRes=R;
   scr(`<h2 class="big">${R.win?'VITÓRIA':'DERROTA'}</h2><p class="c">${KIND[R.kind][0]} de ${S[R.to][1]}</p>
     <div class="row c"><img class="hero" src="${face[me]}" alt="${S[me][4]}"><img class="hero" src="${face[R.e]}" alt="${S[R.e][4]}"></div>
     <div class="chips"><span>Suas perdas: ${R.l0}</span><span>Perdas de ${S[R.e][4]}: ${R.l1}</span>${R.vg?`<span>Vilas tomadas: +${R.vg} ouro</span>`:''}</div>
-    ${R.best?`<p>★ <b>Destaque:</b> ${R.best}</p>`:''}${R.lv.length?`<p><b>Subiram de nível:</b> ${R.lv.join(', ')}</p>`:''}
+    ${R.best?`<p>★ <b>Destaque:</b> ${R.best}</p>`:''}${R.lv.length?`<p><b>Subiram de nível:</b> ${R.lv.join(', ')}</p>`:''}${R.perks.length?`<div class="perks"><b>Escolha uma melhoria para cada regimento</b>${R.perks.map((p,k)=>`<div class="pk"><span>${p.n}</span>${PERKS.map(([id,nm,d])=>`<button data-s="perk-${k}-${id}" data-help="${d}" title="${d}" ${perk[p.st+'-'+p.j]?.includes(id)?'disabled':''}>${nm}</button>`).join('')}</div>`).join('')}</div>`:''}
     ${R.cap?`<p><b>${S[R.e][4]} foi capturado!</b> Resgate de 10 ouro recebido.</p><button data-s="bfree">Libertar sem resgate: devolve os 10 ouro e firma pacto de 4 turnos</button>`:''}
     ${R.paid!=null?`<p class="warn">Seu comandante foi capturado. Resgate pago: ${R.paid} ouro.</p>`:''}
     <button data-s="close" class="end">Continuar</button>`)}
@@ -192,6 +194,10 @@ function playBattleCard(id,t){const c=CARDS[id];cmd-=c[2];hand.splice(hand.index
 function bClick(e){
   if(B.busy||clashLeft()||B.lock>Date.now())return;
   const[gx,gy]=bCell(e),b0=B;let R;
+  if(B.prep){const pu=B.units.find(v=>v.hp>0&&v.x==gx&&v.y==gy),ps0=B.selU; /* preparação: troca de lugar ou leva para uma casa da zona */
+    if(pu&&pu.side==B.ps){if(ps0&&ps0!==pu){const ax=ps0.x,ay=ps0.y;ps0.x=pu.x;ps0.y=pu.y;pu.x=ax;pu.y=ay;B.selU=null;sfx.move()}else{B.selU=pu==ps0?null:pu;sfx.sel()}}
+    else if(ps0&&!pu&&gx>=0&&gy>=0&&gx<GW&&gy<GH&&inZone([gx,gy])&&pass(gx,gy,ps0)){ps0.x=gx;ps0.y=gy;B.selU=null;sfx.move()}
+    return ui()}
   if(B.aim){const u=B.units.find(v=>v.hp>0&&v.side!=B.ps&&v.x==gx&&v.y==gy&&seen(v));if(u)playBattleCard(B.aim,u);else note('Ataque de fogo cancelado: clique numa unidade inimiga');B.aim=null;return ui()}
   const u=B.units.find(v=>v.hp>0&&v.x==gx&&v.y==gy&&seen(v)),s=B.selU;
   closeCmd();
@@ -263,7 +269,9 @@ function drawBattle(){
   if(B.kind=='emboscada'){const mine=alive(ps);x.fillStyle='rgba(6,12,24,.5)'; // neblina: só se vê perto das suas tropas
     for(let gy=0;gy<GH;gy++)for(let gx=0;gx<GW;gx++)if(!mine.some(v=>Math.abs(v.x-gx)+Math.abs(v.y-gy)<=3))x.fillRect(OX+gx*CS,OY+gy*CS,CS,CS)}
   const cellBox=(gx,gy,fill)=>{x.fillStyle=fill;x.fillRect(OX+gx*CS+1,OY+gy*CS+1,CS-2,CS-2)};
-  const R=s&&!s.moved?reach(s):[];
+  const R=s&&!s.moved&&!B.prep?reach(s):[];
+  if(B.prep){for(let gy=0;gy<GH;gy++)for(let gx=0;gx<GW;gx++)if(inZone([gx,gy])&&pass(gx,gy,s)){cellBox(gx,gy,'rgba(110,170,255,.3)');x.strokeStyle='rgba(190,220,255,.8)';x.lineWidth=1;x.strokeRect(OX+gx*CS+.5,OY+gy*CS+.5,CS-1,CS-1)}
+    if(s){x.strokeStyle='#fff';x.lineWidth=3;x.strokeRect(OX+s.x*CS+1.5,OY+s.y*CS+1.5,CS-3,CS-3)}}
   R.forEach(([gx,gy])=>{if(gx==s.x&&gy==s.y)return;cellBox(gx,gy,'rgba(255,246,200,.3)');cellBox(gx,gy,HATCH[0]);
     x.strokeStyle='rgba(255,246,200,.9)';x.lineWidth=1;x.strokeRect(OX+gx*CS+.5,OY+gy*CS+.5,CS-1,CS-1)});
   const pk=B.peek&&B.peek.hp>0?B.peek:null;
@@ -271,7 +279,7 @@ function drawBattle(){
     for(let gy=0;gy<GH;gy++)for(let gx=0;gx<GW;gx++)if(!key.has(gx+','+gy)&&PR.some(c=>Math.abs(c[0]-gx)+Math.abs(c[1]-gy)<=rg)){x.strokeStyle='rgba(255,90,40,.55)';x.lineWidth=2;x.setLineDash([4,4]);x.strokeRect(OX+gx*CS+3,OY+gy*CS+3,CS-6,CS-6);x.setLineDash([])}
     PR.forEach(([gx,gy])=>{cellBox(gx,gy,'rgba(255,140,30,.38)');x.strokeStyle='#ff8a1e';x.lineWidth=2;x.strokeRect(OX+gx*CS+1,OY+gy*CS+1,CS-2,CS-2)});
     x.strokeStyle='#fff';x.lineWidth=3;x.strokeRect(OX+pk.x*CS+1.5,OY+pk.y*CS+1.5,CS-3,CS-3)}
-  if(s){alive(1-ps).filter(f=>inR(s,f)&&seen(f)).forEach(f=>{cellBox(f.x,f.y,'rgba(255,60,40,.25)');cellBox(f.x,f.y,HATCH[1]);
+  if(s&&!B.prep){alive(1-ps).filter(f=>inR(s,f)&&seen(f)).forEach(f=>{cellBox(f.x,f.y,'rgba(255,60,40,.25)');cellBox(f.x,f.y,HATCH[1]);
       x.strokeStyle='#ff3b30';x.lineWidth=3;x.strokeRect(OX+f.x*CS+1.5,OY+f.y*CS+1.5,CS-3,CS-3)});
     x.strokeStyle='#fff';x.lineWidth=3;x.strokeRect(OX+s.x*CS+1.5,OY+s.y*CS+1.5,CS-3,CS-3)}
   const hv=B.hov&&!B.busy&&B.hov[0]>=0&&B.hov[1]>=0&&B.hov[0]<GW&&B.hov[1]<GH?B.hov:null;

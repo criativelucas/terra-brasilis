@@ -12,6 +12,7 @@ function ui(){
       obj=B.kind=='cerco'?(B.ps?'segure o portão e a praça até a última rodada':'arrombe o portão e tome a praça (bandeira)'):B.ps?'mantenha seu comandante vivo até a última rodada':'derrube o comandante inimigo';
     $('panel').innerHTML=`<h2>${B.ps?'Defesa':'Batalha'} de ${S[B.to][1]}</h2>
       <div class="chips"><span data-help="${esc(KIND[B.kind][1])}">${KIND[B.kind][0]}</span><span>Rodada ${Math.min(B.round,MAXR)}/${MAXR}</span><span>${B.bio.nome}</span>${B.wx=='rain'?'<span data-help="Chuva: tiro com 1 casa a menos de alcance">Chuva</span>':B.wx=='dry'?'<span data-help="Seca: infantaria anda 1 casa a menos">Seca</span>':''}${B.gate?`<span data-help="Vida do portão do cerco">Portão ${B.gate.hp}/${B.gate.max}</span>`:''}${pwOn(B.ps,B.pw[B.ps]?.k)?`<span>${POW[B.pw[B.ps].k][0]} ativo</span>`:''}${B.rl[B.ps]==B.round?'<span>Brado ativo</span>':''}${B.amb==B.round?'<span>Emboscada</span>':''}${B.chg==B.round?'<span>Carga</span>':''}</div>
+      ${B.prep?'<div class="summ prep"><b>Preparação</b><p>Posicione suas tropas nas casas azuis antes da primeira rodada. O inimigo já está em posição.</p><button data-a="bstart" class="end">Começar batalha ▶</button></div>':''}
       <p class="obj"><b>Objetivo:</b> ${obj}.</p>
       ${B.aim?'<p class="warn">Ataque de fogo: clique numa unidade inimiga.</p>':''}
       ${s||pk?statCard(s||pk):''}
@@ -85,6 +86,7 @@ const onPanel=e=>{const b=e.target.closest('button');if(!b||cam||aiShow)return;c
   if(a=='room')return enterRoom(b.dataset.r);
   if(a=='hqexit')return closeHQ();
   if(b.dataset.u){const u=B.units[+b.dataset.u];if(!B.busy&&!u.done)B.selU=u;return ui()}
+  if(B&&B.prep&&(a=='bstart'||a=='bend'||a=='bauto')){B.prep=false;B.selU=null;if(a=='bauto')return bEnd(true);banner('Rodada 1. É a sua vez.');tutEv('bstart');return ui()}
   if(a=='bend')return bEnd();
   if(a=='bauto')return bEnd(true);
   if(a=='brally'){B.rl[B.ps]=B.round;sfx.win()}
@@ -139,7 +141,7 @@ function openCmd(items,cx,cy,first){ /* items: [rótulo, ação, atributos, desa
   cmdEl.style.left=Math.max(6,L)+'px';cmdEl.style.top=Math.max(6,Math.min(cv.clientHeight-h-6,T))+'px';
   (cmdEl.querySelector(`[data-a=${first}]:not(:disabled)`)||cmdEl.querySelector('button:not(:disabled)'))?.focus({preventScroll:true})}
 function closeCmd(){cmdEl.hidden=true}
-function battleCmd(s){if(!B||B.busy||!s||s.done||s.hp<=0)return;const tg=alive(1-B.ps).some(f=>inR(s,f)&&seen(f))||gateFor(s),br=B.kind=='travessia'&&bridgeNear(s),pk=S[B.ps?B.was:B.af][5];
+function battleCmd(s){if(!B||B.busy||B.prep||!s||s.done||s.hp<=0)return;const tg=alive(1-B.ps).some(f=>inR(s,f)&&seen(f))||gateFor(s),br=B.kind=='travessia'&&bridgeNear(s),pk=S[B.ps?B.was:B.af][5];
   openCmd([['Atacar','batk','',!tg,tg?'Escolha um alvo marcado em vermelho':'Nenhum inimigo ao alcance daqui'],
     ...(br?[['Queimar ponte','bburn','',false,'Destrói a ponte ao lado. Gasta a ação desta unidade']]:[]),
     ...(!B.pw[B.ps]?[[POW[pk][0],'bpow','',false,`Poder do líder, uma vez por batalha: ${POW[pk][1]}`]]:[]),
@@ -163,7 +165,7 @@ document.addEventListener('keydown',e=>{if(cmdEl.hidden)return;const bs=[...cmdE
 // ---------- painel de batalha: ficha da unidade e do terreno ----------
 function statCard(u){const f=u.side?B.was:B.af,mine=u.side==B.ps,weakT=Object.keys(BEATS).find(k=>BEATS[k]==CL(u.type)),strT=BEATS[CL(u.type)];
   return`<div class="stat"><img class="sp" src="${icon(u.type,f,mine,u.ld)}" alt=""><div class="sd"><b>${nmOf(u)}${u.ld?' · Comandante':''}</b>
-    <small>${mine?'Sua tropa':'Tropa inimiga'}${u.lv?` · nível ${u.lv}`:''}${u.done&&mine?' · já agiu':''}</small>
+    <small>${mine?'Sua tropa':'Tropa inimiga'}${u.lv?` · nível ${u.lv}`:''}${u.done&&mine?' · já agiu':''}</small>${u.j>=0&&perk[stOf(u)+'-'+u.j]?.length?`<div class="chips">${perk[stOf(u)+'-'+u.j].map(id=>{const q=PERKS.find(z=>z[0]==id);return`<span data-help="${q[2]}">${q[1]}</span>`}).join('')}</div>`:''}
     <div class="hp ${mine?'me':'foe'}" data-help="Vida: cada ponto é uma tropa"><i style="width:${Math.round(u.hp/u.max*100)}%"></i><span>${u.hp}/${u.max}</span></div>
     <div class="par"><span data-help="Casas que anda por vez">${I('boot')}${mvOf(u)}</span><span data-help="Alcance do ataque, em casas">${I('aim')}${rgOf(u)}</span>${strT?`<span data-help="${esc(`Forte: causa +50% de dano em ${UT[strT][0]}`)}">▲<img src="${icon(strT,f,mine,false)}" alt="${UT[strT][0]}"></span>`:''}${weakT?`<span data-help="${esc(`Fraca: leva +50% de dano de ${UT[weakT][0]}`)}">▼<img src="${icon(weakT,f,mine,false)}" alt="${UT[weakT][0]}"></span>`:''}</div></div></div>${u.el?`<p class="elite">${I('star')}<b>${u.el[0]}</b> · ${elTxt(u.el)}</p>`:''}`}
 const DEFS={f:3,v:3,h:2},COSTS={h:2,a:2};
@@ -184,6 +186,7 @@ function cellHelp(){const[hx,hy]=B.hov||[];const t=B.T[hy]?.[hx];if(!t)return'';
 // ---------- barra de ajuda no pé do palco ----------
 const helpEl=$('helpT');let helpHover=null;
 function helpDefault(){if(HQ)return'Clique numa sala do quartel.';
+  if(B?.prep)return'Preparação: clique numa unidade sua e depois numa casa azul, ou em outra unidade para trocar. Depois, Começar batalha.';
   if(B){const s=B.selU;return B.busy?'Aguarde: o inimigo está agindo.':B.aim?'Clique numa unidade inimiga para o ataque de fogo. Esc cancela.':s?(s.moved?'Clique num alvo vermelho, ou na própria unidade para o menu.':'Mova para uma casa hachurada ou ataque um alvo vermelho. Clique de novo na unidade para o menu.'):'Escolha uma unidade sua. Clique num inimigo para ver até onde ele vai.'}
   if(me<0)return'Escolha um líder no mapa ou na galeria abaixo.';if(over)return'Partida encerrada.';
   if(aim)return`Carta ${CARDS[aim][0]}: clique num ${TW1} destacado. Esc cancela.`;
