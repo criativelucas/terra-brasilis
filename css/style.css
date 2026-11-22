@@ -420,3 +420,31 @@ body.battle #cv{touch-action:none}
 .card.ghost small{display:none}
 @media (max-width:900px){#hand.fan .card{flex-basis:64px;min-height:88px;margin:0 -4px;padding:6px 3px;transform:translateY(calc(68% + var(--y))) rotate(var(--r))}
   #hand.fan .card img{width:26px;height:26px;padding:3px}#hand.fan .card b{font-size:10px}#hand.fan .card small{display:none}#hand.fan .card .cc{width:20px;height:20px;font-size:11px}}
+/* ================= painel do estado: números grandes, grupos, ameaças, ações ================= */
+.who.sm img{width:72px;height:72px}.who.sm h2{margin:0}.who.sm p{margin:0;font-size:14px}
+button.back{align-self:flex-start;margin-bottom:-4px}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.kpi{display:flex;flex-direction:column;align-items:center;padding:6px 4px 5px;background:linear-gradient(180deg,#efe3c4,#dcc9a0);border:1px solid var(--parch-edge);border-radius:10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
+.kpi b{font:800 24px/1.05 var(--display);color:var(--frame)}.kpi span{font:700 12px var(--sc);letter-spacing:.4px;color:var(--ink2);text-transform:lowercase}
+.kpi.hot{background:linear-gradient(180deg,#f1c7b6,#dd9a82);border-color:var(--red2)}
+.chips.tchips span{font-size:14px}.chips span.gl{background:none;border:0;border-bottom:1px dotted currentColor;border-radius:0;padding:0;box-shadow:none}
+#act .row button[data-a=next]{flex:1.5}
+.box.spec p{margin:0;font-size:15px}
+.box.threat{border-left:4px solid var(--red2);background:rgba(240,196,180,.45)}
+.foes button.thr{font-size:14px;padding:3px 10px;min-height:0;background:linear-gradient(180deg,#efe3c4,#d6c398);color:var(--ink);border:1px solid var(--parch-edge);border-radius:7px;box-shadow:none}
+.foes button.thr b{font-weight:800}.foes button.thr.hot{background:linear-gradient(180deg,#f0c4b4,#d88a72);border-color:var(--red2)}
+.foes button.thr:hover{filter:brightness(1.07);transform:translateY(-1px)}
+.acts4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.acts4 button{font-size:14px;padding:7px 4px}
+@media (max-width:420px){.acts4{grid-template-columns:repeat(2,1fr)}}
+button.off{opacity:.5;filter:grayscale(.6);cursor:help}
+#log{border-top:0;padding-top:0}#log button{position:relative}
+.badge{display:inline-grid;place-items:center;min-width:18px;height:18px;margin-left:4px;padding:0 4px;border-radius:9px;background:var(--red2);color:#fff;font:700 11px/1 sans-serif;font-style:normal}
+#plaque.sum{top:46%;cursor:pointer}
+@media (prefers-reduced-motion:no-preference){#plaque.sum{animation:plqIn .35s ease both}}
+@keyframes plqIn{0%{opacity:0;transform:translate(-50%,-50%) scale(.9)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+#plaque .sumk{display:flex;gap:8px}
+#plaque .sumk div{display:flex;flex-direction:column;align-items:center;min-width:96px;padding:8px 10px;background:linear-gradient(180deg,var(--parch),var(--parch2));border:2px solid var(--frame);border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,.4)}
+#plaque .sumk b{font:800 30px/1 var(--display);color:var(--frame)}#plaque .sumk span{font:700 12px var(--sc);color:var(--ink2)}
+#plaque .sumk .hot{background:linear-gradient(180deg,#f3cfc0,#e0a48c);border-color:var(--red2)}#plaque .sumk .hot b{color:#8a2a1a}
+#plaque p small{display:block;font-weight:600;color:var(--ink2);font-size:12px}
+@media (max-width:600px){#plaque .pl{padding:6px 20px 8px}#plaque .pl b{font-size:40px}#plaque em{font-size:26px}#plaque .sumk div{min-width:72px;padding:6px}#plaque .sumk b{font-size:22px}#plaque p{font-size:13px}}
