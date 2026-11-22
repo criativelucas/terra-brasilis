@@ -367,3 +367,42 @@ body{padding-bottom:124px}
 #hand{left:max(16px,env(safe-area-inset-left,0px));width:min(816px,calc(100vw - 32px));transform:translate(0,calc(100% - 112px))}
 #hand.open{transform:translate(0,0)}
 @media (max-width:900px){#hand{left:8px;width:calc(100vw - 16px)}}
+
+/* ================= tela de jogo: sem rolagem no computador ================= */
+.col{display:flex;flex-direction:column;min-width:0}
+.view{display:flex;align-items:center;justify-content:center}
+#help{border:2px solid var(--frame);border-top:2px solid var(--gilt2);border-radius:0 0 12px 12px;margin-top:-4px}
+@media (min-width:901px){
+  html,body{height:100%}
+  body{height:100vh;box-sizing:border-box;overflow:hidden;padding:8px 12px 10px;gap:8px}
+  header{padding:4px 10px;gap:6px 10px}h1 img{height:38px}
+  main{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) clamp(300px,26vw,380px);gap:12px;align-items:stretch}
+  .col{min-height:0}.view{flex:1;min-height:0}
+  #stage{flex:none;max-width:none}
+  aside{position:static;max-width:none;max-height:none;height:100%;box-sizing:border-box;overflow:auto}
+  #hand{position:static;transform:none!important;left:auto;width:auto;max-width:none;margin-top:8px;border-radius:12px;border-bottom:2px solid var(--frame);
+    max-height:112px;overflow:hidden;transition:max-height .25s ease}
+  #hand.open{max-height:320px}
+  #act{bottom:-16px}
+}
+/* ================= estilos padronizados: um tipo de ficha, dois tamanhos de botão ================= */
+.box,.ucard,.stat,.terr,.forces,.objbar,.summ,.slot,.mk,.perks,.helpbox{background:rgba(255,255,255,.38);border:1px solid var(--parch-edge);border-radius:10px;padding:10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
+.box{display:flex;flex-direction:column;gap:6px}.box>b{font:700 13px var(--sc);letter-spacing:.5px;color:var(--ink2)}.box p{margin:0}
+.summ.prep{border-left:4px solid #6f8fff}
+#panel,.ctx,#card,#menuBox,#room{gap:10px}
+button{font-size:15px;padding:8px 14px}
+button.mini,.mini,header>button,#bar .mkt,.minor button{font-size:13px;padding:5px 12px}
+header>button{min-height:0}
+.hint{font-size:14px;color:var(--ink2);margin:0}
+.foes{display:flex;flex-wrap:wrap;gap:6px}.foes span{padding:1px 8px;border-radius:6px;background:var(--parch2);border:1px solid var(--parch-edge);font-weight:700;font-size:14px}.foes .hot{background:#f0c4b4;border-color:var(--red)}
+/* ================= seleção de líder ================= */
+#card.wide{width:min(1120px,100%)}
+.pick{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:16px;align-items:start}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:8px;max-height:62vh;overflow:auto;padding:4px}
+.pgrid button{clip-path:none;border-radius:10px;padding:5px 4px;display:flex;flex-direction:column;align-items:center;gap:3px;background:var(--grain),linear-gradient(180deg,var(--parch),var(--parch2));color:var(--ink);text-shadow:none;border:1px solid var(--parch-edge);box-shadow:none;font-size:13px}
+.pgrid button img{width:60px;height:60px;border-radius:6px}.pgrid button.on{box-shadow:0 0 0 3px var(--script),0 4px 10px rgba(0,0,0,.3);transform:translateY(-2px)}
+.pinfo{display:flex;flex-direction:column;gap:10px}.phead{display:flex;gap:12px;align-items:center}.phead .hero{width:110px;height:110px}
+.phead h3{margin:0;font:italic 800 24px var(--display);color:var(--frame);border:0}.phead p{margin:2px 0 6px}
+.rmap{width:100%;height:auto;image-rendering:pixelated;border:2px solid var(--frame);border-radius:8px;box-shadow:0 0 0 1px var(--gilt)}
+.pinfo p{margin:0}
+@media (max-width:900px){.pick{grid-template-columns:1fr}.pgrid{max-height:40vh}}

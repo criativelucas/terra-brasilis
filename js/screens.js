@@ -108,15 +108,15 @@ let tut=-1;
 const tutStart=()=>{let seen=false;try{seen=localStorage.getItem('tb-tut')}catch{}if(!seen)tut=0};
 function tutEv(ev){if(tut<0)return;const k=TUT.findIndex((s,i)=>i>=tut&&s[0]==ev);if(k<0)return;tut=k+1;
   if(tut>=TUT.length){tut=-1;try{localStorage.setItem('tb-tut','1')}catch{}}}
-function tutBox(){const el=$('tut');el.hidden=tut<0||!!HQ;if(tut>=0)el.innerHTML=`<b>Tutorial ${tut+1}/${TUT.length}</b><p>${TUT[tut][1]}</p><button data-a="tutskip">Pular tutorial</button>`}
+function tutBox(){const el=$('tut');el.hidden=tut<0||!!HQ||(typeof talkCur!='undefined'&&!!talkCur); /* a fala de abertura vem sozinha */if(tut>=0)el.innerHTML=`<b>Tutorial ${tut+1}/${TUT.length}</b><p>${TUT[tut][1]}</p><button data-a="tutskip">Pular tutorial</button>`}
 function dipHTML(f,where){ // cartão de diplomacia com um líder rival; where='hq' para os botões da Chancelaria
   const st=pact[f]>turn?(ally[f]>turn?`Aliado até o turno ${ally[f]}`:`Pacto até o turno ${pact[f]}`):angry[f]>turn?'Hostil: recusou tributo':betray>turn?'Desconfia de você: traidor':border(f).length?'Vizinho sem acordo':'Sem fronteira com você';
-  const bt=(k,label)=>{const why=dipState(k,f);return`<button ${where=='hq'?'data-s="hq-dip"':'data-a="dip"'} data-k="${k}" data-f="${f}" ${why?'disabled':''} title="${why}">${why&&why!='Ouro insuficiente'?why:label}</button>`};
-  return`<div class="own">${img(f)}<span><b>${S[f][4]}</b> · ${nOwn(f)} ${TW}<br>${st}</span></div><button ${where=='hq'?`data-s="enc-${f}"`:`data-a="enc" data-i="${f}"`} class="mini">Ficha histórica</button>`+
+  const bt=(k,label)=>{const why=dipState(k,f);return`<button ${where=='hq'?'data-s="hq-dip"':where=='scr'?'data-s="dipx"':'data-a="dip"'} data-k="${k}" data-f="${f}" ${why?'disabled':''} title="${why}">${why&&why!='Ouro insuficiente'?why:label}</button>`};
+  return`<div class="own">${img(f)}<span><b>${S[f][4]}</b> · ${nOwn(f)} ${TW}<br>${st}</span></div><button ${where=='hq'||where=='scr'?`data-s="enc-${f}"`:`data-a="enc" data-i="${f}"`} class="mini">Ficha histórica</button>`+
     bt('pact',`Pacto de não agressão (${dipCost('pact')} ouro, 5 turnos)`)+bt('ally',`Aliança (${dipCost('ally')} ouro, 8 turnos)`)+bt('trib','Exigir tributo')+
     (pact[f]>turn?'<p><i>Atacar agora é traição: rompe todos os pactos e enfurece os vizinhos.</i></p>':'')}
 const traitTxt=i=>({atk:`+${S[i][6]*100}% ataque`,def:`+${S[i][6]*100}% defesa`,gold:`+${S[i][6]} ouro por turno`,rec:'recrutamento pela metade'})[S[i][5]];
-const scr=h=>{if(h&&$('screen').hidden)sfx.page();$('screen').hidden=!h;$('screen').classList.remove('title');if(h){$('card').innerHTML=h;$('card').scrollTop=0;$('card').querySelector('button.end,button')?.focus()}};
+const scr=h=>{if(h&&$('screen').hidden)sfx.page();$('screen').hidden=!h;$('screen').classList.remove('title');$('card').classList.remove('wide');if(h){$('card').innerHTML=h;$('card').scrollTop=0;$('card').querySelector('button.end,button')?.focus()}};
 let pickI=ix.RJ,scnI=0,EVT=null;
 const goalTxt=(sc,f)=>{const g=SCN[sc].play?.[f];return g?`Domine ${g.map(i=>S[i][0]).join(', ')}`:`Unifique os ${N} ${TW}`};
 function showTitle(){const sv=savedInfo(),camp=TKEY!='brasil';
@@ -135,17 +135,26 @@ function showCamps(){ // cada campanha abre num mapa próprio, só da região da
 $('armyBtn').addEventListener('click',()=>{if(me>=0&&!B&&!HQ)showArmy()});
 $('councilBtn').addEventListener('click',()=>{if(me>=0&&!B&&!HQ&&!over)showCouncil()});
 addEventListener('hashchange',()=>location.reload()); // trocar de teatro recarrega o jogo com o mapa novo
-function showSetup(){const SC=SCN[scnI],pl=SC.play&&Object.keys(SC.play).map(Number);if(pl&&!pl.includes(pickI))pickI=pl[0];
+function showSetup(){const SC=SCN[scnI],pl=SC.play?Object.keys(SC.play).map(Number):S.map((_,j)=>j);if(!pl.includes(pickI))pickI=pl[0];
   reset(scnI);sel=pickI;const i=pickI,s=S[i],reg=REG.find(r=>r[1].includes(i)),own=owner.filter(o=>o==i).length;
-  scr(`<h2>${TKEY=='brasil'?'Dominação do Brasil':TH.nome}</h2>
-    ${SCN.length>1?`<div class="opt"><span>Cenário</span><button data-s="scn">‹ ${SC.n} (${SC.y}) ›</button></div>`:''}<p class="c">${SC.d}</p>
-    <div class="row c"><button data-s="prev" aria-label="Líder anterior">‹</button><img class="hero" src="${face[i]}" alt="${s[4]}"><button data-s="next" aria-label="Próximo líder">›</button></div>
-    <p class="c"><b>${s[4]}</b><br>${s[1]} · ${reg[0]}${own>1?` · começa com ${own} ${TW}`:''}</p>
-    <p class="c"><b>Objetivo:</b> ${goalTxt(scnI,i)}</p>
-    <p>${s[7]}: ${traitTxt(i)}<br>Terreno de batalha: ${BIO[BOF[i]].nome}<br>Fronteiras: ${adj[i].map(j=>S[j][0]).join(', ')}<br>Região completa rende +${reg[2]} ouro por turno</p>
-    <div class="opt"><span>Dificuldade</span><button data-s="diff">‹ ${OPT.diff[1][CFG.diff]} ›</button></div>
-    <button data-s="go" class="end">Iniciar</button><button data-s="rand">Sortear líder</button><button data-s="title">Voltar</button>`);
-  ui()}
+  scr(`<h2>${TKEY=='brasil'?'Escolha seu líder':TH.nome}</h2><p class="c">${SC.d}</p>
+    <div class="pick"><div class="pgrid" role="listbox" aria-label="Líderes">${pl.map(j=>`<button data-s="pick-${j}" class="${j==i?'on':''}" role="option" aria-selected="${j==i}" data-help="${esc(S[j][4]+' · '+S[j][1])}">${img(j,S[j][4])}<span>${S[j][0]}</span></button>`).join('')}</div>
+    <div class="pinfo"><div class="phead"><img class="hero" src="${face[i]}" alt="${s[4]}"><div><h3>${s[4]}</h3><p>${s[1]}${reg?' · '+reg[0]:''}${own>1?` · começa com ${own} ${TW}`:''}</p><button data-s="enc-${i}" class="mini">Ficha histórica</button></div></div>
+      <img class="rmap" src="${regionMap(i)}" alt="Mapa com ${s[1]} em destaque">
+      <p><b>Objetivo:</b> ${goalTxt(scnI,i)}</p>
+      <p>${s[7]}: ${traitTxt(i)}<br>Terreno de batalha: ${BIO[BOF[i]].nome}${resOf(i)?' · Recurso: '+RESN[resOf(i)][0]:''}<br>Fronteiras: ${adj[i].map(j=>S[j][0]).join(', ')}${reg?`<br>Região completa rende +${reg[2]} ouro por turno`:''}</p>
+      ${SCN.length>1?`<div class="opt"><span>Cenário</span><button data-s="scn">‹ ${SC.n} (${SC.y}) ›</button></div>`:''}
+      <div class="opt"><span>Dificuldade</span><button data-s="diff">‹ ${OPT.diff[1][CFG.diff]} ›</button></div>
+      <div class="row"><button data-s="go" class="end">Iniciar</button><button data-s="rand">Sortear</button><button data-s="title">Voltar</button></div></div></div>`);
+  $('card').classList.add('wide');$('card').querySelector('.pgrid .on')?.scrollIntoView({block:'nearest'});ui()}
+const RMAP={};
+function regionMap(i){const k=TKEY+i+'-'+scnI;if(RMAP[k])return RMAP[k]; /* mapa plano: o líder em destaque, vizinhos em tom claro */
+  const[c,g]=mk(W,H),im=g.createImageData(W,H),d=im.data,own=new Set(owner.map((o,j)=>o==i?j:-1).filter(j=>j>=0)),nb=new Set([...own].flatMap(j=>adj[j]));
+  const mine=hsl2rgb(hue(i)/360,.72,.5),edge=hsl2rgb(hue(i)/360,.8,.28);
+  for(let q=0;q<W*H;q++){const v=cell[q];let col=v<0?(v==-2?[118,108,88]:[38,66,104]):own.has(v)?mine:nb.has(v)?[214,198,160]:[168,156,130];
+    if(v>=0&&own.has(v)&&[q-1,q+1,q-W,q+W].some(z=>!own.has(cell[z])))col=edge;
+    d[q*4]=col[0];d[q*4+1]=col[1];d[q*4+2]=col[2];d[q*4+3]=255}
+  g.putImageData(im,0,0);return RMAP[k]=c.toDataURL()}
 function showHelp(){scr(`<h2>Como jogar</h2>
   <p><b>Dominação do Brasil:</b> conquiste os 27 estados. <b>Campanhas históricas:</b> cada guerra tem mapa próprio e um objetivo para cada lado.</p>
   <p><b>Turno:</b> clique num ${TW1} seu, recrute com ouro, escolha quantas tropas enviar e marche para um vizinho. Cada ${TW1} marcha uma vez por turno.</p>
@@ -197,6 +206,8 @@ const onScr=e=>{const k=e.target.closest('button')?.dataset.s;if(!k)return;sfx.s
   else if(k=='go'){reset(scnI);startAs(pickI);sel=me;regionCheck(true);setTimeout(storyIntro,400);say(`${SCN[scnI].y}: ${S[me][4]} ergue a bandeira em ${S[me][1]}`);scr();tutStart();ui()}
   else if(k=='close')scr();
   else if(k.startsWith('enc-'))showEnc(+k.slice(4));
+  else if(k.startsWith('pick-')){pickI=+k.slice(5);showSetup()}
+  else if(k=='dipx'){const b=e.target.closest('button'),ok=dipAct(b.dataset.k,+b.dataset.f);ok?sfx.win():sfx.lose();if(ok&&b.dataset.k=='ally')storyAlly(+b.dataset.f);showDip(window.dipF);ui()}
   else if(k.startsWith('perk-')){const[,kk,id]=k.split('-'),p=lastRes.perks[+kk];(perk[p.st+'-'+p.j]=perk[p.st+'-'+p.j]||[]).push(id);note(`${p.n}: ${PERKS.find(q=>q[0]==id)[1]}`);lastRes.perks.splice(+kk,1);showBRes(lastRes)}
   else if(k=='bfree'){if(bCap!=null&&gold[me]>=10){gold[me]-=10;pact[bCap]=Math.max(pact[bCap]||0,turn+4);note(`${S[bCap][4]} libertado: pacto até o turno ${turn+4}`)}bCap=null;scr();ui()}
   else if(k.startsWith('sv-')){try{localStorage.setItem(SLOT(k.slice(3)),JSON.stringify({...snap(),nome:$('svname').value.trim()||`Turno ${turn}`,quando:Date.now(),thumb:mapThumb()}));note('Partida salva')}catch{note('Não foi possível salvar: armazenamento do navegador cheio ou bloqueado')}showSaves('close')}

@@ -5,7 +5,7 @@ const LN=i=>LORE[S[i]?.[4]]||{};
 let talkQ=[],talkCur=null;
 function talk(lines,then){ /* lines: [[índice do líder ou -1 para narrador, texto]] */
   if(talkCur){talkQ.push([lines,then]);return}
-  talkCur={lines,k:0,then,c:0,full:''};$('talk').hidden=false;closeCmd();talkShow()}
+  talkCur={lines,k:0,then,c:0,full:''};$('talk').hidden=false;$('tut').hidden=true;$('tutPtr').hidden=true;closeCmd();talkShow()}
 function talkShow(){const T=talkCur,[f,txt]=T.lines[T.k],el=$('talk'),side=f<0?'nar':T.k%2?'r':'l';
   el.innerHTML=`<div class="tbox ${side}">${f>=0?`<img class="tp" src="${face[f]}" alt=""><b class="tn">${S[f][4]}</b>`:''}<p class="tt"></p><i class="tc">▼</i></div><small class="tskip">Clique ou Enter para seguir · Esc pula</small>`;
   const p=el.querySelector('.tt');T.full=txt;T.c=0;clearInterval(T.iv);sfx.page();
@@ -26,7 +26,7 @@ const TALKED=new Set;
 function capTalk(from,to,go){const a=owner[from],d=owner[to];
   if(to!=d||(a!=me&&d!=me)||TALKED.has(a+'-'+d))return go();TALKED.add(a+'-'+d);
   talk([[a,LN(a).a||`${S[to][1]} será minha!`],[d,LN(d).r||`${S[to][1]} não cai sem luta!`]],go)}
-function storyIntro(){const L=INTRO[TKEY];if(L)talk(L.map(([w,t])=>[w=='me'?me:w,fill(t,me)]))}
+function storyIntro(){const L=INTRO[TKEY];if(L)talk(L.map(([w,t])=>[w=='me'?me:w,fill(t,me)]),ui)}
 function storyAlly(f){talk([[me,`${S[f][4]}, juntos ninguém nos para.`],[f,`Aliança firmada. Que ela dure mais que esta guerra.`]])}
 onStory=(k,f)=>{if(k=='betray')talk([[f,`Traição! ${S[me][4]} rompeu o nosso pacto. ${S[f][1]} não vai esquecer.`],[me,'Acordos valem enquanto servem à causa.']])};
 
