@@ -363,3 +363,7 @@ body{padding-bottom:124px}
 .mkt{margin-left:auto;padding:3px 12px;font-size:13px}
 .mk{display:grid;grid-template-columns:24px 1fr auto auto;gap:10px;align-items:center;padding:6px 10px;background:rgba(255,255,255,.35);border:1px solid var(--parch-edge);border-radius:8px}
 .mk .ico{margin:0}.mk .pr{font-weight:800}.mk .up{color:#2f7a2a}.mk .dn{color:#a8321f}
+/* bandeja de cartas alinhada embaixo do mapa: não cobre o painel nem o Fim do turno */
+#hand{left:max(16px,env(safe-area-inset-left,0px));width:min(816px,calc(100vw - 32px));transform:translate(0,calc(100% - 112px))}
+#hand.open{transform:translate(0,0)}
+@media (max-width:900px){#hand{left:8px;width:calc(100vw - 16px)}}
