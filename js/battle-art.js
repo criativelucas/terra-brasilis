@@ -1,17 +1,28 @@
 // batalha tática: geração do campo, terrenos e sprites
 function genMap(b,kind){ // g grama, r estrada, w água, b ponte, a vau, f mata, m serra, h morro baixo, v vila, W muralha, D portão, P praça
-  const T=Array.from({length:GH},()=>Array(GW).fill('g')),rnd=n=>Math.random()*n|0;
+  const T=Array.from({length:GH},()=>Array(GW).fill('g')),rnd=n=>Math.random()*n|0,a0=A0(),wc=GW-a0-4,A=GW*GH/160,at=(c,yy)=>T[yy]?.[c];
   let y=GH>>1; // a estrada liga os dois lados e nunca é coberta: garante passagem
-  for(let c=0;c<GW;c++){T[y][c]='r';if(c>1&&c<GW-2&&Math.random()<.35){y=Math.max(1,Math.min(GH-2,y+(rnd(2)?1:-1)));T[y][c]='r'}}
-  if(kind=='travessia'||b.river&&kind!='cerco'){let c=6+rnd(4);const wet=(yy,cc)=>T[yy][cc]=T[yy][cc]=='r'||T[yy][cc]=='b'?'b':'w';
-    for(let yy=0;yy<GH;yy++){wet(yy,c);if(yy<GH-1&&Math.random()<.4){c=Math.max(5,Math.min(10,c+(rnd(2)?1:-1)));wet(yy,c)}}
+  for(let c=0;c<GW;c++){T[y][c]='r';if(c>1&&c<GW-2&&Math.random()<.3){y=Math.max(2,Math.min(GH-3,y+(rnd(2)?1:-1)));T[y][c]='r'}}
+  if(kind=='travessia'||b.river&&kind!='cerco'){const mid=GW>>1;let c=mid-2+rnd(4);const wet=(yy,cc)=>T[yy][cc]=T[yy][cc]=='r'||T[yy][cc]=='b'?'b':'w'; // rio sinuoso no meio
+    for(let yy=0;yy<GH;yy++){wet(yy,c);if(yy<GH-1&&Math.random()<.4){c=Math.max(mid-4,Math.min(mid+3,c+(rnd(2)?1:-1)));wet(yy,c)}}
     const ws=[];T.forEach((row,yy)=>row.forEach((t,cc)=>{if(t=='w'&&row[cc-1]=='g'&&row[cc+1]=='g')ws.push([cc,yy])}));
-    const pick=()=>ws.splice(rnd(ws.length),1)[0];if(ws.length){const[cc,yy]=pick();T[yy][cc]='b'}if(kind=='travessia'&&ws.length){const[cc,yy]=pick();T[yy][cc]='a'}}
-  const wc=GW-5,lim=kind=='cerco'?wc-3:GW-4;
+    const pick=()=>ws.splice(rnd(ws.length),1)[0];for(let k=0;k<(GH>16?2:1)&&ws.length;k++){const[cc,yy]=pick();T[yy][cc]='b'}if(kind=='travessia'&&ws.length){const[cc,yy]=pick();T[yy][cc]='a'}} // várias pontes e um vau
   if(kind=='cerco'){let gy=-1;for(let yy=0;yy<GH;yy++){if(T[yy][wc]=='r'&&gy<0){gy=yy;T[yy][wc]='D'}else T[yy][wc]='W'} // muralha com um portão na estrada
     T[gy][wc+2]='P'}
-  const put=(ch,n)=>{for(let k=0,tries=0;k<n&&tries<500;tries++){const c=2+rnd(lim),yy=rnd(GH);if(T[yy][c]=='g'){T[yy][c]=ch;k++}}};
-  put('m',b.m*(kind=='emboscada'?.6:1.3)|0);put('f',b.f*1.3+(kind=='emboscada'?40:0)|0);put('h',kind=='emboscada'?2:4);put('v',3);return T}
+  const free=(c,yy)=>at(c,yy)=='g'&&!(c>=a0-2&&c<=a0+1)&&!(c>=GW-a0-2&&c<=GW-a0+1)&&!(kind=='cerco'&&c>=wc-1), // as faixas de posicionamento ficam livres
+    cx0=a0+3,cx1=kind=='cerco'?wc-3:GW-a0-4,rx=()=>cx0+rnd(Math.max(1,cx1-cx0+1));
+  const blob=(ch,c,yy,n,sp)=>{const q=[[c,yy]];let k=0,g=0;while(q.length&&k<n&&g++<200){const[a,bb]=q.splice(rnd(q.length),1)[0];if(!free(a,bb))continue;T[bb][a]=ch;k++;
+    [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy])=>{if(Math.random()<sp)q.push([a+dx,bb+dy])})}return k};
+  const roadY=c=>{for(let yy=0;yy<GH;yy++)if(T[yy][c]=='r')return yy;return GH>>1};
+  for(let k=0,n=GW>=27?3:2+rnd(2);k<n;k++){const c=Math.round(cx0+(cx1-cx0)*(k+.5)/n)+rnd(3)-1,r0=roadY(c),up=rnd(2)?1:-1,vy=Math.max(1,Math.min(GH-2,r0+up*(2+rnd(3)))); // vilarejos: 2 ou 3 casas juntas, ligadas à estrada
+    for(let yy=r0+up;yy!=vy+up;yy+=up){if(T[yy]?.[c]!='g')break;T[yy][c]='r'}blob('v',c+1,vy,2+rnd(2),.9)||blob('v',c-1,vy,2,.9)}
+  for(let k=0,n=kind=='cerco'?0:GW>=27?2:1;k<n;k++){const c=rx(),yy=k%2?1+rnd(2):GH-2-rnd(2);blob('Q',c,yy,1,1)} // quartel no flanco
+  let M=Math.round(b.m*1.3*Math.sqrt(A)*(kind=='emboscada'?.5:1)),g=0; // cordilheiras: linhas tortas de serra com passagens
+  while(M>0&&g++<40){let c=rx(),yy=rnd(GH);const dx=rnd(2)?1:-1,dy=rnd(2)?1:-1;for(let k=0,n=4+rnd(5);k<n&&M>0;k++){if(free(c,yy)&&k%4!=3){T[yy][c]='m';M--}if(rnd(3))c+=dx;else yy+=dy}}
+  T.forEach((row,yy)=>row.forEach((t,c)=>{if(t=='m')[[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy])=>{if(free(c+dx,yy+dy)&&Math.random()<.12)T[yy+dy][c+dx]='h'})})); // sopé de morros
+  let F=Math.round((b.f*1.3+(kind=='emboscada'?40:0))*A);g=0;while(F>0&&g++<80)F-=blob('f',rnd(GW),rnd(GH),Math.min(F,3+rnd(7)),.55); // faixas de mata
+  for(let k=0,n=Math.round((kind=='emboscada'?2:4)*Math.sqrt(A)),tr=0;k<n&&tr<300;tr++){const c=rx(),yy=rnd(GH);if(free(c,yy)){T[yy][c]='h';k++}}
+  return T}
 function tree(q,st,a,b,h){ // q aceita meia unidade: dá para desenhar detalhes finos
   if(st=='cactus'){const G='#3f8f4f',Gd='#2a6a38',Gl='#7fcf7f'; // mandacaru: braços em candelabro, costelas claras, flor no topo
     q(a+2,b+9,4,.5,'rgba(0,0,0,.25)');q(a+3,b+1,2,8,G);q(a+3,b+1,.5,8,Gl);q(a+4.5,b+1,.5,8,Gd);
@@ -66,6 +77,9 @@ function tile(g,T,c,y,b){
     else[[9,2,13],[4,7,8]].forEach(([cx_,ty,n])=>{for(let k=0;k<n;k++){const w=1+k;q(cx_-w,ty+k,w,1,l);q(cx_,ty+k,w,1,d)} // pico: face clara e face escura
       q(cx_-1,ty+3,.5,n-4,'rgba(0,0,0,.18)');q(cx_+2,ty+5,.5,n-6,'rgba(0,0,0,.2)');q(cx_-3,ty+n-3,1,.5,'rgba(255,255,255,.2)'); // veios na rocha
       q(cx_-2,ty+1,2,2,top);q(cx_-1,ty,1,1,top);q(cx_,ty+1,1.5,1.5,'rgba(255,255,255,.6)')})}
+  if(t=='Q'){q(1,15,16,1.5,'rgba(0,0,0,.25)');q(2,7,14,8,'#b8ab90');q(2,7,14,.5,'#e6dcc2');q(13,7,3,8,'#9a8e74'); // quartel: paredes de pedra, telhado vermelho, portão e mastro
+    for(let k=8.5;k<15;k+=2)q(2,k,11,.5,'rgba(0,0,0,.08)');q(1,4,16,3,'#b3412f');q(1,4,16,.5,'#e0705a');q(1,6.5,16,.5,'#7a2a1f');
+    q(7,10,4,5,'#3a2413');q(7.5,10.5,3,4.5,'#22140c');q(3.5,9,2,2,'#3a2413');q(12.5,9,2,2,'#3a2413');q(3.75,9.25,1.5,1.5,'#ffe27a');q(15,0,.75,4,'#3a2413')}
   if(t=='v'){q(2,14,15,1,'rgba(0,0,0,.22)'); // vila: casa com telhas, janela acesa, porta e chaminé; casinha ao lado
     q(3,8,8,6,'#efe2c0');q(9,8,2,6,'#cdbd95');q(3,8,8,.5,'rgba(255,255,255,.3)');
     q(2,5,10,3,'#2a9db0');for(let k=5.5;k<8;k+=1)q(2,k,10,.5,'#1f7385');q(3,4,8,1,'#52c8d6');q(3,4,8,.5,'#9fe6ee');

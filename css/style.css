@@ -406,3 +406,17 @@ header>button{min-height:0}
 .rmap{width:100%;height:auto;image-rendering:pixelated;border:2px solid var(--frame);border-radius:8px;box-shadow:0 0 0 1px var(--gilt)}
 .pinfo p{margin:0}
 @media (max-width:900px){.pick{grid-template-columns:1fr}.pgrid{max-height:40vh}}
+/* ================= batalha: câmera e cartas em leque sobre o campo ================= */
+body.battle #cv{touch-action:none}
+#stage>#hand.fan{position:absolute!important;left:50%;bottom:0;top:auto;width:auto!important;max-width:none;max-height:none!important;transform:translateX(-50%)!important;
+  background:none;border:0;box-shadow:none;padding:0;margin:0;pointer-events:none;overflow:visible;z-index:6}
+#hand.fan .cards{display:flex;gap:0;padding:0;overflow:visible;align-items:flex-end}
+#hand.fan .card{pointer-events:auto;flex:0 0 104px;min-height:146px;margin:0 -10px;padding:10px 6px 8px;gap:3px;touch-action:none;
+  transform:translateY(calc(62% + var(--y))) rotate(var(--r));transform-origin:50% 120%;transition:transform .18s ease,filter .18s;box-shadow:0 6px 14px rgba(0,0,0,.45)}
+#hand.fan .card img{width:40px;height:40px}#hand.fan .card b{font-size:13px}#hand.fan .card small{font-size:11px;line-height:1.2}
+#hand.fan .card:hover:not(:disabled),#hand.fan .card:focus-visible,#hand.fan .card.on{transform:translateY(-6px) rotate(0) scale(1.08);z-index:2}
+#hand.fan .card:disabled{filter:grayscale(.7) brightness(.8)}
+.card.ghost{position:fixed;z-index:50;pointer-events:none;width:96px;min-height:0;transform:translate(-50%,-60%) rotate(-4deg) scale(.9);opacity:.92;box-shadow:0 10px 24px rgba(0,0,0,.5)}
+.card.ghost small{display:none}
+@media (max-width:900px){#hand.fan .card{flex-basis:64px;min-height:88px;margin:0 -4px;padding:6px 3px;transform:translateY(calc(68% + var(--y))) rotate(var(--r))}
+  #hand.fan .card img{width:26px;height:26px;padding:3px}#hand.fan .card b{font-size:10px}#hand.fan .card small{display:none}#hand.fan .card .cc{width:20px;height:20px;font-size:11px}}
