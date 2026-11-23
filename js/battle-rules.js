@@ -48,7 +48,7 @@ const bCell=e=>{const[px,py]=bPt(e),c=B.cam;if(!inView(px,py))return[-1,-1];retu
 const zMin=()=>Math.min(1,VW/(GW*CS),VH/(GH*CS)); // afastado ao máximo: o campo inteiro cabe
 function camClamp(c){const z=c.tz=Math.max(zMin(),Math.min(1.6,c.tz)),w=VW/z,h=VH/z,WW=GW*CS,WH=GH*CS;
   c.tx=w>=WW?(WW-w)/2:Math.max(0,Math.min(WW-w,c.tx));c.ty=h>=WH?(WH-h)/2:Math.max(0,Math.min(WH-h,c.ty))}
-const bSafe=()=>VX?[VX,VY,VX+VW,VY+VH]:[16,118,VW-420,VH-30]; // tela cheia: área que o placar e a ficha não cobrem
+const bSafe=()=>VX?[VX,VY,VX+VW,VY+VH]:[16,118,VW-(compactUI()?340:420),VH-30]; // tela cheia: área que o placar e a ficha não cobrem
 function camTo(gx,gy,z){const c=B.cam,[L,T,R,Bt]=bSafe();if(z)c.tz=z;c.tz=Math.max(zMin(),Math.min(1.6,c.tz));c.tx=(gx+.5)*CS-((L+R)/2-VX)/c.tz;c.ty=(gy+.5)*CS-((T+Bt)/2-VY)/c.tz;camClamp(c)}
 function camZoom(f,px=VX+VW/2,py=VY+VH/2){const c=B.cam,wx=(px-VX)/c.tz+c.tx,wy=(py-VY)/c.tz+c.ty;c.tz*=f;camClamp(c);c.tx=wx-(px-VX)/c.tz;c.ty=wy-(py-VY)/c.tz;camClamp(c)}
 function camFrame(...us){const c=B.cam,[L,T,R,Bt]=bSafe(),M=CS*1.4*c.tz,sc=u=>[VX+((u.x+.5)*CS-c.tx)*c.tz,VY+((u.y+.5)*CS-c.ty)*c.tz]; /* só move se alguma casa sair da área livre; devolve true se moveu */

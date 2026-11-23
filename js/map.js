@@ -110,12 +110,13 @@ function draw(){
       x.fillStyle=`rgba(255,200,90,${.28*a})`;x.fillRect(fx_-12,fy-16,24,18);x.fillStyle=`rgba(255,236,160,${a})`;x.fillRect(fx_-6,fy-9,3,3);x.fillRect(fx_+3,fy-9,3,3);x.fillRect(fx_-2,fy-5,3,3)})}}
   [...SEA,...portLinks].forEach(([a,b])=>{const[ax,ay]=proj(...px(a)),[bx,by]=proj(...px(b));x.strokeStyle='rgba(255,255,255,.75)';x.lineWidth=2;x.setLineDash([3,7]); // rotas marítimas
     x.beginPath();x.moveTo(ax,ay);x.quadraticCurveTo((ax+bx)/2+120,(ay+by)/2,bx,by);x.stroke();x.setLineDash([])});
-  // bússola
-  x.save();x.translate(cw>900?cw-470:74,ch>700?ch-118:ch-88);x.fillStyle='rgba(10,6,20,.35)';x.beginPath();x.arc(0,0,44,0,7);x.fill();
+  // bússola (só na tela pequena; em tela cheia ela só ocupa espaço)
+  if(!floatUI()){x.save();x.translate(cw>900?cw-470:74,ch>700?ch-118:ch-88);x.fillStyle='rgba(10,6,20,.35)';x.beginPath();x.arc(0,0,44,0,7);x.fill();
   for(let k=0;k<4;k++){x.rotate(Math.PI/2);x.fillStyle=k==3?'#b3312a':'#e3c98b';x.beginPath();x.moveTo(0,-38);x.lineTo(8,0);x.lineTo(-8,0);x.fill();
     x.fillStyle=k==3?'#7a1f1a':'#8a5a2b';x.beginPath();x.moveTo(0,-38);x.lineTo(8,0);x.lineTo(0,0);x.fill()}
   x.fillStyle='#f1e3a8';x.fillRect(-3,-3,6,6);x.restore();
-  x.font=FONT(8);x.textBaseline='top';x.fillStyle='#f1e3a8';x.textAlign='center';x.fillText('N',cw>900?cw-470:74,(ch>700?ch-118:ch-88)-54);x.textAlign='left';
+  x.font=FONT(8);x.textBaseline='top';x.fillStyle='#f1e3a8';x.textAlign='center';x.fillText('N',cw>900?cw-470:74,(ch>700?ch-118:ch-88)-54);x.textAlign='left'}
+  x.textBaseline='top';x.textAlign='left'; // as plaquinhas medem o texto pelo topo
   tags=[];
   if(marching)adj[sel].forEach(j=>{route(sel,j,owner[j]==me?'#7fd0ff':'#ff5a48',.86);const o=oddsC[j];if(!o)return; // chance de vitória em cada rota de ataque
     const[ax,ay]=proj(...px(sel)),[tx,ty]=proj(...px(j)),mx=ax+(tx-ax)*.6,my=ay+(ty-ay)*.6,t=`~${Math.round(o[0]*100)}%`,col=o[0]>.65?'#2f8a4a':o[0]>.35?'#b8891f':'#b3312a';
@@ -123,7 +124,7 @@ function draw(){
   const LB=labelOffsets();
   S.map((_,i)=>i).sort((a,b)=>S[b][3]-S[a][3]).forEach(i=>{
     if(intro&&revealAt[i]>now-intro)return;
-    const mv=CFG.mv||'trp',r=resOf(i),TS=CFG.big?12:10,[fx_,fy]=proj(...px(i)),t=S[i][0]+(mv=='trp'?troops[i]:mv=='eco'?' +'+inc(i):''),w=(x.font=FONT(TS),Math.ceil(x.measureText(t).width)+20),bx=Math.round(fx_),by0=Math.round(fy)-30-(TS-10),by=by0+LB[i],
+    const mv=CFG.mv||'trp',r=resOf(i),TS=CFG.big?12:10,[fx_,fy]=proj(...px(i)),t=S[i][0]+(mv=='trp'?troops[i]:mv=='eco'?' +'+inc(i):''),dg_=owner[i]==me&&danger(i),ext=(fort[i]?fort[i]*9+3:0)+(dg_?15:0),w=(x.font=FONT(TS),Math.ceil(x.measureText(t).width)+20+ext),bx=Math.round(fx_),by0=Math.round(fy)-30-(TS-10),by=by0+LB[i],
       left=LEFT.has(S[i][0]),rx=left?bx-w-1:bx+1,f=owner[i];
     if(lastOwner[i]!==f){if(lastOwner[i]!=null)flagT[i]=now;lastOwner[i]=f} // bandeira desce e sobe na cor nova
     const fp=flagT[i]?(now-flagT[i])/900:1,fb=by+(fp<1?(fp<.45?fp/.45:1-(fp-.45)/.55)*20:0);
@@ -141,9 +142,10 @@ function draw(){
     if(i==sel||i==hov){x.strokeStyle='#f08a3a';x.lineWidth=2;x.beginPath();x.roundRect(rx-1,fb-1,w+2,LH+2,6);x.stroke()}
     x.font=FONT(TS);x.fillStyle=mineT?(moved.has(i)?'#a89880':'#f3e7cf'):'#3a2a1f';x.fillText(t,rx+(left?4:14),fb+2);
     if(mv=='eco'&&r){const im=RIM[r]||(RIM[r]=Object.assign(new Image(),{src:pxIcon('r_'+r)}));if(im.complete){x.imageSmoothingEnabled=false;x.drawImage(im,left?rx-17:rx+w+2,fb,LH,LH)}} // modo economia: ícone do recurso
-    if(f==me&&danger(i)){const ax=rx-12,ay=fb+1,on=CFG.calm||Math.floor(now/400)%2;x.fillStyle='#22140c';x.beginPath();x.moveTo(ax+6,ay-2);x.lineTo(ax+14,ay+14);x.lineTo(ax-2,ay+14);x.fill(); // em perigo
+    const ix0=rx+(left?4:14)+Math.ceil(x.measureText(t).width)+4; // fortes e perigo dentro da plaquinha, depois do número
+    for(let k=0;k<fort[i];k++){const fx2=ix0+k*9,fy2=fb+(LH-8)/2;x.fillStyle='#22140c';x.fillRect(fx2,fy2,8,8);x.fillStyle='#ffd23f';x.fillRect(fx2+1,fy2+3,6,4);x.fillRect(fx2+1,fy2+1,2,2);x.fillRect(fx2+5,fy2+1,2,2)}
+    if(dg_){const ax=ix0+(fort[i]?fort[i]*9+2:0),ay=fb+(LH-14)/2,on=CFG.calm||Math.floor(now/400)%2;x.fillStyle='#22140c';x.beginPath();x.moveTo(ax+6,ay-2);x.lineTo(ax+14,ay+14);x.lineTo(ax-2,ay+14);x.fill(); // em perigo
       x.fillStyle=on?'#ff3b30':'#b3312a';x.beginPath();x.moveTo(ax+6,ay+1);x.lineTo(ax+12,ay+12);x.lineTo(ax,ay+12);x.fill();x.fillStyle='#fff';x.fillRect(ax+5,ay+4,2,5);x.fillRect(ax+5,ay+10,2,2)}
-    for(let k=0;k<fort[i];k++){x.fillStyle='#22140c';x.fillRect(rx+1+k*9,fb-9,8,8);x.fillStyle='#ffd23f';x.fillRect(rx+2+k*9,fb-6,6,5);x.fillRect(rx+2+k*9,fb-8,2,2);x.fillRect(rx+6+k*9,fb-8,2,2)}
     tags.push([Math.min(rx,bx-2),by,w+3,by0-by+28+(TS-10),i])});
   if(mfx){const p=(now-mfx.start)/700,[ax,ay]=proj(...px(mfx.a)),[bx,by]=proj(...px(mfx.b)),sp=sprite({type:'inf',sk:'T'},me,true,Math.floor(now/90)%2); // tropa marchando entre estados seus
     if(p<1)x.drawImage(sp,ax+(bx-ax)*p-26,ay+(by-ay)*p-44-Math.abs(Math.sin(p*18))*5,52,48)}
@@ -190,8 +192,8 @@ function mapBox(){if(MBB)return MBB;let a=1e9,b=1e9,c=-1e9,d=-1e9; // caixa do B
   for(let k=0;k<cell.length;k+=2)if(cell[k]>=0){const p=proj0((k%W+.5)*C,((k/W|0)+.5)*C);a=Math.min(a,p[0]);b=Math.min(b,p[1]);c=Math.max(c,p[0]);d=Math.max(d,p[1])}
   return MBB=[a-10,b-46,c+10,d+14]}
 const floatUI=()=>document.body.classList.contains('mapv')&&innerWidth>900;
-const mapPad=()=>floatUI()?[24,96,430,140]:[4,4,4,4]; // esquerda, topo, direita, base: espaço dos painéis flutuantes
-function mapClamp(){const[a,b,c,d]=mapBox();MC.tz=Math.max(MC.fz*.8,Math.min(MC.fz*4.5,MC.tz));MC.tx=Math.max(a,Math.min(c,MC.tx));MC.ty=Math.max(b,Math.min(d,MC.ty))}
+const compactUI=()=>innerWidth<1200||innerHeight<720,mapPad=()=>floatUI()?(compactUI()?[16,80,350,118]:[24,96,430,140]):[4,4,4,4]; // esquerda, topo, direita, base: espaço dos painéis flutuantes
+function mapClamp(){const[a,b,c,d]=mapBox();MC.tz=Math.max(MC.fz*.8,Math.min(MC.fz*3,MC.tz));MC.tx=Math.max(a,Math.min(c,MC.tx));MC.ty=Math.max(b,Math.min(d,MC.ty))}
 function mapFit(snap){const[a,b,c,d]=mapBox(),[L,T,R,Bm]=mapPad(),z=Math.min((cv.width-L-R)/(c-a),(cv.height-T-Bm)/(d-b));
   MC.fz=MC.tz=z;MC.tx=(a+c)/2-(L-R)/2/z;MC.ty=(b+d)/2-(T-Bm)/2/z;if(snap)Object.assign(MC,{cx:MC.tx,cy:MC.ty,z})}
 function mapStep(now){const k=Math.min(1,(now-(MC.t||now))/120);MC.t=now;MC.cx+=(MC.tx-MC.cx)*k;MC.cy+=(MC.ty-MC.cy)*k;MC.z+=(MC.tz-MC.z)*k;
@@ -236,15 +238,15 @@ const PK={ama:['jtree','jtree','jtree','palm','jtree'],ser:['cactus','cactus','m
 let PROPS=null;
 const[PL,plg]=mk(16,16);let plKey='';
 function props(now,zr){const a=Math.max(0,Math.min(1,(zr-1.15)/.35));if(!a)return; /* só quando a câmera chega perto; tudo vai para uma camada pronta */
-  const ph=CFG.calm||!CFG.q?0:Math.floor(now/320)%4,key=[cv.width,cv.height,MC.cx.toFixed(1),MC.cy.toFixed(1),MC.z.toFixed(3),ph,a.toFixed(2),owner.join()].join('|');
+  const ph=CFG.calm||!CFG.q?0:Math.floor(now/320)%4,key=[cv.width,cv.height,MC.cx.toFixed(1),MC.cy.toFixed(1),MC.z.toFixed(3),ph,a.toFixed(2),owner.join(),CFG.mv].join('|');
   if(key!=plKey){plKey=key;if(PL.width!=cv.width||PL.height!=cv.height){PL.width=cv.width;PL.height=cv.height}plg.clearRect(0,0,PL.width,PL.height);
     roads(zr,plg);rivers(zr,plg);propsDraw(ph,zr,plg)}
   x.drawImage(PL,0,0)}
 let ROADS=null;
-function roads(zr,g){const a=Math.max(0,Math.min(1,(zr-1.15)/.3));if(!a)return; /* estradas de terra ligando as capitais vizinhas por terra */
+function roads(zr,g){const a=Math.max(0,Math.min(1,(zr-1.15)/.3));if(!a||(CFG.mv||'trp')=='ter')return; // só entre os seus estados /* estradas de terra ligando as capitais vizinhas por terra */
   if(!ROADS){const sea=new Set([...SEA,...portLinks].map(([p,q])=>Math.min(p,q)+'-'+Math.max(p,q)));ROADS=[];S.forEach((_,i)=>adj[i].forEach(j=>{if(j>i&&!sea.has(i+'-'+j))ROADS.push([i,j])}))}
   g.save();g.globalAlpha=a*.5;g.lineCap='round';g.setLineDash([MC.z*3,MC.z*2.4]); // trilha tracejada, discreta
-  ROADS.forEach(([i,j])=>{const[ax,ay]=proj(...px(i)),[bx,by]=proj(...px(j)),h=hash(i,j),mx=(ax+bx)/2+((h%21)-10)*MC.z*.9,my=(ay+by)/2+(((h>>5)%21)-10)*MC.z*.9;
+  ROADS.forEach(([i,j])=>{if(owner[i]!=me||owner[j]!=me)return;const[ax,ay]=proj(...px(i)),[bx,by]=proj(...px(j)),h=hash(i,j),mx=(ax+bx)/2+((h%21)-10)*MC.z*.9,my=(ay+by)/2+(((h>>5)%21)-10)*MC.z*.9;
     [['rgba(60,36,16,.8)',Math.max(2,MC.z*1.2)],['#e0c48a',Math.max(1,MC.z*.6)]].forEach(([c,w])=>{g.strokeStyle=c;g.lineWidth=w;g.beginPath();g.moveTo(ax,ay+4);g.quadraticCurveTo(mx,my+4,bx,by+4);g.stroke()})});
   g.setLineDash([]);
   g.restore()}
@@ -255,17 +257,18 @@ function rivers(zr,g){const a=Math.max(0,Math.min(1,(zr-1.15)/.3));if(!a)return;
   g.restore()}
 function propsDraw(ph,zr,g){const a=Math.max(0,Math.min(1,(zr-1.3)/.45));if(!a)return;
   if(!PROPS){PROPS=[];const caps=S.map((_,i)=>px(i).map(v=>v/C));
-    for(let cy=0;cy<H;cy++)for(let cx=0;cx<W;cx++){const s=cell[cy*W+cx],h=hash(cx*3+1,cy*5+2);if(s<0||h%5)continue;
+    for(let cy=0;cy<H;cy++)for(let cx=0;cx<W;cx++){const s=cell[cy*W+cx],h=hash(cx*3+1,cy*5+2),patch=hash(cx>>2,cy>>2)%3==0;if(s<0||h%(patch?3:13))continue; // manchas densas e áreas abertas
       if(caps.some(([qx,qy])=>Math.abs(qx-cx)<6&&Math.abs(qy-cy)<4))continue; // deixa espaço para a cidade e o exército
-      const L=PK[BOF[s]]||PK.mata,k=L[(h>>4)%L.length];PROPS.push([(cx+.5)*C+(h>>8)%3-1,(cy+.5)*C,k,(h>>11)%3])}}
+      const L=PK[BOF[s]]||PK.mata,k=L[(h>>4)%L.length];PROPS.push([(cx+.5)*C+(h>>8)%3-1,(cy+.5)*C,k,(h>>11)%3,.8+((h>>14)%5)*.09])}}
   g.save();g.globalAlpha=a;g.imageSmoothingEnabled=false;const cw=cv.width,ch=cv.height,SW_=new Set(['jtree','palm','round','pine','twist','ipe','buriti']);
-  for(const[fx_,fy,k,v]of PROPS){const[X,Y,sc]=proj(fx_,fy);if(X<-40||Y<-40||X>cw+40||Y>ch+60)continue;const im=pspr(k,v),f=sc*.55,
+  for(const[fx_,fy,k,v,sz]of PROPS){const[X,Y,sc]=proj(fx_,fy);if(X<-40||Y<-40||X>cw+40||Y>ch+60)continue;const im=pspr(k,v),f=sc*.55*sz,
       sw=SW_.has(k)?Math.round([0,1,0,-1][(ph+(fx_|0)%4)%4]*f*.6):0; // copas balançando ao vento, em passos de pixel
     g.drawImage(im,Math.round(X-im.width*f/2)+sw,Math.round(Y-im.height*f),Math.round(im.width*f),Math.round(im.height*f))}
   g.restore()}
 function town(i,X,Y,sc,zr){const a=Math.max(0,Math.min(1,(zr-1.15)/.35));if(!a)return; /* capital em 3D simples: cresce com as tropas, ganha muralha com o forte e barco no porto */
   const n=2+Math.min(5,troops[i]/6|0),f=sc*.6,im=pspr('house',0),pos=[[0,0],[-9,3],[8,4],[-3,7],[5,-4],[-12,-2],[12,-1]];x.save();x.globalAlpha=a;x.imageSmoothingEnabled=false;
-  if(fort[i]){x.strokeStyle='#6b6258';x.lineWidth=Math.max(2,2.5*f);x.beginPath();x.ellipse(X+6*f,Y+4*f,22*f,10*f,0,0,7);x.stroke();x.strokeStyle='#a89c88';x.lineWidth=Math.max(1,f);x.stroke()}
+  if(fort[i])for(let k=0;k<9+fort[i]*3;k++){const an=.12*Math.PI+k/(8+fort[i]*3)*.76*Math.PI,sx=X+6*f+Math.cos(an)*22*f,sy=Y+6*f+Math.sin(an)*9*f; /* forte: paliçada de estacas na frente da vila */
+    x.fillStyle='#5a3a1c';x.fillRect(sx-f,sy-5*f,Math.max(1.5,2*f),5*f);x.fillStyle='#a87a42';x.fillRect(sx-f,sy-5*f,Math.max(1.5,2*f),Math.max(1,f))}
   pos.slice(0,n).sort((p,q)=>p[1]-q[1]).forEach(([dx,dy])=>x.drawImage(im,Math.round(X+(dx+4)*f-im.width*f/2),Math.round(Y+dy*f-im.height*f+6*f),Math.round(im.width*f),Math.round(im.height*f)));
   {const ch=pspr('mill',0);x.drawImage(ch,Math.round(X+2*f),Math.round(Y-14*f),Math.round(ch.width*f*.9),Math.round(ch.height*f*.9))} // igreja/casa grande no centro
   if(port[i]){x.fillStyle='#5a3a1c';x.fillRect(X+24*f,Y+8*f,10*f,3*f);x.fillStyle='#f1e9d6';x.fillRect(X+27*f,Y,4*f,7*f)}
