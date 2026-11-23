@@ -15,7 +15,7 @@ function scriptT(g,t,X,Y,n,al='center',mw){g.font=`italic 800 ${n}px "Alegreya",
   const gr=g.createLinearGradient(0,Y,0,Y+n*1.1);gr.addColorStop(0,'#ffd88a');gr.addColorStop(.75,'#f08a3a');g.fillStyle=gr;g.fillText(t,X,Y,mw)} // fonte de pixel moderna; n segue a escala antiga
 CFG.q=2;CFG.big=0;CFG.cb=0;CFG.confirm=1;CFG.calm=matchMedia('(prefers-reduced-motion: reduce)').matches?1:0; // q: qualidade dos efeitos; calm: efeitos fortes reduzidos
 try{Object.assign(CFG,JSON.parse(localStorage.getItem('tb-cfg')||'{}'))}catch{}
-const applyCfg=()=>{document.body.classList.toggle('big',!!CFG.big)};applyCfg();
+const applyCfg=()=>{document.body.classList.toggle('big',!!CFG.big);document.documentElement.style.setProperty('--uiz',[.9,1,1.15,1.3][CFG.uiz??1])};applyCfg(); // --uiz: tamanho da interface
 // ícones em pixel 10x10 (no lugar dos emojis): O contorno, W branco, Y/y ouro, R vermelho, B/b madeira, G/g metal, U azul, S sol, K preto
 const PXI={scroll:['..OOOOOO..','.OWWWWWWO.','.OWbbbbWO.','..OWWWWO..','..OWbbWO..','..OWWWWO..','..OWbbWO..','.OWWWWWWO.','.OWWWWWWO.','..OOOOOO..'],
   swords:['O........O','OGO....OGO','.OGO..OGO.','..OGOOGO..','...OGGO...','...OGGO...','..OYOOYO..','.OYO..OYO.','OBO....OBO','OO......OO'],
@@ -100,5 +100,18 @@ Object.assign(sfx,{page:()=>{noise(.2,1400,.8,'bandpass',.22,0,500);noise(.1,350
 const CNT={},cnt=(k,v)=>`<b class="cnt" data-cnt="${k}" data-v="${v}">${CNT[k]??v}</b>`;
 setInterval(()=>document.querySelectorAll('[data-cnt]').forEach(el=>{const k=el.dataset.cnt,v=+el.dataset.v,c=CNT[k]??v;
   if(c==v){CNT[k]=v;el.classList.remove('up','dn');return}const n=c+Math.sign(v-c)*Math.max(1,Math.abs(v-c)/6|0);CNT[k]=n;el.textContent=n;el.classList.toggle('up',v>c);el.classList.toggle('dn',v<c)}),45);
-function toast(t){const box=$('toasts'),d=document.createElement('div');d.className='toast';d.textContent=t;box.prepend(d);while(box.children.length>4)box.lastChild.remove();setTimeout(()=>d.remove(),2700)}
+function toast(t){const box=$('toasts'),d=document.createElement('div'),k=/Traição|Faltam|Indisponível|recusa|perd|Derrota|não |Nada para|Solte|cancelad|caiu|tomou .* de você/i.test(t)?'bad':/\+\d|firmad|construído|conquist|treinad|adotad|Desfeito|Vitória|paga|repeliu/i.test(t)?'ok':'info'; /* aviso: laca, cor e ícone pelo tipo */
+  d.className='toast '+k;d.innerHTML=I(k=='bad'?'warn':k=='ok'?'check':'scroll');d.append(t);box.prepend(d);while(box.children.length>4)box.lastChild.remove();setTimeout(()=>d.remove(),2700)}
 
+
+// ---------- som com padrão: passar o mouse, clicar e errar soam igual em todos os botões ----------
+{const s0=sfx.sel;let t0=0;sfx.sel=()=>{const n=performance.now();if(n-t0<90)return;t0=n;s0()}} // clique repetido no mesmo instante toca uma vez
+sfx.hover=()=>{if(!CFG.vol)return;try{AC=AC||new AudioContext;const o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime;o.type='triangle';o.frequency.value=1700;
+  g.gain.setValueAtTime(CFG.vol*.035,t);g.gain.exponentialRampToValueAtTime(.0005,t+.03);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+.035)}catch{}};
+sfx.err=()=>{beep(190,.08,'square');beep(150,.08,'square',.06)};
+{let hb=null,ht=0;document.addEventListener('mouseover',e=>{const b=e.target.closest?.('button');if(b&&b!==hb&&!b.disabled&&!b.classList.contains('off')&&performance.now()-ht>45&&!matchMedia('(hover:none)').matches){ht=performance.now();sfx.hover()}hb=b});
+  document.addEventListener('click',e=>{const b=e.target.closest?.('button');if(!b)return;b.classList.contains('off')?sfx.err():sfx.sel()},true)}
+// ---------- dica de primeira vez: aparece uma vez por recurso, depois do tutorial ----------
+function coach(k,t){if(typeof tut!='undefined'&&tut>=0)return;try{const s=JSON.parse(localStorage.getItem('tb-ft')||'{}');if(s[k])return;s[k]=1;localStorage.setItem('tb-ft',JSON.stringify(s))}catch{return}
+  let c=$('coach');if(!c){c=document.createElement('div');c.id='coach';c.setAttribute('role','status');document.body.appendChild(c);c.addEventListener('click',e=>{if(e.target.closest('button'))c.hidden=true})}
+  c.innerHTML=`<b>${I('star')}Dica</b><p>${t}</p><button class="mini end">Entendi</button>`;c.hidden=false;clearTimeout(coach.t);coach.t=setTimeout(()=>c.hidden=true,14000)}

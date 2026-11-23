@@ -27,8 +27,8 @@ const startBattle=(from,to,n,ps)=>{tutEv('battle'); // ps: lado do jogador (0 at
     if(ob){B.obj=ob;B.goals=ob=='vilas'?vs.slice(0,2):ob=='ponte'?[br.sort((p,q)=>Math.abs(p[1]-(GH>>1))-Math.abs(q[1]-(GH>>1)))[0]]:[[GW-1,T.findIndex(row=>row[GW-1]=='r')]]}}
   camTo((GW-1)/2,(GH-1)/2,zMin());Object.assign(B.cam,{x:B.cam.tx,y:B.cam.ty,z:B.cam.tz}); // abre com o campo inteiro e depois aproxima das suas tropas
   banner(`${KIND[kind][0]}: ${ps?'defenda':'ataque'} ${S[to][1]}.`,ps?'#d0452f':'#e2a83c');
-  B.prep=true; /* preparação: o jogador posiciona as tropas antes da rodada 1 */
-  const b0=B;setTimeout(()=>{if(B===b0)camTo(ps?GW-1-a0:a0,GH>>1,1)},1300);let lf=0;(function loop(t){if(B!==b0)return;requestAnimationFrame(loop);if(document.hidden||t-lf<1000/[15,40,60][CFG.q]-2)return;lf=t;drawBattle()})(performance.now())};
+  B.prep=true; /* preparação: o jogador posiciona as tropas antes da rodada 1 */setTimeout(()=>coach('prep','Arraste o campo para mover a câmera e use a roda para aproximar. Posicione as tropas nas casas azuis e comece.'),1600);
+  const b0=B;setTimeout(()=>{if(B===b0)camTo(ps?GW-1-a0:a0,GH>>1,phoneUI()?1.35:1)},1300); /* no celular, casas maiores para o dedo */let lf=0;(function loop(t){if(B!==b0)return;requestAnimationFrame(loop);if(document.hidden||t-lf<1000/[15,40,60][CFG.q]-2)return;lf=t;drawBattle()})(performance.now())};
 function bake(T,bio){ // fundo fixo do campo; refeito quando uma ponte queima
   const[bg,g]=mk(GW*CS,GH*CS);for(let y=0;y<GH;y++)for(let c=0;c<GW;c++)tile(g,T,c,y,bio);
   for(let y=0;y<GH;y++)for(let c=0;c<GW;c++)if('mfvW'.includes(T[y][c])){const X=c*CS,Y=y*CS; // sombra projetada para sudeste
@@ -201,13 +201,14 @@ function bFinish(){tutEv('bdone');closeCmd();const stg=$('stage');stg.classList.
   setTimeout(()=>{if(!over&&!B&&$('screen').hidden)showBRes(R)},1300); // depois do painel de confronto
   ps?nextRaid():ui()}
 let lastRes=null;
-function showBRes(R){lastRes=R;
+function showBRes(R){lastRes=R; /* resultado: placar você x inimigo, destaques e melhorias em cartões */
   scr(`<h2 class="big">${R.win?'VITÓRIA':'DERROTA'}</h2><p class="c">${KIND[R.kind][0]} de ${S[R.to][1]}</p>
-    <div class="row c"><img class="hero" src="${face[me]}" alt="${S[me][4]}"><img class="hero" src="${face[R.e]}" alt="${S[R.e][4]}"></div>
-    <div class="chips"><span>Suas perdas: ${R.l0}</span><span>Perdas de ${S[R.e][4]}: ${R.l1}</span>${R.vg?`<span>Vilas tomadas: +${R.vg} ouro</span>`:''}</div>
-    ${R.best?`<p>★ <b>Destaque:</b> ${R.best}</p>`:''}${R.lv.length?`<p><b>Subiram de nível:</b> ${R.lv.join(', ')}</p>`:''}${R.perks.length?`<div class="perks"><b>Escolha uma melhoria para cada regimento</b>${R.perks.map((p,k)=>`<div class="pk"><span>${p.n}</span>${PERKS.map(([id,nm,d])=>`<button data-s="perk-${k}-${id}" data-help="${d}" title="${d}" ${perk[p.st+'-'+p.j]?.includes(id)?'disabled':''}>${nm}</button>`).join('')}</div>`).join('')}</div>`:''}
-    ${R.cap?`<p><b>${S[R.e][4]} foi capturado!</b> Resgate de 10 ouro recebido.</p><button data-s="bfree">Libertar sem resgate: devolve os 10 ouro e firma pacto de 4 turnos</button>`:''}
-    ${R.paid!=null?`<p class="warn">Seu comandante foi capturado. Resgate pago: ${R.paid} ouro.</p>`:''}
+    <div class="vsr"><figure class="me"><img src="${face[me]}" alt=""><b>Você</b><span>−${R.l0}</span><small>suas perdas</small></figure><em>×</em>
+      <figure class="them"><img src="${face[R.e]}" alt=""><b>${S[R.e][4]}</b><span>−${R.l1}</span><small>perdas dele</small></figure></div>
+    <div class="chips c">${R.vg?`<span>${I('coin')}Vilas tomadas +${R.vg} ouro</span>`:''}${R.best?`<span>${I('star')}Destaque: ${R.best}</span>`:''}${R.lv.map(l=>`<span>${I('up')}${l}</span>`).join('')}</div>
+    ${R.perks.length?`<div class="box perks"><b>${I('star')}Escolha uma melhoria para cada regimento</b>${R.perks.map((p,k)=>`<div class="pk"><span>${p.n}</span><div class="pkb">${PERKS.map(([id,nm,d])=>{const on=perk[p.st+'-'+p.j]?.includes(id);return`<button data-s="perk-${k}-${id}" class="${on?'on':''}" data-help="${d}" ${on?'disabled':''}>${nm}<small>${d}</small></button>`}).join('')}</div></div>`).join('')}</div>`:''}
+    ${R.cap?`<div class="box safe"><b>${I('check')}${S[R.e][4]} foi capturado</b><p>Resgate de 10 ouro recebido.</p><button data-s="bfree">Libertar sem resgate: devolve os 10 ouro e firma pacto de 4 turnos</button></div>`:''}
+    ${R.paid!=null?`<div class="box threat"><b>${I('warn')}Seu comandante foi capturado</b><p>Resgate pago: ${R.paid} ouro.</p></div>`:''}
     <button data-s="close" class="end">Continuar</button>`)}
 function playBattleCard(id,t){const c=CARDS[id];cmd-=c[2];hand.splice(hand.indexOf(id),1);banner(`Carta: ${c[0]}.`,'#3f8fb0');sfx.win(); // cartas de batalha
   if(id=='embosc')B.amb=B.round;
@@ -379,11 +380,11 @@ function drawBattle(){
   if(B.banner){const Tb=now-B.banner.start;if(Tb>1500)B.banner=null;else{ // balão de pergaminho no meio do campo, com a setinha de continuar
     const a=Math.max(0,Math.min(1,Tb/160,(1500-Tb)/220)),t=B.banner.t,hasF=B.banner.f!=null;x.font=FONT(13);
     const w=Math.min(VW-40,Math.max(360,x.measureText(t).width+(hasF?150:96))),h=74,bx=cw/2-w/2,by=VY+VH/2-h/2+(1-a)*10;
-    x.save();x.globalAlpha=a;x.fillStyle='rgba(20,12,14,.22)';x.fillRect(VX,VY,VW,VH);parch(x,bx,by,w,h,18);
+    x.save();x.globalAlpha=a;x.fillStyle='rgba(20,12,14,.22)';x.fillRect(VX,VY,VW,VH);lac(x,bx,by,w,h,14);x.strokeStyle='rgba(226,168,60,.7)';x.lineWidth=2;rr(x,bx+1,by+1,w-2,h-2,13);x.stroke();
     if(hasF){x.fillStyle='#3b2618';x.fillRect(bx+13,by+8,60,58);x.fillStyle='#d8b878';x.fillRect(bx+14,by+9,58,56);x.drawImage(fcv[B.banner.f],bx+17,by+11,52,52)} // retrato do líder no poder
     else{x.fillStyle='#3b2618';x.beginPath();x.arc(bx+30,by+h/2,9,0,7);x.fill();x.fillStyle=B.banner.col;x.beginPath();x.arc(bx+30,by+h/2,7,0,7);x.fill();x.fillStyle='rgba(255,255,255,.55)';x.fillRect(bx+26,by+h/2-5,3,3)} // gema na cor do aviso
-    x.font=FONT(13);x.textAlign='center';x.fillStyle='#3a2a1f';x.fillText(t,bx+w/2+(hasF?34:12),by+h/2-13,w-(hasF?110:70));
-    const ay=by+h-22+Math.round(Math.sin(now/150)*2);x.fillStyle='#6b4a2e';x.beginPath();x.moveTo(bx+w-30,ay);x.lineTo(bx+w-16,ay);x.lineTo(bx+w-23,ay+8);x.fill();x.restore()}}
+    x.font=FONT(13);x.textAlign='center';x.fillStyle='#f3e7cf';x.fillText(t,bx+w/2+(hasF?34:12),by+h/2-13,w-(hasF?110:70));
+    const ay=by+h-22+Math.round(Math.sin(now/150)*2);x.fillStyle='#e2a83c';x.beginPath();x.moveTo(bx+w-30,ay);x.lineTo(bx+w-16,ay);x.lineTo(bx+w-23,ay+8);x.fill();x.restore()}}
   if(B.phase)phaseDraw(now);
   x.restore();
   if(B.cut){const T=now-B.cut.start;if(T>1700)B.cut=null;else{ // entrada do líder: campo escurece, faixa diagonal na cor da facção, rosto grande entra pela direita
@@ -405,7 +406,7 @@ const ICON=new Map, icon=(type,f,mine,ldr)=>{const k=[type,f,mine,ldr].join(); /
 function teamBar(sd,X,now){const f=sd?B.was:B.af,mine=sd==B.ps,W=262,L=!sd,al=L?'left':'right',hid=B.kind=='emboscada'&&!mine,col=mine?'#4f8fff':'#e0483a';
   lac(x,X,8,W,96,12);x.fillStyle=col;x.fillRect(X+10,10,W-20,3);
   const su=[B.selU,B.peek].find(u=>u&&u.hp>0&&u.side==sd&&seen(u));
-  if(su)unitRow(su,X,sd);else{const px_=L?X+10:X+W-54;x.fillStyle='#140c0e';x.fillRect(px_-2,17,48,48);x.fillStyle=mine?'#e2a83c':'#9c7a44';x.fillRect(px_-1,18,46,46);x.drawImage(fcv[f],px_,19,44,44);
+  {/* a ficha da unidade fica no painel lateral; o placar mostra o líder */const px_=L?X+10:X+W-54;x.fillStyle='#140c0e';x.fillRect(px_-2,17,48,48);x.fillStyle=mine?'#e2a83c':'#9c7a44';x.fillRect(px_-1,18,46,46);x.drawImage(fcv[f],px_,19,44,44);
     const tx=L?X+62:X+W-62;scriptT(x,(mine?'Você · ':'')+(sd?'Defensor':'Atacante'),tx,15,16,al,W-72);x.textAlign=al;x.font=FONT(7.5);x.fillStyle='#f3e7cf';x.fillText(S[f][4],tx,36,W-72);
     x.fillStyle='#d9c8a8';x.fillText((hid?'?':total(sd)+' tropas · '+alive(sd).length+' unidades'),tx,50,W-72)}
   const us=B.units.filter(u=>u.side==sd&&(u.j>=0||u.hp>0)),n=us.length,cw_=Math.min(24,Math.floor((W-14)/Math.max(1,n))),y0=70;
@@ -441,11 +442,11 @@ function foreChip(s,t){ /* prévia colada no alvo: quanto tira, vida antes → d
     x.font=FONT(7.5);x.fillStyle='#d9c8a8';x.fillText(`Revide −${d1}: você ${s.hp} → `,bx+34,by+57,w-60);const rw=Math.min(w-60,x.measureText(`Revide −${d1}: você ${s.hp} → `).width);x.fillStyle=s.hp-d1<=0?'#ff6a3c':'#ffb3a6';x.fillText(''+(s.hp-d1),bx+34+rw,by+57)}}
 function speedBtns(){ /* velocidade do turno inimigo e "pular": valem durante a fase do inimigo */
   const items=[['×1',{spd:1}],['×2',{spd:2}],['×4',{spd:4}],...(B.busy&&!B.auto?[['Pular ▸▸',{skip:1}]]:[])];x.font=FONT(7.5);const tw=items.reduce((a,[t])=>a+Math.ceil(x.measureText(t).width)+20,0);
-  let X=VX?VX+VW-6:16+tw+90;const Y=VX?VY+6:112;x.textAlign='center'; // tela cheia: embaixo do placar da esquerda
+  let X=cv.width/2+(tw+86)/2;const Y=110;x.textAlign='center'; // embaixo da placa da rodada, centralizado
   for(let i=items.length-1;i>=0;i--){const[t,a]=items[i],w=Math.ceil(x.measureText(t).width)+16,on=a.spd==bFast;X-=w;
-    x.fillStyle='rgba(20,12,14,.82)';rr(x,X,Y,w,24,6);x.fill();if(on||a.skip){x.strokeStyle=a.skip?'#ff8a1e':'#ffd23f';x.lineWidth=2;rr(x,X+1,Y+1,w-2,22,5);x.stroke()}
-    x.fillStyle=on?'#ffd23f':'#f3e7cf';x.fillText(t,X+w/2,Y+3);B.hud.push({x:X,y:Y,w,h:24,...a});X-=4}
-  x.textAlign='right';x.font=FONT(6.5);x.lineWidth=4;x.strokeStyle='#1a1220';x.strokeText('Turno inimigo',X-2,Y+6);x.fillStyle='#f3e7cf';x.fillText('Turno inimigo',X-2,Y+6)}
+    x.fillStyle='rgba(20,12,14,.88)';rr(x,X,Y,w,26,6);x.fill();x.strokeStyle=on||a.skip?(a.skip?'#ff8a1e':'#ffd23f'):'rgba(226,168,60,.45)';x.lineWidth=on||a.skip?2:1;rr(x,X+.5,Y+.5,w-1,25,6);x.stroke();
+    x.fillStyle=on?'#ffd23f':'#f3e7cf';x.fillText(t,X+w/2,Y+5);B.hud.push({x:X,y:Y,w,h:26,...a});X-=4}
+  x.textAlign='right';x.font=FONT(6.5);x.lineWidth=4;x.strokeStyle='#1a1220';x.strokeText('Turno inimigo',X-4,Y+7);x.fillStyle='#f3e7cf';x.fillText('Turno inimigo',X-4,Y+7)}
 let miniOn=true;
 function miniDraw(){const mm=B.bg.mini,k=Math.min(150/GW,96/GH),w=GW*k,h=GH*k,X=VX+VW-w-(VX?8:20),Y=VY+VH-h-(VX?8:20),c=B.cam; /* minimapa: terreno, unidades, objetivos e o quadro da câmera */
   x.fillStyle='rgba(20,12,14,.85)';x.fillRect(X-4,Y-4,w+8,h+8);x.imageSmoothingEnabled=false;x.globalAlpha=.9;x.drawImage(mm,X,Y,w,h);x.globalAlpha=1;

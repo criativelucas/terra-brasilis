@@ -1,6 +1,6 @@
 // quartel-general: maquete isométrica, salas e menus
 // ---------- quartel-general: maquete isométrica em 810x610, no tamanho da tela (medidas de pixel em dobro, detalhes de 1 px por cima) ----------
-const[hqc,hg]=mk(810,610),IS=26,IH=13,ZS=3.2,HX=404,HY=248;
+const HW=1600,HHh=1000,HDX=(HW-810)/2,HDY=(HHh-610)/2,HCX=405+HDX,HCY=305+HDY,[hqc,hg]=mk(HW,HHh),IS=26,IH=13,ZS=3.2,HX=404+HDX,HY=248+HDY; /* buffer maior que a tela: a grama vai até as bordas */
 const iso=(a,b,z=0)=>[HX+(a-b)*IS,HY+(a+b)*IH-z*ZS];
 const poly=(g,pts,col)=>{g.fillStyle=col;g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.fill()};
 function ibox(g,a,b,z,w,d,h,top,left,right){ // caixa com canto de trás em (a,b): w ao longo de a, d ao longo de b, h de altura
@@ -26,15 +26,15 @@ function renderHQ(){
   const ln=(p,q,col,w=.7)=>{g.strokeStyle=col;g.lineWidth=w*1.6;g.beginPath();g.moveTo(p[0],p[1]);g.lineTo(q[0],q[1]);g.stroke()};
   const ball=(p,r,col)=>{g.fillStyle=col;g.beginPath();g.arc(p[0],p[1],r*2,0,7);g.fill()};
   const bx=(a,b,z,w,d,hh,c)=>ibox(g,a,b,z,w,d,hh,...c);
-  g.setTransform(1,0,0,1,0,0);g.fillStyle='#1d2418';g.fillRect(0,0,810,610);
-  for(let a=-7;a<21;a++)for(let b=-7;b<21;b++){const p=iso(a,b),v=hash(a+9,b+9); // gramado: tufos, capim, flores, pedrinhas
+  g.setTransform(1,0,0,1,0,0);g.fillStyle='#1d2418';g.fillRect(0,0,HW,HHh);
+  for(let a=-26;a<40;a++)for(let b=-26;b<40;b++){const p=iso(a,b),v=hash(a+9,b+9);if(p[0]<-40||p[0]>HW+40||p[1]<-30||p[1]>HHh+30)continue; // gramado: tufos, capim, flores, pedrinhas
     dm(a,b,0,['#8f9f2c','#84942a','#9aa934','#8a9a2a'][v%4]);
     if(v%2==0)dot(p,-5+v%9,4+v%5,3,1,'#c9c63a');if(v%3==0)dot(p,v%7-3,5+v%4,1,3,'#66791f');if(v%4==0)dot(p,3-v%8,8,2,1,'#a9b83a');
     if(v%7==0){dot(p,2,6,3,1,'#fff');dot(p,3,5,1,3,'#fff');dot(p,3,6,1,1,gold)}
     if(v%23==0){dot(p,-4,5,5,3,'#8d877b');dot(p,-3,4,3,1,'#b9b3a6')}}
   for(let k=0;k<9;k++){const v=hash(k,3);dm(12.7+k*.95,5.2+v%3*.15,0,k%2?'#cfc6b0':'#b9b09a',.8,.8);dm(12.9+k*.95,6.3+v%2*.2,0,k%2?'#b9b09a':'#d8cfba',.7,.7)}
-  [[-5.5,-1],[-4.5,4],[-5,9.5],[5,-5],[10,-4]].forEach(([a,b],k)=>itree(g,a,b,k+1));
-  for(let a=-7;a<21;a++)for(let b=-7;b<21;b++){const p=iso(a,b),v=hash(a+31,b+17); // capim fino
+  [[-5.5,-1],[-4.5,4],[-5,9.5],[5,-5],[10,-4],[-11,3],[-9,13],[-3,-9],[16,-6],[21,2],[22,11],[18,17],[-14,8],[2,21],[12,22],[24,-2],[-8,-6]].forEach(([a,b],k)=>itree(g,a,b,k+1));
+  for(let a=-26;a<40;a++)for(let b=-26;b<40;b++){const p=iso(a,b),v=hash(a+31,b+17);if(p[0]<-40||p[0]>HW+40||p[1]<-30||p[1]>HHh+30)continue; // capim fino
     for(let k=0;k<5;k++){const w=hash(v,k);px1(p,-12+w%24,3+(w>>5)%10,['#b5c43c','#6f8226','#d2d65a'][k%3],1,2)}}
   bx(-.7,-.7,0,13.4,13.4,3,STONE);
   for(let t=-.6;t<12.7;t+=.45){const p=iso(t,12.7,3),q=iso(12.7,t,3);px1(p,0,1,'rgba(255,255,255,.25)',8,1);px1(q,-8,1,'rgba(255,255,255,.18)',8,1)} // aresta do embasamento
@@ -139,14 +139,15 @@ function renderHQ(){
   [[-1.5,13],[3.5,17],[8,17.5],[16,3],[17.5,8],[13.6,13.8]].forEach(([a,b],k)=>itree(g,a,b,k+5))}
 function drawHQ(){
   const now=Date.now(),zm=HQ.zoom,own=owner.map((o,i)=>o==me?i:-1).filter(i=>i>=0),fc=`hsl(${hue(me)},80%,50%)`,P=(a,b,z)=>iso(a,b,z);
-  x.fillStyle='#1d2418';x.fillRect(0,0,cv.width,cv.height);x.save();
+  const cw=cv.width,ch=cv.height,hs=Math.min(cw/810,ch/610);HQ.s=hs; /* a maquete cabe na tela; a grama cobre o resto */
+  x.fillStyle='#1d2418';x.fillRect(0,0,cw,ch);x.save();x.translate(cw/2,ch/2);x.scale(hs,hs);x.translate(-HCX,-HCY);
   const ip=Math.min(1,(now-HQ.t0)/1300),ie=1-Math.pow(1-ip,3); // entrada: a câmera atravessa o pátio a partir do portão
-  if(ip<1){const[gx,gy]=P(14.4,6,0),s=1+1.6*(1-ie);x.translate(405,305);x.scale(s,s);x.translate(-(405+(gx-405)*(1-ie)),-(305+(gy-305)*(1-ie)))}
+  if(ip<1){const[gx,gy]=P(14.4,6,0),s=1+1.6*(1-ie);x.translate(HCX,HCY);x.scale(s,s);x.translate(-(HCX+(gx-HCX)*(1-ie)),-(HCY+(gy-HCY)*(1-ie)))}
   if(zm){const p=Math.min(1,(now-zm.start)/420),q=1-Math.pow(1-p,3),e=zm.dir>0?q:1-q,R=ROOMS.find(r=>r.k==(zm.room=='dip'?'gen':zm.room)),[cx,cy]=P(R.a+3,R.b+3,3);
-    const sc=1.32,cl=(v,lo)=>Math.max(lo,Math.min(0,v)),ox=cl(250-cx*sc,810-810*sc),oy=cl(320-cy*sc,610-610*sc); // aproxima pouco e para a sala à esquerda, sem mostrar a borda vazia da cena
-    x.translate(ox*e,oy*e);x.scale(1+(sc-1)*e,1+(sc-1)*e);
+    const sc=1.32,TX=HCX-155,TY=HCY+15; // aproxima pouco: a sala vai para a esquerda, o painel entra pela direita
+    x.translate(HCX+(TX-HCX)*e,HCY+(TY-HCY)*e);x.scale(1+(sc-1)*e,1+(sc-1)*e);x.translate(-(HCX+(cx-HCX)*e),-(HCY+(cy-HCY)*e));
     if(p>=1&&zm.dir<0)HQ.zoom=null}
-  x.drawImage(hqc,0,0,810,610);
+  x.drawImage(hqc,0,0);
   {const lit=(k,a0)=>{const R=ROOMS.find(r=>r.k==k);if(!R)return;const pts=[[0,0],[6,0],[6,6],[0,6]].map(([da,db])=>P(R.a+da,R.b+db,3)); /* sala acesa: ao passar o mouse e enquanto o painel dela está aberto */
       x.save();x.globalCompositeOperation='lighter';x.fillStyle=`rgba(255,215,120,${a0})`;x.beginPath();pts.forEach((p,i)=>i?x.lineTo(...p):x.moveTo(...p));x.fill();x.restore();
       x.strokeStyle=`rgba(255,210,63,${.55+a0*2})`;x.lineWidth=3;x.beginPath();pts.forEach((p,i)=>i?x.lineTo(...p):x.moveTo(...p));x.closePath();x.stroke()},pl=(Math.sin(now/300)+1)/2;
@@ -163,7 +164,7 @@ function drawHQ(){
   fig.sort((p,q)=>p[0]+p[1]-q[0]-q[1]).forEach(([a,b,u,f,dir,z],k)=>{const[sx,sy]=P(a,b,z),sp=sprite(u,f,true,Math.floor(now/450+k*.3)%2);
     x.fillStyle='rgba(0,0,0,.25)';x.fillRect(sx-18,sy-4,36,6);x.save();x.translate(sx-dir*39,sy-66);x.scale(dir,1);x.drawImage(sp,0,0,78,72);x.restore()});
   {const tod=turn%4,tint=TOD[tod][2],glow=(a,b,z,r,a0)=>{const[gx,gy]=P(a,b,z),gr=x.createRadialGradient(gx,gy,0,gx,gy,r);gr.addColorStop(0,`rgba(255,200,90,${a0})`);gr.addColorStop(1,'rgba(255,200,90,0)');x.fillStyle=gr;x.fillRect(gx-r,gy-r,r*2,r*2)};
-    if(tint[3]){x.fillStyle=`rgba(${tint.slice(0,3)},${tint[3]})`;x.fillRect(0,0,810,610)} // período do dia
+    if(tint[3]){x.fillStyle=`rgba(${tint.slice(0,3)},${tint[3]})`;x.fillRect(0,0,HW,HHh)} // período do dia
     const night=tod==3,dusk=tod==2;x.globalCompositeOperation='lighter';
     glow(.5,1.9,6,60,night?.35:.12);glow(.5,10.8,6,60,night?.35:.12); // luz das janelas no chão
     [[4.4,2.3,11.5],[6.67,2.67,17.5],[6.67,4.37,17.5],[9.3,10.5,10]].forEach(([a,b,z])=>glow(a,b,z,night?46:28,night?.45:.2)); // velas
@@ -178,19 +179,19 @@ function drawHQ(){
     x.fillStyle='#3a2a1f';x.font=FONT(8);x.fillText(sp.n,cx,by+1);if(hot){x.fillStyle='#6e5843';x.fillText(sp.s,cx,by+17)}
     if(!zm)HQ.bub.push([sp.k,cx-w/2,by,w,bh+13])});
   x.restore();
-  if(ip<.55){const o=ip/.55*420;[[-o,0],[405+o,1]].forEach(([dx,k])=>{x.fillStyle='#6b4524';x.fillRect(dx,0,405,610);x.fillStyle='#4a2c17'; // portão abrindo
-    for(let t=0;t<405;t+=45)x.fillRect(dx+t,0,4,610);x.fillStyle='#2f2f36';x.fillRect(dx,120,405,16);x.fillRect(dx,470,405,16);
-    x.fillStyle='#8a8f98';for(let t=20;t<405;t+=45){x.fillRect(dx+t,124,6,6);x.fillRect(dx+t,474,6,6)}x.fillStyle='#e0b030';x.fillRect(dx+(k?18:375),290,12,28)})}
-  lac(x,-6,572,cv.width+12,44,0);x.textBaseline='top';
-  scriptT(x,'Quartel-general de '+S[me][4],405,578,22)}
+  if(ip<.55){const hw=cw/2,o=ip/.55*(hw+20);[[-o,0],[hw+o,1]].forEach(([dx,k])=>{x.fillStyle='#6b4524';x.fillRect(dx,0,hw,ch);x.fillStyle='#4a2c17'; // portão abrindo
+    for(let t=0;t<hw;t+=45)x.fillRect(dx+t,0,4,ch);x.fillStyle='#2f2f36';x.fillRect(dx,ch*.2,hw,16);x.fillRect(dx,ch*.77,hw,16);
+    x.fillStyle='#8a8f98';for(let t=20;t<hw;t+=45){x.fillRect(dx+t,ch*.2+4,6,6);x.fillRect(dx+t,ch*.77+4,6,6)}x.fillStyle='#e0b030';x.fillRect(dx+(k?18:hw-30),ch/2-14,12,28)})}
+  lac(x,-6,ch-38,cw+12,44,0);x.textBaseline='top';
+  scriptT(x,'Quartel-general de '+S[me][4],cw/2,ch-32,22)}
 const hqSpot=e=>{ // balão clicado, senão sala sob o cursor, torre ou portão
-  const r=cv.getBoundingClientRect(),mx=(e.clientX-r.left)*810/r.width,my=(e.clientY-r.top)*610/r.height,hb=(HQ.bub||[]).find(q=>mx>=q[1]&&mx<=q[1]+q[3]&&my>=q[2]&&my<=q[2]+q[4]);
+  const r=cv.getBoundingClientRect(),hs=HQ.s||1,mx=((e.clientX-r.left)*cv.width/r.width-cv.width/2)/hs+HCX,my=((e.clientY-r.top)*cv.height/r.height-cv.height/2)/hs+HCY,hb=(HQ.bub||[]).find(q=>mx>=q[1]&&mx<=q[1]+q[3]&&my>=q[2]&&my<=q[2]+q[4]);
   if(hb)return hb[0];
   const tw=iso(-.3,-.3,30);if(Math.abs(mx-tw[0])<44&&Math.abs(my-tw[1])<80)return'cam';
   const dx=(mx-HX)/IS,dy=(my-HY+3*ZS)/IH,a=(dy+dx)/2,b=(dy-dx)/2;
   return a>=0&&b>=0&&a<12&&b<12?ROOMS[(a>=6)+(b>=6)*2].k:a>12&&a<17&&b>4&&b<8?'gate':null};
 function closeHQ(){HQ=null;document.body.classList.remove('hq');$('room').hidden=true;ui()}
-function openHQ(){if(me<0||B||over||cam||aiShow)return;HQ={hov:null,zoom:null,t0:Date.now()};document.body.classList.add('hq');renderHQ();ui();let lf=0;(function loop(t){if(!HQ)return;requestAnimationFrame(loop);if(document.hidden||t-lf<1000/[15,40,60][CFG.q]-2)return;lf=t;drawHQ()})(performance.now())}
+function openHQ(){if(me<0||B||over||cam||aiShow)return;setTimeout(()=>coach('hq','Passe o mouse sobre as salas e clique para entrar. Cada compra aparece na maquete.'),1500);HQ={hov:null,zoom:null,t0:Date.now()};document.body.classList.add('hq');renderHQ();ui();let lf=0;(function loop(t){if(!HQ)return;requestAnimationFrame(loop);if(document.hidden||t-lf<1000/[15,40,60][CFG.q]-2)return;lf=t;drawHQ()})(performance.now())}
 const enterRoom=k=>{if(!HQ||HQ.zoom)return;if(k=='cam')return showCampaign();if(k=='gate')return closeHQ();
   const h=HQ;HQ.zoom={room:k,start:Date.now(),dir:1};sfx.move();setTimeout(()=>HQ===h&&showRoom(k),340)};
 $('room').addEventListener('change',e=>{const el=e.target;if(el.dataset.post==null)return;const i=+el.dataset.post; // nomear ou dispensar general

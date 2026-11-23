@@ -191,11 +191,12 @@ let MBB=null;
 function mapBox(){if(MBB)return MBB;let a=1e9,b=1e9,c=-1e9,d=-1e9; // caixa do Brasil na cena
   for(let k=0;k<cell.length;k+=2)if(cell[k]>=0){const p=proj0((k%W+.5)*C,((k/W|0)+.5)*C);a=Math.min(a,p[0]);b=Math.min(b,p[1]);c=Math.max(c,p[0]);d=Math.max(d,p[1])}
   return MBB=[a-10,b-46,c+10,d+14]}
-const floatUI=()=>document.body.classList.contains('mapv')&&innerWidth>900;
-const compactUI=()=>innerWidth<1200||innerHeight<720,mapPad=()=>floatUI()?(compactUI()?[16,80,350,118]:[24,96,430,140]):[4,4,4,4]; // esquerda, topo, direita, base: espaço dos painéis flutuantes
+const floatUI=()=>document.body.classList.contains('mapv'),phoneUI=()=>innerWidth<=900;
+const compactUI=()=>innerWidth<1200||innerHeight<720,mapPad=()=>(phoneUI()?[8,104,8,sel>=0||empOpen?110+innerHeight*.42:160]:!floatUI()?[4,4,4,4]:compactUI()?[16,80,350,118]:[24,96,430,140]).map(v=>v*RS); // esquerda, topo, direita, base: espaço dos painéis flutuantes
 function mapClamp(){const[a,b,c,d]=mapBox();MC.tz=Math.max(MC.fz*.8,Math.min(MC.fz*3,MC.tz));MC.tx=Math.max(a,Math.min(c,MC.tx));MC.ty=Math.max(b,Math.min(d,MC.ty))}
 function mapFit(snap){const[a,b,c,d]=mapBox(),[L,T,R,Bm]=mapPad(),z=Math.min((cv.width-L-R)/(c-a),(cv.height-T-Bm)/(d-b));
   MC.fz=MC.tz=z;MC.tx=(a+c)/2-(L-R)/2/z;MC.ty=(b+d)/2-(T-Bm)/2/z;if(snap)Object.assign(MC,{cx:MC.tx,cy:MC.ty,z})}
+function mapRefit(){const r=MC.ok?MC.tz/MC.fz:1,tx=MC.tx,ty=MC.ty;mapFit(true);if(MC.ok){MC.tz=MC.z=MC.fz*r;MC.tx=MC.cx=tx;MC.ty=MC.cy=ty;mapClamp()}MC.ok=1} // novo tamanho de janela: mantém o zoom e o ponto olhado
 function mapStep(now){const k=Math.min(1,(now-(MC.t||now))/120);MC.t=now;MC.cx+=(MC.tx-MC.cx)*k;MC.cy+=(MC.ty-MC.cy)*k;MC.z+=(MC.tz-MC.z)*k;
   if(Math.abs(MC.tz-MC.z)<MC.z*.002)MC.z=MC.tz}
 function mapZoom(f,px_=cv.width/2,py=cv.height/2){const wx=MC.tx+(px_-cv.width/2)/MC.tz,wy=MC.ty+(py-cv.height/2)/MC.tz;MC.tz*=f;mapClamp();MC.tx=wx-(px_-cv.width/2)/MC.tz;MC.ty=wy-(py-cv.height/2)/MC.tz;mapClamp()}

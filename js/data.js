@@ -186,7 +186,7 @@ const BIO={ // g: chão (xadrez), gd/gl: tufos, f: matas, m: morros, mc: cores d
   sul:{nome:'Campos do Sul',g:['#98cc44','#90c43f'],gd:'#6ea52e',gl:'#c0e868',tree:'pine',f:14,m:5,river:1,mesa:0,mc:['#8f958a','#60665e','#bfc5b8']},
   mata:{nome:'Zona da Mata',g:['#4cae3e','#45a539'],gd:'#2f8a2c',gl:'#7fd45a',tree:'round',f:20,m:4,river:1,mesa:0,mc:['#9a9488','#69645c','#6fbf52']},
   pampa:{nome:'Pampa',g:['#a8d24c','#a0ca46'],gd:'#7fae34',gl:'#d0ec74',tree:'round',f:7,m:3,river:1,mesa:0,mc:['#8f958a','#60665e','#a8d24c']}};
-const CFG={mus:.4,vol:.5,tac:0,speed:1,diff:1,shake:1,clash:1}; // tac: 0 sempre tática, 1 só nos ataques, 2 automática
+const CFG={mus:.4,vol:.5,tac:0,speed:1,diff:1,shake:1,clash:1,uiz:1}; // tac: 0 sempre tática, 1 só nos ataques, 2 automática
 const N=S.length, ix=Object.fromEntries(S.map((s,i)=>[s[0],i]));
 const P=TH.P,RIOS=TH.RIOS,LAKES=TH.LAKES||[];
 // grade fixa de 81x79 casas; o enquadramento se ajusta ao contorno de cada teatro
@@ -231,7 +231,7 @@ const SW=W*C,SH=H*C,K=.35,HS=520,YB=578,F1=1/(1+K);
 const proj0=(sx,sy)=>{const t=1-sy/SH,sc=1/(1+K*t);return[SW/2+(sx-SW/2)*sc,YB-HS*t*sc/F1,sc]};
 const unproj0=(x,y)=>{const g=(YB-y)/HS*F1;if(g<0||g>F1)return null;const t=g/(1-K*g),sc=1/(1+K*t);return[SW/2+(x-SW/2)/sc,(1-t)*SH,sc]};
 // câmera do mapa: a cena acima (810x610) é ampliada e deslocada para a tela; proj/unproj já incluem a câmera
-const MC={cx:405,cy:330,z:1,tx:405,ty:330,tz:1,fz:1,t:0};
+const MC={cx:405,cy:330,z:1,tx:405,ty:330,tz:1,fz:1,t:0,ok:0};let RS=1; // RS: pixels de canvas por pixel de tela
 const proj=(sx,sy)=>{const p=proj0(sx,sy);return[cv.width/2+(p[0]-MC.cx)*MC.z,cv.height/2+(p[1]-MC.cy)*MC.z,p[2]*MC.z]};
 const unproj=(x,y)=>unproj0(MC.cx+(x-cv.width/2)/MC.z,MC.cy+(y-cv.height/2)/MC.z);
 const toScr=(x,y)=>[cv.width/2+(x-MC.cx)*MC.z,cv.height/2+(y-MC.cy)*MC.z]; // ponto da cena na tela

@@ -19,16 +19,16 @@ $('vs').addEventListener('click',()=>$('vs').hidden=true);
 const OPT={tac:['Batalhas',['Sempre táticas','Só nos ataques','Automáticas']],speed:['Ritmo da IA',['Lento','Normal','Rápido']],
   diff:['Dificuldade',['Fácil','Normal','Difícil']],clash:['Cenas de combate',['Desligadas','Ligadas']],shake:['Tremor de tela',['Desligado','Ligado']],
   q:['Qualidade dos efeitos',['Baixa','Média','Alta']],calm:['Efeitos fortes (clarão, confete)',['Ligados','Reduzidos']],big:['Texto grande',['Não','Sim']],
-  cb:['Modo daltônico',['Desligado','Ligado']],confirm:['Confirmar fim do turno',['Não','Sim']]};
+  cb:['Modo daltônico',['Desligado','Ligado']],uiz:['Tamanho da interface',['90%','100%','115%','130%']],confirm:['Confirmar fim do turno',['Não','Sim']]};
 let confirmNew=false,menuTab='jogo';
-const MTABS={jogo:['Jogo',['tac','speed','diff','confirm']],som:['Som',[]],tela:['Tela',['clash','shake','q','calm']],acess:['Acessibilidade',['big','cb']]};
+const MTABS={jogo:['Jogo',['tac','speed','diff','confirm']],som:['Som',[]],tela:['Tela',['clash','shake','q','calm']],acess:['Acessibilidade',['uiz','big','cb']]};
 function drawMenu(focus){
   const opt=k=>`<div class="opt"><span>${OPT[k][0]}</span><button data-c="${k}">‹ ${OPT[k][1][CFG[k]]} ›</button></div>`;
   $('menuBox').innerHTML=`<h2>Pausa</h2><div class="tabs" role="tablist">${Object.entries(MTABS).map(([k,[n]])=>`<button role="tab" aria-selected="${menuTab==k}" data-c="tab-${k}" class="${menuTab==k?'on':''}">${n}</button>`).join('')}</div><div class="mtab">`+
     (menuTab=='som'?`<label class="opt" for="mus"><span>Música</span><input type="range" id="mus" min="0" max="1" step="0.1" value="${CFG.mus}"></label>
       <label class="opt" for="vol"><span>Efeitos sonoros</span><input type="range" id="vol" min="0" max="1" step="0.1" value="${CFG.vol}"></label>`:'')+
     MTABS[menuTab][1].map(opt).join('')+
-    (menuTab=='acess'?`<p class="keys"><b>Teclado</b><br><kbd>E</kbd> fim do turno · <kbd>M</kbd> marchar · <kbd>R</kbd> recrutar · <kbd>F</kbd> fortificar · <kbd>Q</kbd> quartel · <kbd>Z</kbd> desfazer · <kbd>N</kbd> próximo · <kbd>Esc</kbd> pausa ou cancelar · setas e <kbd>Enter</kbd> no mapa e nos menus de comando</p>`:'')+
+    (menuTab=='acess'?`<button data-c="keys">${I('menu')}Todos os atalhos do teclado (?)</button><p class="keys"><b>Teclado</b><br><kbd>E</kbd> fim do turno · <kbd>M</kbd> marchar · <kbd>R</kbd> recrutar · <kbd>F</kbd> fortificar · <kbd>Q</kbd> quartel · <kbd>Z</kbd> desfazer · <kbd>N</kbd> próximo · <kbd>Esc</kbd> pausa ou cancelar · setas e <kbd>Enter</kbd> no mapa e nos menus de comando</p>`:'')+
     (menuTab=='jogo'?`${me>=0?'<button data-c="saves">Salvamentos</button>':''}<button data-c="enc">Enciclopédia</button><button data-c="title">Salvar e sair ao título</button><button data-c="new" class="danger">${confirmNew?'Confirmar: apagar partida':'Nova partida'}</button>`:'')+
     `</div><button data-c="close" class="end">Continuar</button>`;
   $('menuBox').querySelector(`[data-c="${focus||'close'}"]`)?.focus()}
@@ -40,6 +40,7 @@ $('menu').addEventListener('click',e=>{if(e.target.id=='menu')return menu(false)
   if(k=='close')return menu(false);
   if(k.startsWith('tab-')){menuTab=k.slice(4);return drawMenu(k)}
   if(k=='enc'){menu(false);return showEnc(me>=0?me:0)}
+  if(k=='keys'){menu(false);return showKeys()}
   if(k=='saves'){menu(false);return showSaves('close')}
   if((k=='title'||(k=='new'&&confirmNew))&&HQ)closeHQ();
   if(k=='title'){B=null;raids=[];menu(false);if(me>=0)load();ui();return showTitle()} // batalha em curso é abandonada; volta ao último salvamento
@@ -96,7 +97,7 @@ const savedInfo=()=>{try{const d=JSON.parse(localStorage.getItem(SAVE));return d
 // ---------- telas: título, nova campanha, campanha, ajuda, evento, fim ----------
 // tutorial do primeiro jogo: cada passo avança quando o jogador faz a ação dele
 const TUT=[['menu',`Bem-vindo! Clique no seu ${TW1} no mapa (plaquinha escura) para abrir o menu de comandos.`,()=>cenOf(me)],
-  ['rec','No menu, escolha Recrutar: cada tropa custa ouro. A barra de Ajuda, embaixo do mapa, explica tudo o que estiver sob o mouse.','#cmd [data-a=rec]'],
+  ['rec','No menu, escolha Recrutar: cada tropa custa ouro. Passe o mouse sobre qualquer botão para ver o que ele faz.','#cmd [data-a=rec]'],
   ['march',`Abra o menu de novo e escolha Marchar / Atacar. As rotas mostram a chance de vitória contra cada vizinho.`,()=>cenOf(me)],
   ['battle',`Clique num ${TW1} vizinho inimigo para atacar.`,null],
   ['bmove','Na batalha, clique numa unidade sua e depois numa casa hachurada para andar. Arraste o campo para mover a câmera.',()=>{const u=B&&!B.prep&&alive(B.ps).find(v=>!v.done);return u&&inView(...toScreen(u.x*CS+CS/2,u.y*CS+CS/2))?toScreen(u.x*CS+CS/2,u.y*CS+CS/2):null}],
@@ -164,7 +165,7 @@ function showHelp(){scr(`<h2>Como jogar</h2>
   <p>O jogo salva sozinho a cada ação, neste navegador.</p>
   ${me>=0?'<button data-s="tut">Rever tutorial</button>':''}
   <button data-s="${me<0?'title':'close'}" class="end">Voltar</button>`)}
-function showCampaign(){ /* campanha: metas como medalhas, glória somada, potências */
+function showCampaign(){coach('camp','Cada medalha sobe de bronze a ouro; a glória soma os níveis.'); /* campanha: metas como medalhas, glória somada, potências */
   const mine=owner.filter(o=>o==me).length,pw=[...new Set(owner)].map(f=>[f,owner.filter(o=>o==f).length,owner.reduce((a,o,i)=>a+(o==f?troops[i]:0),0)]).sort((a,b)=>b[1]-a[1]||b[2]-a[2]),
     tier=(v,T)=>T.filter(t=>v>=t).length,M=[]; // [ícone, título, valor, alvo, recompensa, nível 0..3]
   if(goal){const g=goal.filter(i=>owner[i]==me).length;M.push(['flag','Objetivo da campanha',g,goal.length,'vitória',g>=goal.length?3:g/goal.length>=.5?2:g?1:0])}
@@ -192,9 +193,11 @@ function showEvent(){ // escolha de início de turno: [título, texto, [[opção
     ['Febre amarela',`Um surto atinge os quartéis de ${n}.`,[['Quarentena (−3 ouro)',3,no],['Seguir marcha (perde um terço das tropas)',0,()=>troops[st]=Math.max(1,Math.round(troops[st]*.67))]]],
     ['Engenheiros militares',`Oferecem erguer um forte em ${n}.`,[['Construir (−3 ouro, +20% defesa)',3,()=>fort[st]=Math.min(2,fort[st]+1)],['Recusar',0,no]]],
     ['Contrabando de armas',`Um navio sem bandeira ancora perto de ${n}.`,[['Comprar (−5 ouro, +5 tropas)',5,()=>troops[st]+=5],['Denunciar (+2 ouro)',0,()=>gold[me]+=2]]]];
-  EVT=E[Math.random()*E.length|0];sel=st;
-  scr(`<h2>${EVT[0]}</h2><div class="row c"><img class="hero" src="${face[me]}" alt=""></div><p class="c">${EVT[1]}</p>`+
-    EVT[2].map(([l,c],k)=>`<button data-s="ev${k}" ${gold[me]<c?'disabled':''}>${l}</button>`).join(''))}
+  EVT=E[Math.random()*E.length|0];sel=st;const EIC={'Safra de café':'r_caf','Voluntários da pátria':'swords','Revolta local':'warn','Febre amarela':'warn','Engenheiros militares':'shield','Contrabando de armas':'anchor'}; /* evento: medalhão do tema e opções com ganho e perda */
+  const fx=t=>t.split(/,\s*/).map(q=>`<span class="${/[−-]|perde/.test(q)?'bad':'good'}">${q}</span>`).join('');
+  scr(`<h2>${EVT[0]}</h2><div class="evh"><span class="medal1">${I(EIC[EVT[0]]||'scroll')}</span><div><p>${EVT[1]}</p><small>${S[st][1]} · ${troops[st]} tropas · ouro em caixa ${gold[me]}</small></div></div><div class="evo">`+
+    EVT[2].map(([l,c],k)=>{const m=l.match(/^(.*?)\s*\((.*)\)$/),nm=m?m[1]:l,ef=m?m[2]:'';
+      return`<button data-s="ev${k}" class="${gold[me]<c?'off':''}" ${gold[me]<c?'disabled':''}><b>${nm}</b><span class="fx">${ef?fx(ef):'<span>nada muda</span>'}</span>${gold[me]<c?`<small>faltam ${c-gold[me]} ouro</small>`:''}</button>`}).join('')+'</div>')}
 onTurn=()=>{if(storyTurn())return;if(Math.random()<.35){if(aiShow)evtDue=true;else showEvent()}}; // durante a reencenação da IA, o evento espera
 $('campBtn').addEventListener('click',()=>{if(me>=0&&!B)showCampaign()});
 const onScr=e=>{const k=e.target.closest('button')?.dataset.s;if(!k)return;sfx.sel();
@@ -236,6 +239,7 @@ const onScr=e=>{const k=e.target.closest('button')?.dataset.s;if(!k)return;sfx.s
   else if(k.startsWith('ev')){const[l,c,fn]=EVT[2][+k[2]];gold[me]-=c;fn();note(`${EVT[0]}: ${l.split(' (')[0].toLowerCase()}`);scr();ui()}};
 $('screen').addEventListener('click',onScr);$('room').addEventListener('click',onScr);
 document.addEventListener('keydown',e=>{ // atalhos: clicam o botão correspondente do painel, se existir e estiver ativo
+  if(e.key=='?'&&$('menu').hidden&&!e.target.closest?.('input,select,textarea')){e.preventDefault();return $('screen').hidden?showKeys():scr()}
   if(!$('screen').hidden||!$('menu').hidden||e.ctrlKey||e.metaKey||e.altKey)return;
   const k=e.key.toLowerCase();
   if(k=='c')return $('campBtn').click();
@@ -246,8 +250,16 @@ document.addEventListener('keydown',e=>{ // atalhos: clicam o botão corresponde
     if(dv){e.preventDefault();const from=marching&&hov>=0?hov:sel,cand=marching?adj[sel]:S.map((_,j)=>j),[fx_,fy]=from>=0?proj(...px(from)):[405,305];
       let best=-1,bs=1e9;cand.forEach(j=>{if(j==from)return;const[jx,jy]=proj(...px(j)),dx=jx-fx_,dy=jy-fy,al=dx*dv[0]+dy*dv[1];if(al<=0)return;const sc=Math.hypot(dx,dy)+Math.abs(dx*dv[1]-dy*dv[0])*1.5;if(sc<bs){bs=sc;best=j}});
       if(best>=0){if(marching)hov=best;else sel=best;sfx.sel();ui()}return}
-    if(k=='enter'&&marching&&adj[sel].includes(hov)){e.preventDefault();act(hov);hov=-1;return ui()}}
+    if(k=='enter'&&marching&&adj[sel].includes(hov)){e.preventDefault();if(tryAct(hov))hov=-1;return ui()}}
   if(k=='q')return HQ?$('panel').querySelector('[data-a=hqexit]').click():openHQ();
   const a=B?{e:'bend',a:'bauto',z:'bcancel',w:'bwait'}[k]:{e:'end',m:'march',r:'rec',f:'fort',z:'undo',n:'next'}[k];
   if(a)document.querySelector(`#cmd:not([hidden]) [data-a="${a}"]:not(:disabled), aside [data-a="${a}"]:not(:disabled)`)?.click()});
 
+
+function showKeys(){const K=(k,t)=>`<div class="kr"><span>${k.split(' ').map(q=>`<kbd>${q}</kbd>`).join(' ')}</span><em>${t}</em></div>`; /* todos os atalhos numa tela, a tecla ? abre e fecha */
+  scr(`<h2>Atalhos do teclado</h2><div class="keyg">
+    <div class="box"><b>${I('flag')}Mapa</b>${K('E','Fim do turno')}${K('M','Marchar')}${K('R','Recrutar')}${K('F','Fortificar')}${K('N','Próximo estado')}${K('Z','Desfazer')}${K('Q','Quartel-general')}${K('Setas Enter','Escolher estado e confirmar marcha')}</div>
+    <div class="box"><b>${I('swords')}Batalha</b>${K('E','Encerrar rodada')}${K('W','Esperar')}${K('Z','Desfazer movimento')}${K('A','Automático (confirma)')}${K('F','Velocidade do turno inimigo')}${K('Espaço','Pular animações do inimigo')}${K('M','Minimapa')}</div>
+    <div class="box"><b>${I('eye')}Câmera</b>${K('+ -','Aproximar e afastar')}${K('0','Mapa inteiro')}${K('Setas','Mover na batalha')}<p class="hint">Arraste para mover, roda ou pinça para aproximar, duplo clique centraliza.</p></div>
+    <div class="box"><b>${I('menu')}Geral</b>${K('C','Campanha')}${K('X','Exército')}${K('V','Conselho')}${K('Esc','Pausa ou cancelar')}${K('?','Esta tela')}</div></div>
+    <button data-s="close" class="end">Fechar</button>`);$('card').classList.add('wide')}
