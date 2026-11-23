@@ -36,7 +36,7 @@ function showEnc(i){i=(i%N+N)%N;const L=LN(i),E=ELITE[S[i][0]];
     <p><b>No jogo:</b> ${S[i][7]}: ${traitTxt(i)}${E?`. Tropa de elite: ${E[0]}`:''}. Terreno de batalha: ${BIO[BOF[i]].nome}.</p>
     ${L.a?`<p class="quote"><i>Fala no jogo:</i> ${L.a}</p>`:''}
     <div class="encg">${S.map((s,j)=>`<button data-s="enc-${j}" class="${j==i?'on':''}" title="${s[4]} · ${s[1]}" data-help="${s[4]} · ${s[1]}">${img(j,s[4])}</button>`).join('')}</div>
-    <div class="row c"><button data-s="enc-${i-1}">‹ Anterior</button><button data-s="enc-${i+1}">Próximo ›</button></div><button data-s="close" class="end">Fechar</button>`)}
+    <div class="row c"><button data-s="enc-${i-1}">${I('back')}Anterior</button><button data-s="enc-${i+1}">Próximo${I('fwd')}</button></div><button data-s="close" class="end">Fechar</button>`)}
 
 // ---------- final por líder ----------
 function endText(){const L=LN(me),full=owner.every(o=>o==me);

@@ -2,7 +2,7 @@
 const $=id=>document.getElementById(id),cv=$('map'),x=cv.getContext('2d');
 const hue=f=>f*137.508%360, px=i=>[(S[i][2]-X0)/D*C,(Y0-S[i][3])/D*C];
 const mk=(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');g.imageSmoothingEnabled=false;return[c,g]};
-const FONT=n=>`700 ${Math.round(n*1.6)}px "Alegreya",Georgia,serif`;
+const FONT=n=>`700 ${Math.round(n*1.6)}px ${n<9?'"Alegreya Sans",system-ui,sans-serif':'"Alegreya",Georgia,serif'}`; // textos pequenos do canvas na mesma fonte simples da interface
 // caixas no canvas no tema de crônica: pergaminho, laca escura e letreiro caligráfico
 const rr=(g,X,Y,w,h,r)=>{g.beginPath();g.roundRect(X,Y,w,h,Math.max(0,r))};
 function parch(g,X,Y,w,h,r=12){g.save();g.shadowColor='rgba(0,0,0,.45)';g.shadowBlur=10;g.shadowOffsetY=4;g.fillStyle='#3b2618';rr(g,X,Y,w,h,r);g.fill();g.restore();
@@ -20,6 +20,14 @@ const applyCfg=()=>{document.body.classList.toggle('big',!!CFG.big)};applyCfg();
 const PXI={scroll:['..OOOOOO..','.OWWWWWWO.','.OWbbbbWO.','..OWWWWO..','..OWbbWO..','..OWWWWO..','..OWbbWO..','.OWWWWWWO.','.OWWWWWWO.','..OOOOOO..'],
   swords:['O........O','OGO....OGO','.OGO..OGO.','..OGOOGO..','...OGGO...','...OGGO...','..OYOOYO..','.OYO..OYO.','OBO....OBO','OO......OO'],
   flag:['.OOOOOO...','.ORRRRRO..','.ORRRRRRO.','.ORRRRRO..','.OOOOOO...','.Ob.......','.Ob.......','.Ob.......','.Ob.......','OOOO......'],
+  back:['..........','....OO....','...OYO....','..OYYOOOO.','.OYYYYYYYO','.OYYYYYYYO','..OYYOOOO.','...OYO....','....OO....','..........'],
+  fwd:['..........','....OO....','....OYO...','.OOOOYYO..','OYYYYYYYO.','OYYYYYYYO.','.OOOOYYO..','....OYO...','....OO....','..........'],
+  play:['..OO......','..OYO.....','..OYYO....','..OYYYO...','..OYYYYO..','..OYYYYO..','..OYYYO...','..OYYO....','..OYO.....','..OO......'],
+  check:['........OO','.......ONO','......ONO.','OO...ONO..','ONO.ONO...','.ONONO....','..ONO.....','...O......','..........','..........'],
+  eye:['..........','..........','...OOOO...','..OWWWWO..','.OWWOOWWO.','OWWOKKOWWO','.OWWOOWWO.','..OWWWWO..','...OOOO...','..........'],
+  up:['..........','....OO....','...ONNO...','..ONNNNO..','.ONNNNNNO.','OOOONNOOOO','...ONNO...','...ONNO...','...OOOO...','..........'],
+  down:['..........','...OOOO...','...ORRO...','...ORRO...','OOOORROOOO','.ORRRRRRO.','..ORRRRO..','...ORRO...','....OO....','..........'],
+  close:['.OO....OO.','OWWO..OWWO','.OWWOOWWO.','..OWWWWO..','...OWWO...','..OWWWWO..','.OWWOOWWO.','OWWO..OWWO','.OO....OO.','..........'],
   undo:['..........','...OO.....','..OYO.....','.OYYOOOOO.','OYYYYYYYYO','.OYYOOOOYO','..OYO..OYO','...OO.OYYO','.....OYYO.','......OO..'],
   menu:['..........','.OOOOOOOO.','.OWWWWWWO.','.OOOOOOOO.','.OWWWWWWO.','.OOOOOOOO.','.OWWWWWWO.','.OOOOOOOO.','..........','..........'],
   coin:['...OOOO...','..OYYYYO..','.OYWYYyyO.','.OYYyYYyO.','.OYYyYYyO.','.OYYyYYyO.','.OYYYYyyO.','..OyyyyO..','...OOOO...','..........'],

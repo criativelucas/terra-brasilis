@@ -52,8 +52,8 @@ aside h2{border-bottom:0;box-shadow:none;position:relative;padding-bottom:8px}
 aside h2::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,transparent,var(--parch-edge) 12%,var(--parch-edge) 88%,transparent);-webkit-text-fill-color:initial}
 /* placa de título no alto das janelas grandes */
 #card h2,#menuBox h2,#room h2{align-self:center;text-align:center;padding:6px 26px 8px;font-size:23px;position:relative;filter:none;-webkit-text-fill-color:var(--lac-text);color:var(--lac-text);
-  background:linear-gradient(180deg,#8d877e,#5f5a53);border:1px solid var(--stone-edge);
-  clip-path:polygon(14px 0,calc(100% - 14px) 0,100% 50%,calc(100% - 14px) 100%,14px 100%,0 50%);
+  background:linear-gradient(180deg,#4a3138,#2a1a20);border:1px solid var(--gilt2);border-radius:var(--r2);
+  clip-path:none;color:#ffe7a8;-webkit-text-fill-color:#ffe7a8;
   font-style:normal;font-weight:700;text-shadow:0 2px 0 rgba(0,0,0,.45);box-shadow:inset 0 1px 0 rgba(255,255,255,.3)}
 #card h2.big{font:italic 800 46px/1.05 var(--display);padding:0;clip-path:none;border:0;box-shadow:none;letter-spacing:.5px;text-shadow:none;
   background:linear-gradient(180deg,var(--script2),var(--script) 65%,#c85a20);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
@@ -70,28 +70,29 @@ b{font-weight:800}i{color:var(--ink2)}
 kbd{font:700 13px var(--sc);background:var(--parch2);border:1px solid var(--parch-edge);border-bottom-width:2px;border-radius:4px;padding:0 5px;color:var(--ink)}
 .gl{border-bottom:1px dotted currentColor;cursor:help}
 
-/* ---------- botões: placas de pedra com pontas chanfradas ---------- */
-button{font:700 15px/1.15 var(--display);padding:8px 14px;color:var(--stone-text);cursor:pointer;position:relative;
-  border:1px solid var(--stone-edge);border-radius:4px;
-  background:linear-gradient(180deg,#aaa59c 0,var(--stone) 45%,var(--stone2) 100%);
-  clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px);
-  text-shadow:0 1px 0 rgba(0,0,0,.55),0 0 2px rgba(0,0,0,.35);box-shadow:inset 0 1px 0 rgba(255,255,255,.4),inset 0 -2px 0 rgba(0,0,0,.25);transition:filter .1s,transform .05s}
-button:hover:not(:disabled),button:focus-visible{filter:brightness(1.12) saturate(1.1);outline:none;transform:translateY(-1px)}
-button:focus-visible{box-shadow:inset 0 0 0 2px var(--parch),inset 0 1px 0 rgba(255,255,255,.4)}
-button:active:not(:disabled){transform:translateY(1px);filter:brightness(.95)}
-button:disabled{opacity:.45;cursor:default;filter:grayscale(.6)}
-/* principal: bronze dourado com tinta escura */
-button.end{background:linear-gradient(180deg,#f2cf86 0,#dca85a 50%,#b47a34 100%);color:#2e1c0c;text-shadow:0 1px 0 rgba(255,240,200,.6);border-color:#6b4318}
-button.on,button.danger{background:linear-gradient(180deg,#d77a64 0,#b8432f 50%,#7a2418 100%)}
-/* listas de menu: faixa clara e luva apontando, como o cursor dos menus de crônica */
-#card>button,#menuBox>button,#room>button,#panel>button,#cmd>button{text-align:left;padding-left:34px}
-#card>button.end,#menuBox>button.end{text-align:center;padding-left:14px}
-#card>button::before,#menuBox>button::before,#room>button::before,#panel>button::before,#cmd>button::before{content:"";position:absolute;left:9px;top:50%;width:18px;height:14px;margin-top:-7px;opacity:.35;
-  background:no-repeat center/contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 14'%3E%3Cpath d='M1 5.5h9l-1.6-2c-.7-1 .6-2 1.5-1.2l4.6 3.9 2 .3c.8.2 1 .8 1 1.5v2.4c0 1.6-1.2 2.6-2.8 2.6H8.6c-1 0-1.6-.6-1.6-1.2H5.4c-1.1 0-1.1-1.7 0-1.7H4.9c-1.1 0-1.1-1.7 0-1.7H1C-.3 8.4-.3 5.5 1 5.5z' fill='%23fff' stroke='%232a1d14' stroke-width='1' stroke-linejoin='round'/%3E%3C/svg%3E")}
-#card>button.end::before,#menuBox>button.end::before{display:none}
-#card>button:hover:not(:disabled)::before,#menuBox>button:hover:not(:disabled)::before,#room>button:hover:not(:disabled)::before,#panel>button:hover:not(:disabled)::before,#cmd>button:hover:not(:disabled)::before,
-#card>button:focus-visible::before,#menuBox>button:focus-visible::before,#panel>button:focus-visible::before,#cmd>button:focus::before{opacity:1;animation:nudge .6s ease-in-out infinite alternate}
-@keyframes nudge{to{transform:translateX(3px)}}
+/* ---------- padrão visual: medidas fixas ---------- */
+:root{--s1:4px;--s2:8px;--s3:12px;--s4:16px;--r1:6px;--r2:10px;--r3:14px;--bh:36px;--bhs:28px;--ic:18px;--ics:16px;
+  --b-bg:linear-gradient(180deg,#fbf3df,#e6d3a8);--b-bd:#8a6a3c;--b-tx:#3a2414;
+  --b1-bg:linear-gradient(180deg,#f6dc8e,#dcaa4e 55%,#b07a2c);--b1-bd:#5a3a14;--b1-tx:#2e1c0c;
+  --b2-bg:linear-gradient(180deg,#4a3138,#2a1a20);--b2-bd:#b8955a;--b2-tx:#f3e7cf;
+  --bd-bg:linear-gradient(180deg,#e0806a,#b8432f 55%,#8a2a1c);--bd-tx:#fff}
+/* ---------- botão único: pergaminho (padrão), dourado (principal), laca (sobre o mapa), vermelho (perigo) ---------- */
+button{display:inline-flex;align-items:center;justify-content:center;gap:var(--s2);min-height:var(--bh);padding:0 var(--s3);
+  font:700 15px/1.15 var(--display);color:var(--b-tx);cursor:pointer;position:relative;text-align:center;
+  background:var(--b-bg);border:1px solid var(--b-bd);border-radius:var(--r1);clip-path:none;text-shadow:none;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 1px 0 rgba(60,36,16,.25)}
+button .ico{width:var(--ic);height:var(--ic);flex:none}
+button:hover:not(:disabled):not(.off),button:focus-visible{filter:brightness(1.06);outline:none;transform:translateY(-1px);border-color:#5a3a14}
+button:focus-visible{box-shadow:0 0 0 2px #fff3c0,0 0 0 4px var(--frame)}
+button:disabled,button.off{opacity:.5;filter:grayscale(.6);cursor:not-allowed;transform:none}
+button.off{cursor:help}
+button.mini,.mini{min-height:var(--bhs);padding:0 10px;font-size:13px;gap:6px}button.mini .ico{width:var(--ics);height:var(--ics)}
+button.end,button.buy{background:var(--b1-bg);border-color:var(--b1-bd);color:var(--b1-tx);text-shadow:0 1px 0 rgba(255,240,200,.5)}
+button.danger{background:var(--bd-bg);border-color:#5a1a10;color:var(--bd-tx);text-shadow:0 1px 0 rgba(0,0,0,.35)}
+button.on{background:linear-gradient(180deg,#fff0c0,#f0cc78);border-color:#8a5a12;box-shadow:inset 0 0 0 1px #fff7da,0 0 0 2px rgba(226,168,60,.45)}
+header>button,#bar .mkt{background:var(--b2-bg);border-color:var(--b2-bd);color:var(--b2-tx)}
+#card>button,#menuBox>button,#room>button,#panel>button{width:100%}
+#cmd>button{justify-content:flex-start;width:100%}
 input[type=range]{flex:1;min-width:0;accent-color:var(--frame)}
 #card input,select{font:600 15px var(--body);padding:4px 8px;min-width:0;flex:1;border:1px solid var(--parch-edge);border-radius:6px;background:#fbf5e6;color:var(--ink);box-shadow:inset 0 1px 3px rgba(90,60,30,.25)}
 select{max-width:190px}
@@ -352,7 +353,7 @@ canvas{touch-action:manipulation}
 .forces div:not(.fb){display:flex;flex-direction:column;align-items:center;line-height:1.1}.forces span{font-size:12px;color:var(--ink2)}.forces b{font-size:20px}
 .fb{height:12px;background:linear-gradient(90deg,#e0583f,#b8432f);border:1px solid var(--frame2);border-radius:6px;overflow:hidden}.fb i{display:block;height:100%;background:linear-gradient(90deg,#6f9fff,#3f6db0)}
 .grp{display:flex;flex-direction:column;gap:5px}.lbl{font:700 12px var(--sc);color:var(--ink3);letter-spacing:1px}
-.grp .row button{flex:1;padding:7px 6px;font-size:14px;background:linear-gradient(180deg,#b9b4aa,#8f8a82 50%,#6f6a63)}
+.grp .row button{flex:1;padding:0 6px;font-size:14px}
 .minor{display:flex;gap:6px;justify-content:flex-end}
 /* ---------- bandeja de cartas: metade das cartas aparece mesmo fechada ---------- */
 #hand{transform:translate(-50%,calc(100% - 112px))}#hand.open{transform:translate(-50%,0)}
@@ -663,3 +664,40 @@ button.scard>img{grid-column:1}button.scard .tb{grid-column:2;grid-row:1}button.
   body.full #hand:not(.fan){width:min(700px,calc(100vw - 440px));bottom:70px}
   .who.sm img{width:56px;height:56px}.kpi b{font-size:20px}
 }
+/* ================= padrão visual: ícones, títulos de seção, etiquetas ================= */
+.ico{width:18px;height:18px;vertical-align:-4px;margin-right:0}button .ico,a .ico{margin:0}
+:not(button)>.ico+*{margin-left:0}
+.chips{gap:var(--s2)}
+.chips>span{display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 9px;line-height:1;font-size:14px}
+.chips>span .ico{width:16px;height:16px;vertical-align:0}
+.chips span span,.chips span .gl{display:inline;height:auto;padding:0;background:none;border:0;box-shadow:none;font:inherit}
+.gl{border-bottom:0;cursor:help}
+.gl::after{content:"?";display:inline-grid;place-items:center;width:13px;height:13px;margin-left:4px;border-radius:50%;background:rgba(138,106,60,.28);color:var(--ink);font:800 9px/1 var(--ui);vertical-align:1px}
+/* título de seção: versalete, ícone opcional, filete embaixo */
+.box>b,.grp>.lbl,#card h3,#room .cat,.perks>b{display:flex;align-items:center;gap:6px;margin:0 0 2px;padding-bottom:4px;font:700 12px/1.2 var(--sc);letter-spacing:.9px;color:var(--ink2);border-bottom:1px solid rgba(138,106,60,.35)}
+.box>b .ico,.grp>.lbl .ico{width:16px;height:16px;vertical-align:0}
+.box.safe>b{color:#2f6a38;border-color:rgba(63,138,74,.4)}.box.threat>b{color:#8a2a1a;border-color:rgba(184,67,47,.4)}
+.box,.ucard,.stat,.terr,.forces,.objbar,.summ,.slot,.mk,.perks,.helpbox,.tcard,.dcard,.gcard,.medal,.mcard{border-radius:var(--r2)}
+.box{padding:var(--s3);gap:var(--s2)}
+#panel,.ctx{gap:var(--s3)}
+/* etiquetas clicáveis das fronteiras com a mesma altura das outras */
+.foes{gap:var(--s2)}.foes button.thr,.foes>span{min-height:26px;height:26px;padding:0 9px;display:inline-flex;align-items:center;gap:4px;font-size:13px}
+/* estado de "ok" e "falta" com ícone alinhado */
+.st{gap:4px}.st .ico{width:14px;height:14px;vertical-align:0}
+/* cabeçalho de janela: placa de laca igual em todas as telas */
+#card h2,#menuBox h2{margin-bottom:var(--s1)}
+#card>.row.c,#card .row.c{justify-content:center;gap:var(--s2)}
+.row{gap:var(--s2)}
+/* tabs e alternadores no mesmo padrão */
+.tabs button{border-radius:var(--r1) var(--r1) 0 0;min-height:32px}
+.opt button{min-height:var(--bhs);font-size:13px}
+/* correções do padrão: ícone não herda tamanho de retrato; espaço entre ícone e texto fora de botões */
+.who img.ico,.ucard img.ico,.gcard img.ico,.stat img.ico{width:16px;height:16px;border:0;border-radius:0;background:none;box-shadow:none}
+.ico{margin-right:5px}button .ico,.chips>span .ico,.box>b .ico,.grp>.lbl .ico,.st .ico,.dock .ico,#mapMode .ico,.tabs .ico{margin:0}
+#panel>button.back,#panel>button.mini{width:auto;align-self:flex-start}
+.who .row{gap:var(--s2);flex-wrap:wrap}
+/* salvamentos: espaço vazio em pergaminho, sem bloco colorido */
+.slot .th{background:repeating-linear-gradient(135deg,rgba(138,106,60,.08) 0 8px,transparent 8px 16px),#efe2c0;border:2px dashed rgba(138,106,60,.55);color:var(--ink2);font:700 14px var(--ui)}
+.slot img.th{border-style:solid;background:none}
+.slot{align-items:center}.slot .si{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+@media (max-width:900px){#cmd{gap:3px;padding:7px;min-width:160px}#cmd>button{min-height:28px;font-size:13px;padding:0 10px}#cmd .ch b{font-size:15px}}
