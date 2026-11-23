@@ -228,5 +228,10 @@ const SCN=TH.SCN.map(s=>({...s,sub:s.sub&&Object.fromEntries(Object.entries(s.su
 
 // câmera: o mapa plano (810x790) vira um tabuleiro visto de cima e de frente
 const SW=W*C,SH=H*C,K=.35,HS=520,YB=578,F1=1/(1+K);
-const proj=(sx,sy)=>{const t=1-sy/SH,sc=1/(1+K*t);return[SW/2+(sx-SW/2)*sc,YB-HS*t*sc/F1,sc]};
-const unproj=(x,y)=>{const g=(YB-y)/HS*F1;if(g<0||g>F1)return null;const t=g/(1-K*g),sc=1/(1+K*t);return[SW/2+(x-SW/2)/sc,(1-t)*SH,sc]};
+const proj0=(sx,sy)=>{const t=1-sy/SH,sc=1/(1+K*t);return[SW/2+(sx-SW/2)*sc,YB-HS*t*sc/F1,sc]};
+const unproj0=(x,y)=>{const g=(YB-y)/HS*F1;if(g<0||g>F1)return null;const t=g/(1-K*g),sc=1/(1+K*t);return[SW/2+(x-SW/2)/sc,(1-t)*SH,sc]};
+// câmera do mapa: a cena acima (810x610) é ampliada e deslocada para a tela; proj/unproj já incluem a câmera
+const MC={cx:405,cy:330,z:1,tx:405,ty:330,tz:1,fz:1,t:0};
+const proj=(sx,sy)=>{const p=proj0(sx,sy);return[cv.width/2+(p[0]-MC.cx)*MC.z,cv.height/2+(p[1]-MC.cy)*MC.z,p[2]*MC.z]};
+const unproj=(x,y)=>unproj0(MC.cx+(x-cv.width/2)/MC.z,MC.cy+(y-cv.height/2)/MC.z);
+const toScr=(x,y)=>[cv.width/2+(x-MC.cx)*MC.z,cv.height/2+(y-MC.cy)*MC.z]; // ponto da cena na tela

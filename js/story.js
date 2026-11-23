@@ -52,7 +52,7 @@ function endCard(){const[c,g]=mk(480,210);g.textBaseline='top';
 
 // ---------- ponteiro do tutorial: a luva aponta onde clicar ----------
 const CEN={};
-function cenOf(i){if(CEN[i])return CEN[i];let sx=0,sy=0,n=0;for(let k=0;k<cell.length;k++)if(cell[k]==i){sx+=k%W;sy+=k/W|0;n++}return CEN[i]=n?proj((sx/n+.5)*C,(sy/n+.5)*C):proj(...px(i))}
+function cenOf(i){if(!CEN[i]){let sx=0,sy=0,n=0;for(let k=0;k<cell.length;k++)if(cell[k]==i){sx+=k%W;sy+=k/W|0;n++}CEN[i]=n?[(sx/n+.5)*C,(sy/n+.5)*C]:px(i)}return proj(...CEN[i])} // guarda o centro no mapa plano; a câmera entra na hora
 setInterval(()=>{const p=$('tutPtr');if(!p)return;const st=tut>=0&&!HQ&&$('screen').hidden&&$('menu').hidden&&!talkCur?TUT[tut]?.[2]:null;let r=null;
   if(typeof st=='function'){const pt=st();if(pt){const cr=cv.getBoundingClientRect(),k=cr.width/cv.width;r={x:cr.left+pt[0]*k,y:cr.top+pt[1]*k}}}
   else if(st){const el=[...document.querySelectorAll(st)].find(e=>e.offsetParent);if(el){const b=el.getBoundingClientRect();r={x:b.left,y:b.top+b.height/2}}}
