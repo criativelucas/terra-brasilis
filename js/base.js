@@ -20,6 +20,7 @@ const applyCfg=()=>{document.body.classList.toggle('big',!!CFG.big)};applyCfg();
 const PXI={scroll:['..OOOOOO..','.OWWWWWWO.','.OWbbbbWO.','..OWWWWO..','..OWbbWO..','..OWWWWO..','..OWbbWO..','.OWWWWWWO.','.OWWWWWWO.','..OOOOOO..'],
   swords:['O........O','OGO....OGO','.OGO..OGO.','..OGOOGO..','...OGGO...','...OGGO...','..OYOOYO..','.OYO..OYO.','OBO....OBO','OO......OO'],
   flag:['.OOOOOO...','.ORRRRRO..','.ORRRRRRO.','.ORRRRRO..','.OOOOOO...','.Ob.......','.Ob.......','.Ob.......','.Ob.......','OOOO......'],
+  undo:['..........','...OO.....','..OYO.....','.OYYOOOOO.','OYYYYYYYYO','.OYYOOOOYO','..OYO..OYO','...OO.OYYO','.....OYYO.','......OO..'],
   menu:['..........','.OOOOOOOO.','.OWWWWWWO.','.OOOOOOOO.','.OWWWWWWO.','.OOOOOOOO.','.OWWWWWWO.','.OOOOOOOO.','..........','..........'],
   coin:['...OOOO...','..OYYYYO..','.OYWYYyyO.','.OYYyYYyO.','.OYYyYYyO.','.OYYyYYyO.','.OYYYYyyO.','..OyyyyO..','...OOOO...','..........'],
   star:['....OO....','....OYO...','...OYYO...','OOOOYYOOOO','OYYYYYYYYO','.OYYYYYYO.','..OYYYYO..','.OYYOOYYO.','.OYO..OYO.','.OO....OO.'],

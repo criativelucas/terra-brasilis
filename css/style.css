@@ -562,3 +562,48 @@ button.buy small{font:700 11px var(--ui);color:#4a2c10}
   body.mapv #tutPtr{z-index:31}
 }
 .acts4 button{min-width:0}.acts4{grid-template-columns:repeat(4,minmax(0,1fr))}
+/* ================= diplomacia: frente a frente ================= */
+.dipv{display:grid;grid-template-columns:200px minmax(0,1fr) 200px;gap:14px;align-items:stretch}
+.ldr{margin:0;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px;border-radius:14px;border:2px solid var(--frame);text-align:center}
+.ldr.me{background:linear-gradient(180deg,#3a4f8a,#1f2a52)}.ldr.them{background:linear-gradient(180deg,#8a3a30,#4a1a16)}
+.ldr img{width:100%;max-width:170px;aspect-ratio:1;border-radius:10px;border:3px solid var(--gilt2);background:#2e2a3a;image-rendering:pixelated}
+.ldr figcaption{display:flex;flex-direction:column;gap:2px;color:#f3e7cf}.ldr b{font:italic 800 18px var(--display);color:#ffe7a8}.ldr small{font:600 12px var(--ui);color:#d9c8a8}.ldr span{font:600 12px var(--ui);color:#f3e7cf}
+.dmid{display:flex;flex-direction:column;gap:10px;min-width:0}
+.rel{display:flex;flex-direction:column;align-items:center;gap:4px}.rel>b{font:italic 800 18px var(--display);color:var(--frame)}
+.rl{display:flex;justify-content:space-between;width:100%;font:700 12px var(--sc);color:var(--ink2)}
+.rbar{position:relative;width:100%;height:12px;border-radius:6px;background:linear-gradient(90deg,#b3312a,#d8b060 50%,#3f8a4a);border:2px solid var(--frame)}
+.rbar i{position:absolute;top:50%;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;background:#fff3c0;border:3px solid #22140c;box-shadow:0 2px 4px rgba(0,0,0,.4);transition:left .3s}
+.tabs{display:flex;gap:4px;border-bottom:2px solid var(--frame)}.tabs button{flex:1;border-radius:8px 8px 0 0;padding:6px 8px;font-size:14px}.tabs button.on{background:linear-gradient(180deg,#f6d77a,#d39a2a);color:#2e1c0c;text-shadow:none}
+.dbody{display:flex;flex-direction:column;gap:8px;min-height:180px}.dst{font:700 16px var(--ui);text-align:center}
+.vsbar{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;font:600 13px var(--ui)}
+button.buy.wide{align-self:center;min-width:200px}
+@media (max-width:700px){.dipv{grid-template-columns:1fr 1fr}.dmid{grid-column:1/3;grid-row:2}.ldr img{max-width:110px}}
+/* ================= campanha: medalhas ================= */
+.camp{display:grid;grid-template-columns:220px minmax(0,1fr);gap:16px}
+.camp .cl{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px;border-radius:14px;background:linear-gradient(180deg,var(--lac),var(--lac2));color:#f3e7cf;text-align:center}
+.camp .cl img{width:150px;height:150px;border-radius:12px;border:3px solid var(--gilt2);image-rendering:pixelated;background:#2e2a3a}
+.camp .cl>b{font:italic 800 20px var(--display);color:var(--script)}.camp .cl small,.camp .cl .hint{color:#d9c8a8;font:600 13px var(--ui)}
+.glory{font:800 40px/1 var(--display);color:#ffe7a8;display:flex;flex-direction:column;align-items:center;margin:6px 0}.glory span{font:700 12px var(--sc);color:#d9c8a8}
+.camp .cr{display:flex;flex-direction:column;gap:8px;min-width:0}.camp .cr h2{align-self:flex-start}
+.medals{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.medal{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 8px;border-radius:12px;background:rgba(255,255,255,.4);border:1px solid var(--parch-edge);text-align:center}
+.medal .hx{position:relative;width:56px;height:62px;display:grid;place-items:center;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:linear-gradient(180deg,#8a8a8a,#5a5a5a)}
+.medal .hx .ico{width:28px;height:28px;filter:grayscale(1) brightness(1.2)}.medal .hx i{position:absolute;bottom:6px;font:800 10px/1 sans-serif;font-style:normal;color:#fff;text-shadow:0 1px 0 #000}
+.medal.t1 .hx{background:linear-gradient(180deg,#e0a070,#9a5a2a)}.medal.t2 .hx{background:linear-gradient(180deg,#f0f4f8,#9aa4b0)}.medal.t3 .hx{background:linear-gradient(180deg,#ffe7a0,#c8902e)}
+.medal.t1 .ico,.medal.t2 .ico,.medal.t3 .ico{filter:none}.medal.t3{background:rgba(255,235,170,.5);border-color:var(--gilt2)}
+.medal b{font:700 13px/1.15 var(--ui);color:var(--ink)}.medal small{font:600 11px var(--ui);color:var(--ink2)}.medal .pb{width:100%}
+.pows{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px}
+.pows>div{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:10px;background:rgba(255,255,255,.35);border:1px solid var(--parch-edge)}.pows>div.me{border-color:var(--gilt2);background:rgba(255,235,170,.5)}
+.pows em{font:800 15px var(--display);font-style:normal;color:var(--frame);width:24px}.pows img{width:34px;height:34px;border-radius:6px;border:1px solid var(--frame)}
+.pows span{display:flex;flex-direction:column}.pows b{font:700 14px var(--ui)}.pows small{font:500 12px var(--ui);color:var(--ink2)}
+@media (max-width:700px){.camp{grid-template-columns:1fr}}
+/* ================= polimento: toque nos botões e trocas suaves ================= */
+button{transition:transform .12s ease,filter .12s ease,box-shadow .12s ease,background-color .12s}
+button:active:not(:disabled):not(.off){transform:translateY(1px) scale(.97);filter:brightness(.94)}
+@media (prefers-reduced-motion:no-preference){
+  #panel.swap>*{animation:pswap .22s ease both}#panel.swap>*:nth-child(2){animation-delay:.03s}#panel.swap>*:nth-child(3){animation-delay:.06s}#panel.swap>*:nth-child(4){animation-delay:.09s}
+  #screen:not([hidden]){animation:sfade .18s ease both}#screen:not([hidden]) #card{animation:spop .22s cubic-bezier(.2,.9,.3,1.2) both}
+  .medal{animation:spop .3s ease both}.dock .rb .badge{animation:bpop .3s ease both}
+}
+@keyframes pswap{from{opacity:0;transform:translateY(6px)}}@keyframes sfade{from{opacity:0}}@keyframes spop{from{opacity:0;transform:scale(.95) translateY(6px)}}@keyframes bpop{from{transform:scale(0)}}
+.medal .pb{flex:none;height:8px}

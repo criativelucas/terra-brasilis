@@ -164,16 +164,21 @@ function showHelp(){scr(`<h2>Como jogar</h2>
   <p>O jogo salva sozinho a cada ação, neste navegador.</p>
   ${me>=0?'<button data-s="tut">Rever tutorial</button>':''}
   <button data-s="${me<0?'title':'close'}" class="end">Voltar</button>`)}
-function showCampaign(){
-  const mine=owner.filter(o=>o==me).length,pw=[...new Set(owner)].map(f=>[f,owner.filter(o=>o==f).length,owner.reduce((a,o,i)=>a+(o==f?troops[i]:0),0)]).sort((a,b)=>b[1]-a[1]||b[2]-a[2]);
-  scr(`<h2>Campanha de ${S[me][4]}</h2>
-    <p class="c">${SCN[scn].n} (${SCN[scn].y}) · ${goalTxt(scn,me)}</p>${goal?`<div class="rk"><span>Objetivo</span><div class="pb"><i style="width:${goal.filter(i=>owner[i]==me).length/goal.length*100}%"></i></div><span>${goal.filter(i=>owner[i]==me).length}/${goal.length}</span></div>`:''}
-    <div class="rk"><span>Brasil unificado</span><div class="pb"><i style="width:${mine/N*100}%"></i></div><span>${mine}/${N}</span></div>
-    <h3>REGIÕES</h3>`+REG.map(([n,st,b])=>{const k=st.filter(i=>owner[i]==me).length;
-      return`<div class="rk"><span>${n}</span><div class="pb"><i style="width:${k/st.length*100}%"></i></div><span>${k}/${st.length} ${k==st.length?'✔':''} +${b}</span></div>`}).join('')+
-    `<h3>POTÊNCIAS</h3>`+pw.slice(0,5).map(([f,n,t])=>`<div class="rk">${img(f)}<span>${f==me?'<b>Você</b>':S[f][4]}</span><span>${n} ${TW} · ${t} tropas</span></div>`).join('')+
-    `<h3>CRÔNICA</h3><p>Turno ${turn} · ${stats.won} vitórias · ${stats.lost} derrotas · ${stats.taken} ${TW} tomados · renda ${income(me)} por turno</p>
-    <button data-s="close" class="end">Voltar ao mapa</button><button data-s="help">Como jogar</button>`)}
+function showCampaign(){ /* campanha: metas como medalhas, glória somada, potências */
+  const mine=owner.filter(o=>o==me).length,pw=[...new Set(owner)].map(f=>[f,owner.filter(o=>o==f).length,owner.reduce((a,o,i)=>a+(o==f?troops[i]:0),0)]).sort((a,b)=>b[1]-a[1]||b[2]-a[2]),
+    tier=(v,T)=>T.filter(t=>v>=t).length,M=[]; // [ícone, título, valor, alvo, recompensa, nível 0..3]
+  if(goal){const g=goal.filter(i=>owner[i]==me).length;M.push(['flag','Objetivo da campanha',g,goal.length,'vitória',g>=goal.length?3:g/goal.length>=.5?2:g?1:0])}
+  M.push(['flag','Brasil unificado',mine,N,'vitória',mine>=N?3:mine/N>=.5?2:mine/N>=.25?1:0]);
+  REG.forEach(([n,st,b])=>{const k=st.filter(i=>owner[i]==me).length;M.push(['house',`Região ${n}`,k,st.length,`+${b} ouro/turno`,k>=st.length?3:k/st.length>=.5?2:k?1:0])});
+  [['swords','Vitórias em batalha',stats.won,[3,10,25]],['star',`${TW[0].toUpperCase()+TW.slice(1)} conquistados`,stats.taken,[3,8,15]],['coin','Renda por turno',income(me),[10,20,35]]].forEach(([ic,t,v,T])=>{const lv=tier(v,T);M.push([ic,t,v,T[Math.min(2,lv)],lv>2?'nível máximo':`próximo: ${T[lv]}`,lv])});
+  const glory=M.reduce((a,m)=>a+m[5],0),TN=['','bronze','prata','ouro'];
+  scr(`<div class="camp"><div class="cl"><img src="${face[me]}" alt=""><b>${S[me][4]}</b><small>${SCN[scn].n} · ${SCN[scn].y}</small>
+      <div class="glory" data-help="Glória: soma dos níveis das medalhas">★ ${glory}<span>glória</span></div><p class="hint">${goalTxt(scn,me)}</p>
+      <p class="hint">Turno ${turn} · ${stats.won} vitórias · ${stats.lost} derrotas</p></div>
+    <div class="cr"><h2>Campanha</h2><div class="medals">${M.map(([ic,t,v,mx,rw,lv])=>`<div class="medal t${lv}" data-help="${esc(`${t}: ${v}/${mx}${lv?` · ${TN[lv]}`:''}`)}"><div class="hx">${I(ic)}${lv?`<i>${'★'.repeat(lv)}</i>`:''}</div><b>${t}</b>
+        <div class="pb"><i style="width:${Math.min(100,v/Math.max(1,mx)*100)}%"></i></div><small>${v}/${mx} · ${rw}</small></div>`).join('')}</div>
+      <h3>Potências</h3><div class="pows">${pw.slice(0,6).map(([f,n,t],k)=>`<div class="${f==me?'me':''}"><em>${k+1}º</em>${img(f)}<span><b>${f==me?'Você':S[f][4]}</b><small>${n} ${n==1?TW1:TW} · ${t} tropas</small></span></div>`).join('')}</div>
+      <div class="row c"><button data-s="close" class="end">Voltar ao mapa</button><button data-s="help">Como jogar</button></div></div></div>`);$('card').classList.add('wide')}
 function showEnd(){const win=victory;win?sfx.fanfare():sfx.lose();if(win){cele={i:me,start:Date.now(),dur:6000,n:180};mood[me]={m:'smile',until:Date.now()+6e4}}
   scr(`<h2 class="big">${win?(goal&&!owner.every(o=>o==me)?'OBJETIVO CUMPRIDO':'BRASIL UNIFICADO'):'FIM DA CAMPANHA'}</h2>${win?`<img class="ending" src="${endCard()}" alt="">`:`<div class="row c"><img class="hero" src="${face[me]}" alt=""></div>`}
     <p class="c">${win?(goal&&!owner.every(o=>o==me)?`${S[me][4]} vence a ${SCN[scn].n}.`:`${S[me][4]} reúne ${TKEY=='brasil'?'as 27 províncias':'todos os '+TW} sob uma só bandeira.`):`O domínio de ${S[me][4]} caiu.`}</p>
@@ -207,6 +212,8 @@ const onScr=e=>{const k=e.target.closest('button')?.dataset.s;if(!k)return;sfx.s
   else if(k=='close')scr();
   else if(k.startsWith('enc-'))showEnc(+k.slice(4));
   else if(k.startsWith('pick-')){pickI=+k.slice(5);showSetup()}
+  else if(k.startsWith('dipf-'))showDip(+k.slice(5));
+  else if(k.startsWith('dipt-')){window.dipTab=k.slice(5);showDip(window.dipF)}
   else if(k=='dipx'){const b=e.target.closest('button'),ok=dipAct(b.dataset.k,+b.dataset.f);ok?sfx.win():sfx.lose();if(ok&&b.dataset.k=='ally')storyAlly(+b.dataset.f);showDip(window.dipF);ui()}
   else if(k.startsWith('perk-')){const[,kk,id]=k.split('-'),p=lastRes.perks[+kk];(perk[p.st+'-'+p.j]=perk[p.st+'-'+p.j]||[]).push(id);note(`${p.n}: ${PERKS.find(q=>q[0]==id)[1]}`);lastRes.perks.splice(+kk,1);showBRes(lastRes)}
   else if(k=='bfree'){if(bCap!=null&&gold[me]>=10){gold[me]-=10;pact[bCap]=Math.max(pact[bCap]||0,turn+4);note(`${S[bCap][4]} libertado: pacto até o turno ${turn+4}`)}bCap=null;scr();ui()}
