@@ -701,3 +701,28 @@ button.scard>img{grid-column:1}button.scard .tb{grid-column:2;grid-row:1}button.
 .slot img.th{border-style:solid;background:none}
 .slot{align-items:center}.slot .si{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
 @media (max-width:900px){#cmd{gap:3px;padding:7px;min-width:160px}#cmd>button{min-height:28px;font-size:13px;padding:0 10px}#cmd .ch b{font-size:15px}}
+/* ================= barra do topo: uma linha, tudo na mesma altura e centralizado ================= */
+@media (min-width:901px){
+  body.full #bar{flex-wrap:nowrap;align-items:center;gap:var(--s2);height:60px;padding:0 10px 0 6px;border-radius:32px 12px 12px 32px}
+  body.full #bar .crest{display:flex;align-items:center;gap:10px;height:48px;padding:0 12px 0 0;margin-right:2px;border:0;border-right:1px solid rgba(255,220,160,.22);border-radius:0;background:none}
+  body.full #bar .crest img{width:48px;height:48px;border-width:2px;flex:none}
+  body.full #bar .crest .cn{display:flex;flex-direction:column;gap:1px;padding:0;border:0;background:none;line-height:1.1}
+  body.full #bar .crest .cn b{font:italic 800 17px/1.1 var(--display);white-space:nowrap}
+  body.full #bar .crest .cn small{font:600 12px/1.1 var(--ui);color:#cdbb98}
+  body.full #bar>span:not(.crest){display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;font:700 14px/1 var(--ui);color:#f3e7cf;
+    background:rgba(255,255,255,.04);border:1px solid rgba(226,168,60,.45);border-radius:var(--r1)}
+  body.full #bar>span:not(.crest) .ico{width:16px;height:16px;margin:0;vertical-align:0}
+  body.full #bar .mkt{height:32px;min-height:32px;margin:0;padding:0 12px;font:700 14px/1 var(--ui);gap:6px;align-self:center;border-radius:var(--r1);border-color:rgba(226,168,60,.45)}
+  body.full #bar .mkt .ico{width:16px;height:16px}
+  body.full header>button{height:40px;min-height:40px;align-self:center}
+  body.full header{align-items:center}
+  body.full #mapMode{top:80px;left:14px;padding:3px;border-radius:var(--r2);gap:2px}
+  body.full #mapMode button{height:30px;min-height:30px;font:700 13px var(--ui);border-radius:var(--r1)}
+}
+@media (min-width:901px) and (max-width:1199px),(min-width:901px) and (max-height:719px){
+  body.full #bar{height:50px}body.full #bar .crest{height:40px}body.full #bar .crest img{width:40px;height:40px}
+  body.full #bar>span:not(.crest),body.full #bar .mkt{height:28px;min-height:28px;font-size:12px;padding:0 8px}
+  body.full #bar .crest .cn small{display:none}body.full #mapMode{top:66px}
+}
+#bar>span span:not(.cn),body.full #bar>span:not(.crest) span{display:inline;height:auto;padding:0;margin:0;border:0;background:none;box-shadow:none;font:inherit;color:inherit;gap:0}
+body.full #bar>span:not(.crest){gap:0;white-space:pre}body.full #bar>span:not(.crest) .ico{margin-right:6px}
