@@ -63,6 +63,9 @@ function renderHQ(){
     wp(onA,t-.25,10.5,12.5,2,'#8a6a3c');for(let i=0;i<6;i++)dot(pt(onA,t+.1+i*.26,13.6),0,-1,2,2,['#e0452f','#ff8fa3','#fff'][i%3])};
   const ban=(onA,t)=>{wp(onA,t-.15,31,32,1.3,'#3a2413');wp(onA,t,13,31,1,fc);wp(onA,t,13,16,1,fd);wp(onA,t+.42,16,31,.16,fl);wp(onA,t+.3,22,25.5,.4,gold)};
   win(1,1.2);win(1,10.1);ban(1,4.5);ban(0,11);
+  const DCOL={log:['#2a5fb0','#1f4a8c','#8fb8f0'],eng:['#5f646c','#3f434a','#c0c6cf'],gue:['#7a4f26','#5a3a1c','#c99a5c']}; /* cada doutrina adotada pendura um estandarte na sala de guerra */
+  DOC.forEach(([id],k)=>{if(!hq.doc[id])return;const[onA,t]=[[0,.45],[0,1.75],[1,3.15]][k]||[0,.45],[c0,c1,c2]=DCOL[id]||[fc,fd,fl];
+    wp(onA,t-.15,31,32,1.3,'#3a2413');wp(onA,t,14,31,1,c0);wp(onA,t,14,17,1,c1);wp(onA,t+.42,17,31,.16,c2);wp(onA,t+.25,20,24,.5,gold);wp(onA,t+.35,21,23,.3,c1)});
   [[1,1.35],[1,10.25]].forEach(([onA,t])=>{for(let k=0;k<4;k++){const p=pt(onA,t+k*.12,25-k*1.2);px1(p,0,0,'rgba(255,255,255,.7)',2,1)}}); // reflexo nos vidros
   for(const onA of[0,1])for(let r=0;r<8;r++)for(let t=r%2*.4;t<12;t+=.8){const p=pt(onA,t+.05,5+r*4+3.6);if(hash(r*7+onA,t*10|0)%3==0)px1(p,0,0,'rgba(255,255,255,.22)',onA?4:5,1)} // luz no topo dos tijolos
   [6.9,8.05].forEach(t=>{wp(1,t,17,27,.9,fd);wp(1,t+.1,18,26,.7,fc);wp(1,t+.38,18,26,.14,gold);wp(1,t+.1,21.4,22.6,.7,gold)}); // escudos no quartel
@@ -70,7 +73,7 @@ function renderHQ(){
   wp(0,3.2,13,31,2.5,'#6b4524');wp(0,3.35,14.5,29.5,2.2,'#f0dfb0'); // mapa do Brasil na parede
   {const p=iso(3.35,0,29.5);g.setTransform(2,1,0,2,p[0],p[1]);g.fillStyle='#3fae48';g.fillRect(5,3,16,9);g.fillRect(8,12,11,5);g.fillRect(11,17,6,4);g.fillRect(3,5,3,4);
     g.fillStyle='#2f6fb0';g.fillRect(6,6,12,1);g.fillStyle='#b3312a';g.fillRect(14,10,2,2);g.fillRect(9,5,2,2);g.setTransform(1,0,0,1,0,0)}
-  own.slice(0,3).forEach((i,k)=>{wp(0,6.85+k*1.5,17,32,1.25,gd);wp(0,6.95+k*1.5,18,31,1.05,'#3a2413');const p=iso(7+k*1.5,0,30.5); // retratos dos generais
+  const posted=i=>Object.values(posts).includes(i);[...own].sort((p,q)=>posted(q)-posted(p)).slice(0,3).forEach((i,k)=>{wp(0,6.75+k*1.5,16,33,1.45,posted(i)?'#ffd23f':'#7a6a50');wp(0,6.85+k*1.5,17,32,1.25,gd);wp(0,6.95+k*1.5,18,31,1.05,'#3a2413');const p=iso(7+k*1.5,0,30.5); // retratos dos generais
     g.setTransform(2,1,0,2,p[0],p[1]);g.drawImage(fcv[i],0,0,12,17);g.setTransform(1,0,0,1,0,0)});
   bx(-.7,-1.9,36,13.4,1.9,4,TEAL);bx(-1.9,-.7,36,1.9,13.4,4,TEAL); // telhado azul, telha a telha
   for(let t=-.5;t<12.7;t+=.5){wp(0,t,36,40,.08,'#1f7385');wp(1,t,36,40,.08,'#16596a');ln(iso(t,-1.9,40),iso(t,0,40),'rgba(0,0,0,.2)');ln(iso(-1.9,t,40),iso(0,t,40),'rgba(0,0,0,.2)')}
@@ -139,10 +142,15 @@ function drawHQ(){
   x.fillStyle='#1d2418';x.fillRect(0,0,cv.width,cv.height);x.save();
   const ip=Math.min(1,(now-HQ.t0)/1300),ie=1-Math.pow(1-ip,3); // entrada: a câmera atravessa o pátio a partir do portão
   if(ip<1){const[gx,gy]=P(14.4,6,0),s=1+1.6*(1-ie);x.translate(405,305);x.scale(s,s);x.translate(-(405+(gx-405)*(1-ie)),-(305+(gy-305)*(1-ie)))}
-  if(zm){const p=Math.min(1,(now-zm.start)/320),e=zm.dir>0?p:1-p,R=ROOMS.find(r=>r.k==(zm.room=='dip'?'gen':zm.room)),[cx,cy]=P(R.a+3,R.b+3,3);
-    x.translate(405-150*e,305+20*e);x.scale(1+e*.85,1+e*.85);x.translate(-(405+(cx-405)*e),-(305+(cy-305)*e)); // a sala cresce e fica à esquerda; o painel dela entra pela direita
+  if(zm){const p=Math.min(1,(now-zm.start)/420),q=1-Math.pow(1-p,3),e=zm.dir>0?q:1-q,R=ROOMS.find(r=>r.k==(zm.room=='dip'?'gen':zm.room)),[cx,cy]=P(R.a+3,R.b+3,3);
+    const sc=1.32,cl=(v,lo)=>Math.max(lo,Math.min(0,v)),ox=cl(250-cx*sc,810-810*sc),oy=cl(320-cy*sc,610-610*sc); // aproxima pouco e para a sala à esquerda, sem mostrar a borda vazia da cena
+    x.translate(ox*e,oy*e);x.scale(1+(sc-1)*e,1+(sc-1)*e);
     if(p>=1&&zm.dir<0)HQ.zoom=null}
   x.drawImage(hqc,0,0,810,610);
+  {const lit=(k,a0)=>{const R=ROOMS.find(r=>r.k==k);if(!R)return;const pts=[[0,0],[6,0],[6,6],[0,6]].map(([da,db])=>P(R.a+da,R.b+db,3)); /* sala acesa: ao passar o mouse e enquanto o painel dela está aberto */
+      x.save();x.globalCompositeOperation='lighter';x.fillStyle=`rgba(255,215,120,${a0})`;x.beginPath();pts.forEach((p,i)=>i?x.lineTo(...p):x.moveTo(...p));x.fill();x.restore();
+      x.strokeStyle=`rgba(255,210,63,${.55+a0*2})`;x.lineWidth=3;x.beginPath();pts.forEach((p,i)=>i?x.lineTo(...p):x.moveTo(...p));x.closePath();x.stroke()},pl=(Math.sin(now/300)+1)/2;
+    const open=!$('room').hidden&&HQ.room;if(open)lit(open=='dip'?'gen':open,.1+.08*pl);else if(!zm&&HQ.hov)lit(HQ.hov,.16)}
   {const[fx_,fy]=P(-.35,-.35,62);for(let i=0;i<6;i++){const w=Math.sin(now/180+i*.9)*2.5;x.fillStyle=i%2?fc:`hsl(${hue(me)},80%,42%)`;x.fillRect(fx_+2+i*5,fy-36+w,5,14)}x.fillStyle='#ffd23f';x.fillRect(fx_+12,fy-32,6,6)} // bandeira ao vento
   {const[sx,sy]=P(9.45,-1.05,49);for(let i=0;i<5;i++){const t=(now/2400+i*.2)%1,s=8+t*18;x.fillStyle=`rgba(230,230,230,${(1-t)*.5})`;x.fillRect(sx-s/2+Math.sin(t*6+i)*8,sy-t*80-s/2,s,s)}} // fumaça da chaminé
   [[4.4,2.3,11.5],[6.67,2.67,17.5],[6.67,4.37,17.5],[9.3,10.5,10]].forEach(([a,b,z],i)=>{const[cx,cy]=P(a,b,z),f=Math.floor(now/110+i*3)%3; // chamas das velas
@@ -151,6 +159,7 @@ function drawHQ(){
   const fig=[[4.6,4.4,{type:'inf',ld:true,sk:'L'},me,1,3],[2.6,7.6,{type:'inf',sk:'T'},me,1,3],[4.2,8.6,{type:'cav',sk:'L'},me,-1,3],[2,9.3,{type:'ati',sk:'B'},me,1,3],
     [9.4,11.3,{type:'ati',sk:'T'},me,-1,3],[13.6,4.5,{type:'inf',sk:'D'},me,1,0],[13.6,7.5,{type:'inf',sk:'L'},me,1,0]];
   own.filter(i=>i!=me).slice(0,2).forEach((i,k)=>fig.push([8.2+k*1.5,2.6+k*.9,{type:'inf',ld:true,sk:'L'},i,k?-1:1,3]));
+  [['inf',1.5,7.9],['cav',3.3,8.2],['ati',3,9.6],['art',5.2,8]].forEach(([t,a,b],k)=>{for(let n=0;n<(hq.tech[t]||0);n++)fig.push([a+n*.35,b+n*.25,{type:t,sk:'LTBD'[(k+n)%4]},me,k%2?-1:1,3])}); // cada nível de treino põe mais um soldado no quartel
   fig.sort((p,q)=>p[0]+p[1]-q[0]-q[1]).forEach(([a,b,u,f,dir,z],k)=>{const[sx,sy]=P(a,b,z),sp=sprite(u,f,true,Math.floor(now/450+k*.3)%2);
     x.fillStyle='rgba(0,0,0,.25)';x.fillRect(sx-18,sy-4,36,6);x.save();x.translate(sx-dir*39,sy-66);x.scale(dir,1);x.drawImage(sp,0,0,78,72);x.restore()});
   {const tod=turn%4,tint=TOD[tod][2],glow=(a,b,z,r,a0)=>{const[gx,gy]=P(a,b,z),gr=x.createRadialGradient(gx,gy,0,gx,gy,r);gr.addColorStop(0,`rgba(255,200,90,${a0})`);gr.addColorStop(1,'rgba(255,200,90,0)');x.fillStyle=gr;x.fillRect(gx-r,gy-r,r*2,r*2)};
@@ -163,8 +172,7 @@ function drawHQ(){
     if(night)for(let k=0;k<14;k++){const v=hash(k,7),t=now/900+k,[gx,gy]=P(-4+v%22,-4+(v>>5)%22,0); // vaga-lumes
       if((t|0)%3)continue;x.fillStyle=`rgba(220,255,140,${.5+.5*Math.sin(t*3)})`;x.fillRect(gx+Math.sin(t)*10,gy-20+Math.cos(t*1.3)*8,2,2)}}
   x.textBaseline='top';x.textAlign='center';HQ.bub=[];
-  if(!zm)SPOTS.forEach((sp,k)=>{const hot=HQ.hov==sp.k,[cx,cy]=P(...sp.at),bh=hot?34:20,by=cy-sp.up*2+Math.sin(now/400+k)*4-(hot?14:0),w=(x.font=FONT(8),Math.ceil(Math.max(x.measureText(sp.n.toUpperCase()).width,hot?x.measureText(sp.s).width:0))+18),R=ROOMS.find(r=>r.k==sp.k);
-    if(hot&&R){x.strokeStyle='#ffd23f';x.lineWidth=4;x.beginPath();[[0,0],[6,0],[6,6],[0,6]].forEach(([da,db],i)=>{const p=P(R.a+da,R.b+db,3);i?x.lineTo(...p):x.moveTo(...p)});x.closePath();x.stroke()}
+  if(!zm&&$('room').hidden)SPOTS.forEach((sp,k)=>{const hot=HQ.hov==sp.k,[cx,cy]=P(...sp.at),bh=hot?34:20,by=cy-sp.up*2+Math.sin(now/400+k)*4-(hot?14:0),w=(x.font=FONT(8),Math.ceil(Math.max(x.measureText(sp.n.toUpperCase()).width,hot?x.measureText(sp.s).width:0))+18),R=ROOMS.find(r=>r.k==sp.k);
     x.fillStyle='#3b2618';x.beginPath();x.moveTo(cx-9,by+bh);x.lineTo(cx+9,by+bh);x.lineTo(cx,by+bh+13);x.fill(); // balão de pergaminho com rabicho
     parch(x,cx-w/2-4,by-4,w+8,bh+8,9);if(hot){x.strokeStyle='#f08a3a';x.lineWidth=2;rr(x,cx-w/2-4,by-4,w+8,bh+8,9);x.stroke()}
     x.fillStyle='#3a2a1f';x.font=FONT(8);x.fillText(sp.n,cx,by+1);if(hot){x.fillStyle='#6e5843';x.fillText(sp.s,cx,by+17)}
@@ -187,26 +195,40 @@ const enterRoom=k=>{if(!HQ||HQ.zoom)return;if(k=='cam')return showCampaign();if(
   const h=HQ;HQ.zoom={room:k,start:Date.now(),dir:1};sfx.move();setTimeout(()=>HQ===h&&showRoom(k),340)};
 $('room').addEventListener('change',e=>{const el=e.target;if(el.dataset.post==null)return;const i=+el.dataset.post; // nomear ou dispensar general
   for(const k in posts)if(posts[k]==i)posts[k]=-1;if(el.value){const prev=posts[el.value];posts[el.value]=i;note(`${S[i][4]} assume ${POSTS[el.value][0]}${prev>=0&&prev!=i?' no lugar de '+S[prev][4]:''}`)}
-  save();showRoom('gen');ui()});
-function showRoom(k){
-  const g=gold[me],own=owner.map((o,i)=>o==me?i:-1).filter(i=>i>=0),line=(t,btn)=>`<div class="rk"><span style="flex:1">${t}</span>${btn}</div>`;let h='';
-  if(k=='war')h=`<h2>Sala de Guerra</h2><p class="c">${gl('doc','Doutrinas')} valem pelo resto da partida.</p>`+
-    DOC.map(([id,n,d,c])=>line(`<b>${n}</b><br>${d}`,`<button data-s="hq-doc-${id}" ${hq.doc[id]||g<c?'disabled':''}>${hq.doc[id]?'Adotada':c+' ouro'}</button>`)).join('');
-  if(k=='gen')h=`<h2>Salão dos Generais</h2><p class="c">Cada general comanda as tropas do seu ${TW1}, no ataque e na defesa. Conquiste o ${TW1} para ganhar o general. Barras: liderança, astúcia, política.</p><p class="c"><b>Cargos:</b> Comércio dá ouro pela política; Guerra dá tropas na fronteira pela liderança; Estratégia dá +1 de Comando e, com astúcia 60+, uma carta a mais; Diplomacia barateia pactos e alianças pela metade.</p>`+
-    own.map(i=>{const v=hash(i+3,7);return`<div class="rk">${img(i,S[i][4])}<span style="flex:1"><b>${S[i][4]}</b> · ${S[i][0]}<br>${S[i][7]}: ${traitTxt(i)}<br>Comando: +${(gs(i)[0]-40)/4|0}% dano${gs(i)[1]>80?', +1 movimento':''}${gs(i)[2]>70?', +1 ouro':''}</span>
-      <div class="st" title="Liderança, astúcia, política"><i style="width:${40+v%60}%"></i><i style="width:${40+(v>>6)%60}%"></i><i style="width:${40+(v>>12)%60}%"></i></div></div>
-      <label class="opt" for="post${i}"><span>Cargo de ${S[i][4].split(' ')[0]}</span><select id="post${i}" data-post="${i}"><option value="">Nenhum</option>${Object.entries(POSTS).map(([k,[n,at]])=>`<option value="${k}" ${posts[k]==i?'selected':''}>${n} (${at})</option>`).join('')}</select></label>`}).join('');
-  if(k=='bar')h=`<h2>Quartel</h2><p class="c">Treino aumenta o dano das suas unidades em batalha.</p>`+Object.keys(UT).map(t=>{const lv=hq.tech[t],c=6+4*lv;
-    return`<div class="ucard"><img src="${icon(t,me,true,false)}" alt=""><div><b>${UT[t][0]} · nível ${lv}</b>
-      <div class="chips"><span>Anda ${UT[t][1]}</span><span>Alcance ${UT[t][2]}</span><span>Dano +${lv*10}%</span></div><p>Forte contra ${strong(t)}</p>
-      <button data-s="hq-tech-${t}" ${lv>2||g<c?'disabled':''}>${lv>2?'Treino máximo':`Treinar: ${c} ouro`}</button></div></div>`}).join('');
-  if(k=='tes'){const base=own.reduce((a,i)=>a+inc(i),0),tax=Math.ceil(income(me)/2);
-    h=`<h2>Tesouraria</h2>${SCN[scn].sub?.[me]?`<p class="c">${gl('sub','Subsídio da Corte')}: +${SCN[scn].sub[me]} ouro por turno</p>`:''}<div class="chips c"><span>◉ Ouro ${g}</span><span>Renda +${income(me)} por turno</span></div>
-      <div class="rk"><span style="flex:1">${own.length} ${TW}</span><span>+${base}</span></div>`+
-      REG.map(([n,st,b])=>`<div class="rk"><span style="flex:1">Região ${n} ${st.every(i=>owner[i]==me)?'completa':`(${st.filter(i=>owner[i]==me).length}/${st.length})`}</span><span>${st.every(i=>owner[i]==me)?'+'+b:'—'}</span></div>`).join('')+
-      line('<b>Imposto de guerra</b><br>Uma vez por turno',`<button data-s="hq-tax" ${hq.tax==turn?'disabled':''}>${hq.tax==turn?'Cobrado':'+'+tax+' ouro'}</button>`)}
+  save();renderHQ();sfx.win();showRoom('gen');ui()});
+const GEN_FX={com:g=>`+${Math.floor(g[2]/25)} ouro por turno`,mil:g=>`+${Math.floor(g[0]/30)} tropas por turno na fronteira`,est:g=>`+1 de Comando${g[1]>=60?' e +1 carta por turno':''}`,dip:()=>'pactos e alianças pela metade do preço'};
+const DOC_IC={log:'coin',eng:'shield',gue:'swords'};
+function showRoom(k){ /* cada sala: cabeçalho igual, cartões no lugar de listas, altura só do que precisa */
+  const g=gold[me],own=owner.map((o,i)=>o==me?i:-1).filter(i=>i>=0),R=ROOMS.find(r=>r.k==k),nm=k=='dip'?'Chancelaria':R.n,
+    head=sub=>`<div class="rhd"><button data-s="hq-close" class="mini" data-help="Volta à visão do quartel-general">◂ Quartel</button><div class="rt"><h2>${nm}</h2>${sub?`<small>${sub}</small>`:''}</div><span class="rg" data-help="Ouro em caixa">${I('coin')}${g}</span><button data-s="hq-map" class="mini rx" data-help="Sai do quartel-general e volta ao mapa">Mapa ✕</button></div>`,
+    buy=(ok,done,c,ds,doneT,lbl)=>done?`<span class="st ok">✓ ${doneT}</span>`:ok?`<button data-s="${ds}" class="buy">${lbl}<small>${c} ouro</small></button>`:`<span class="st no" data-help="Custa ${c}, você tem ${g}">Faltam ${c-g} ouro<small>custa ${c}</small></span>`;
+  let h='';
+  if(k=='bar'){const card=t=>{const lv=hq.tech[t]||0,c=6+4*lv;
+      return`<div class="tcard"><img src="${icon(t,me,true,false)}" alt=""><div class="tb"><b>${UT[t][0]}</b><small>Forte contra ${strong(t)}</small>
+        <div class="tst"><span>Anda ${UT[t][1]}</span><span>Alcance ${UT[t][2]}</span><span class="pips" data-help="Nível de treino: +10% de dano por nível, até 3">${'●'.repeat(lv)}${'○'.repeat(3-lv)} +${lv*10}%</span></div></div>
+        ${buy(g>=c,lv>2,c,'hq-tech-'+t,'Máximo','Treinar')}</div>`};
+    h=head('Treino aumenta o dano em batalha: +10% por nível')+`<div class="cat">Tropas de linha</div>`+['inf','cav','ati','art'].map(card).join('')+
+      `<div class="cat">Tropas regionais</div><p class="hint">Aparecem nas batalhas da sua região e usam o treino da tropa equivalente.</p>`+
+      ['can','lan','jag'].map(t=>`<div class="tcard rg"><img src="${icon(t,me,true,false)}" alt=""><div class="tb"><b>${UT[t][0]}</b><small>Forte contra ${strong(t)}</small><div class="tst"><span>Anda ${UT[t][1]}</span><span>Alcance ${UT[t][2]}</span><span>Treino de ${UT[CL(t)][0]}: +${(hq.tech[CL(t)]||0)*10}%</span></div></div></div>`).join('')}
+  if(k=='war')h=head('Doutrinas valem pelo resto da partida')+DOC.map(([id,n,d,c])=>{const on=!!hq.doc[id];
+    return`<div class="dcard ${on?'on':g>=c?'':'no'}"><span class="di">${I(DOC_IC[id]||'star')}</span><div class="tb"><b>${n}</b><small>${d}</small></div>${buy(g>=c,on,c,'hq-doc-'+id,'Adotada','Adotar')}</div>`}).join('');
+  if(k=='gen'){h=head(`${own.length} general${own.length>1?'is':''} · conquiste ${TW} para ganhar mais`)+`<button data-s="hq-ghelp" class="mini ${HQ.ghelp?'on':''}">? Como funcionam os cargos</button>`+
+      (HQ.ghelp?`<div class="box"><p>Cada general comanda as tropas do próprio ${TW1}. Um cargo usa um atributo dele:</p><p><b>Comércio</b> (política): ouro por turno. <b>Guerra</b> (liderança): tropas na fronteira. <b>Estratégia</b> (astúcia): +1 de Comando; com astúcia 60+, uma carta a mais. <b>Diplomacia</b>: pactos e alianças pela metade.</p></div>`:'')+
+      own.map(i=>{const G=gs(i),cur=Object.keys(POSTS).find(p=>posts[p]==i);
+        return`<div class="gcard ${cur?'on':''}">${img(i,S[i][4])}<div class="tb"><b>${S[i][4]}</b><small>${S[i][1]} · ${S[i][7]}</small>
+          <div class="attrs">${[['Liderança',G[0]],['Astúcia',G[1]],['Política',G[2]]].map(([n,v])=>`<div class="at"><span>${n}</span><i><u style="width:${v}%"></u></i><em>${v}</em></div>`).join('')}</div>
+          <small>Em batalha: +${(G[0]-40)/4|0}% de dano${G[1]>80?', +1 de movimento':''}${G[2]>70?' · +1 ouro no '+TW1:''}</small>
+          <label class="opt" for="post${i}"><span>Cargo</span><select id="post${i}" data-post="${i}"><option value="">Nenhum</option>${Object.entries(POSTS).map(([pk,[pn]])=>{const hold=posts[pk]>=0&&posts[pk]!=i&&owner[posts[pk]]==me?posts[pk]:-1;
+            return`<option value="${pk}" ${posts[pk]==i?'selected':''}>${pn}: ${GEN_FX[pk](G)}${hold>=0?` (troca ${S[hold][4].split(' ')[0]})`:''}</option>`}).join('')}</select></label>
+          ${cur?`<p class="pv">✓ ${POSTS[cur][0]}: ${GEN_FX[cur](G)}</p>`:''}</div></div>`}).join('')}
+  if(k=='tes'){const st=own.reduce((a,i)=>a+inc(i),0),rs=own.reduce((a,i)=>a+resInc(i),0),pg=postGold(),sub=SCN[scn].sub?.[me]||0,
+      rg=REG.filter(([,ss])=>ss.every(i=>owner[i]==me)),rb=rg.reduce((a,[,,b])=>a+b,0),tot=income(me),oth=tot-st-pg-sub-rb,tax=Math.ceil(tot/2),
+      ln=(t,v,hh='')=>`<div class="inc" ${hh?`data-help="${esc(hh)}"`:''}><span>${t}</span><b>${v>=0?'+':''}${v}</b></div>`;
+    h=head('Quanto você tem, quanto ganha e de onde vem')+`<div class="kpis"><div class="kpi"><b>${g}</b><span>ouro em caixa</span></div><div class="kpi"><b>+${tot}</b><span>por turno</span></div><div class="kpi"><b>${own.length}</b><span>${TW}</span></div></div>
+      <div class="box"><b>De onde vem a renda</b>${ln(`Renda dos ${TW} (${own.length})`,st-rs,'3 por território, mais líder, general com política alta, porto e bônus')}${rs?ln('Recursos (café, borracha...)',rs,'Cada recurso rende conforme o preço do mercado'):''}
+        ${pg?ln(`Cargo de Comércio: ${S[posts.com][4]}`,pg,'Política do general dividida por 25'):''}${sub?ln('Subsídio da Corte',sub):''}${rg.map(([n,,b])=>ln(`Região ${n} completa`,b)).join('')}${oth?ln('Outros ajustes',oth):''}<div class="inc tot"><span>Total por turno</span><b>+${tot}</b></div></div>
+      ${REG.filter(([,ss])=>!ss.every(i=>owner[i]==me)&&ss.some(i=>owner[i]==me)).map(([n,ss,b])=>`<p class="hint">Região ${n}: ${ss.filter(i=>owner[i]==me).length}/${ss.length}. Completa, rende +${b}.</p>`).join('')}
+      <div class="dcard ${hq.tax==turn?'on':''}"><span class="di">${I('coin')}</span><div class="tb"><b>Imposto de guerra</b><small>Uma vez por turno: metade da renda agora</small></div>${hq.tax==turn?'<span class="st ok">✓ Cobrado</span>':`<button data-s="hq-tax" class="buy">Cobrar<small>+${tax} ouro</small></button>`}</div>`}
   if(k=='dip'){const nb=[...new Set(own.flatMap(i=>adj[i]).map(j=>owner[j]))].filter(f=>f!=me);
-    h=`<h2>Chancelaria</h2><p class="c">Pacto: não se atacam. Aliança: pacto mais reforço de tropas na fronteira comum. Tributo: exige ouro de quem é bem mais fraco que você na fronteira; se recusar, fica hostil. Atacar quem tem pacto é traição.</p>`+
-      nb.map(f=>`<div class="ucard" style="flex-direction:column;align-items:stretch">${dipHTML(f,'hq')}</div>`).join('')}
-  $('room').innerHTML=h+`<p class="c">◉ Ouro em caixa: ${g}</p><button data-s="hq-close" class="end">Voltar ao quartel</button>`;$('room').hidden=false;HQ.room=k}
-
+    h=head('Pacto: não se atacam · Aliança: pacto e reforços · Tributo: ouro de quem é bem mais fraco')+(nb.length?nb.map(f=>`<div class="ucard" style="flex-direction:column;align-items:stretch">${dipHTML(f,'hq')}</div>`).join(''):'<p class="hint">Nenhum rival faz fronteira com você.</p>')+'<p class="hint">Atacar quem tem pacto com você é traição.</p>'}
+  $('room').innerHTML=h;$('room').hidden=false;HQ.room=k;$('room').scrollTop=0}

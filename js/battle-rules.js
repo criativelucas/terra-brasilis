@@ -18,7 +18,7 @@ const dist=(a,b)=>Math.abs(a.x-b.x)+Math.abs(a.y-b.y), alive=s=>B.units.filter(u
 const total=s=>alive(s).reduce((a,u)=>a+u.hp,0), ld=s=>B.units.find(u=>u.side==s&&u.ld).hp>0;
 const bOver=()=>!ld(0)||!ld(1)||B.round>MAXR||!!B.taken; // B.taken: praça tomada no cerco // comandante caiu = exército debanda
 const cover=t=>'fvQ'.includes(B.T[t.y][t.x]);
-const est=(a,t,back)=>a.hp*.5*UT[a.type][3]*(back?.5:1)*(beats(a,t)?1.5:1)*(a.side?1:1+trait(B.from,'atk'))*(a.side==B.ps?1+.1*hq.tech[a.type]:1)
+const est=(a,t,back)=>a.hp*.5*UT[a.type][3]*(back?.5:1)*(beats(a,t)?1.5:1)*(a.side?1:1+trait(B.from,'atk'))*(a.side==B.ps?1+.1*(hq.tech[CL(a.type)]||0):1)
   /(t.side?1+defOf(B.to):1)/(cover(t)?1.3:1)/(t.el?.[2].def||1)*(a.el?.[2].dmg||1)*(1+(gs(stOf(a))[0]-40)/400)*(1+.08*a.lv)
   *(B.rl[a.side]==B.round?1.4:1)*(B.amb==B.round&&a.side==B.ps&&cover(a)?1.4:1)*(a.side!=B.ps?1+.1*Math.min(3,turn/8|0):1)*(pwOn(a.side,'atk')?1.3:1)/(pwOn(t.side,'def')?1.3:1)/(B.T[t.y]?.[t.x]=='h'?1.2:1)/(hasP(t,'def')?1.2:1)*(back&&hasP(a,'rev')?1.3:1); // elite, general, nível do regimento, brado, treino da IA
 const TN={g:'Campo aberto',r:'Estrada',w:'Água',b:'Ponte: pode ser queimada',f:'Mata: +30% defesa',m:'Serra: bloqueia',v:'Vila: +30% defesa, cura 2 por rodada',

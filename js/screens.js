@@ -219,11 +219,13 @@ const onScr=e=>{const k=e.target.closest('button')?.dataset.s;if(!k)return;sfx.s
   else if(k=='tut'){tut=0;scr();ui()}
   else if(k=='hq-dip'){const b=e.target.closest('button');dipAct(b.dataset.k,+b.dataset.f)?sfx.win():sfx.lose();save();showRoom(HQ.room);ui()}
   else if(k.startsWith('hq-')){const[,a,id]=k.split('-');
+    if(a=='map')return closeHQ();
+    if(a=='ghelp'){HQ.ghelp=!HQ.ghelp;return showRoom('gen')}
     if(a=='close'){$('room').hidden=true;const z=HQ.zoom={room:HQ.room,start:Date.now(),dir:-1};setTimeout(()=>{if(HQ&&HQ.zoom===z)HQ.zoom=null},340);return ui()}
     if(a=='doc'){gold[me]-=DOC.find(d=>d[0]==id)[3];hq.doc[id]=1;note('Doutrina adotada: '+DOC.find(d=>d[0]==id)[1])}
-    if(a=='tech'){gold[me]-=6+4*hq.tech[id];hq.tech[id]++;note(`${UT[id][0]} treinada: nível ${hq.tech[id]}`)}
+    if(a=='tech'){if(!(id in hq.tech))return;gold[me]-=6+4*hq.tech[id];hq.tech[id]++;note(`${UT[id][0]} treinada: nível ${hq.tech[id]}`)}
     if(a=='tax'){gold[me]+=Math.ceil(income(me)/2);hq.tax=turn;note(`Imposto de guerra: +${Math.ceil(income(me)/2)} ouro`)}
-    sfx.win();save();showRoom(HQ.room);ui()}
+    sfx.win();save();renderHQ();showRoom(HQ.room);ui()} // a cena reflete a compra: estandarte, soldado novo
   else if(k.startsWith('ev')){const[l,c,fn]=EVT[2][+k[2]];gold[me]-=c;fn();note(`${EVT[0]}: ${l.split(' (')[0].toLowerCase()}`);scr();ui()}};
 $('screen').addEventListener('click',onScr);$('room').addEventListener('click',onScr);
 document.addEventListener('keydown',e=>{ // atalhos: clicam o botão correspondente do painel, se existir e estiver ativo
