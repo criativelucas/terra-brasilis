@@ -62,11 +62,11 @@ function showSaves(back){const can=me>=0&&!B&&!raids.length&&!over;
       <div class="row">${can?`<button data-s="sv-${k}">Salvar aqui</button>`:''}${d?`<button data-s="ld-${k}">Carregar</button>`:''}</div></div></div>`}).join('')+
     `<button data-s="${back}" class="end">Voltar</button>`)}
 // visão geral do império: todos os seus territórios numa lista; clicar leva até ele
-function showArmy(){const own=owner.map((o,i)=>o==me?i:-1).filter(i=>i>=0).sort((a,b)=>danger(b)-danger(a)||troops[b]-troops[a]);
-  scr(`<h2>Exército</h2><p class="c">${own.length} ${TW} · ${own.reduce((a,i)=>a+troops[i],0)} tropas · ${own.filter(i=>!moved.has(i)&&troops[i]>1).length} ainda podem marchar</p>`+
-    own.map(i=>`<button class="arow" data-s="go-${i}"><span>${danger(i)?'⚠ ':''}<b>${S[i][1]}</b></span><span>⚔ ${troops[i]}${fort[i]?' · forte '+fort[i]:''}${port[i]?' · ⚓':''}</span>
-      <span>${danger(i)?'em perigo':moved.has(i)?'já marchou':troops[i]>1?'pode marchar':'guarnição mínima'}</span></button>`).join('')+
-    '<button data-s="close" class="end">Voltar ao mapa</button>')}
+function showArmy(){const own=owner.map((o,i)=>o==me?i:-1).filter(i=>i>=0).sort((a,b)=>danger(b)-danger(a)||troops[b]-troops[a]),can=own.filter(i=>!moved.has(i)&&troops[i]>1).length,dg=own.filter(danger).length;
+  scr(`<h2>Exército</h2><div class="kpis k4"><div class="kpi"><b>${own.length}</b><span>${TW}</span></div><div class="kpi"><b>${own.reduce((a,i)=>a+troops[i],0)}</b><span>tropas</span></div><div class="kpi"><b>${can}</b><span>podem marchar</span></div><div class="kpi ${dg?'hot':''}"><b>${dg}</b><span>em perigo</span></div></div>
+    <div class="sgrid">${own.map(i=>{const st=danger(i)?['no','Em perigo']:moved.has(i)?['','Já marchou']:troops[i]>1?['ok','Pode marchar']:['','Guarnição mínima'];
+      return`<button class="scard ${danger(i)?'hot':''}" data-s="go-${i}" data-help="Vai até ${esc(S[i][1])} no mapa">${img(i,S[i][4])}<span class="tb"><b>${S[i][1]}</b><small>${S[i][4]}</small><span class="tst">${fort[i]?`<span>Forte ${fort[i]}</span>`:''}${port[i]?'<span>Porto</span>':''}${resOf(i)?`<span>${RESN[resOf(i)][0]}</span>`:''}</span></span><span class="sn"><b>${troops[i]}</b><small>tropas</small></span><em class="st ${st[0]}">${st[1]}</em></button>`}).join('')}</div>
+    <button data-s="close" class="end">Voltar ao mapa</button>`);$('card').classList.add('wide')}
 // conselho (como o "Seek Advice" de Samurai Warriors Empires): a cada turno, até 3 generais propõem uma ação; você segue uma
 let council=null;
 function makeCouncil(){const own=owner.map((o,i)=>o==me?i:-1).filter(i=>i>=0).sort((a,b)=>hash(a,turn)%97-hash(b,turn)%97).slice(0,3),
@@ -81,13 +81,13 @@ const councilNow=()=>{if(me<0)return null;if(!council||council.turn!=turn)counci
 function followCouncil(k){const c=councilNow(),o=c.list[k];if(c.done||gold[me]<o.custo)return;gold[me]-=o.custo;o.fn();c.done=true;
   mood[owner[o.i]==me?o.i:me]={m:'smile',until:Date.now()+6000};note(`Conselho de ${S[o.i][4]}: ${o.nome.toLowerCase()}`);sfx.win()}
 function showCouncil(){const c=councilNow(),postOf=i=>Object.keys(posts).find(k=>posts[k]==i);
-  scr(`<h2>Conselho · turno ${turn}</h2><p class="c">${c.done?'Você já seguiu um conselho neste turno.':'Seus generais trazem propostas. Siga uma por turno.'}</p>`+
-    c.list.map((o,k)=>{const[l,a,p]=gs(o.i),po=postOf(o.i);return`<div class="ucard"><img src="${faceOf(o.i)}" alt="" style="width:72px;height:72px"><div style="flex:1">
-      <b>${S[o.i][4]}</b><small>${po?'Cargo: '+POSTS[po][0]+' · ':''}proposta pela ${o.attr}</small>
-      <div class="st" title="Liderança, astúcia, política"><i style="width:${l}%"></i><i style="width:${a}%"></i><i style="width:${p}%"></i></div>
-      <p><b>${o.nome}</b><br>${o.txt}</p><button data-s="cs-${k}" ${c.done||gold[me]<o.custo?'disabled':''}>${o.custo?`Seguir (${o.custo} ouro)`:'Seguir o conselho'}</button></div></div>`}).join('')+
-    `<div class="opt"><span>Delegar ao conselho</span><button data-s="deleg">‹ ${CFG.deleg?'Sim: escolhe sozinho':'Não'} ›</button></div><button data-s="close" class="end">Voltar ao mapa</button>`)}
-function showLog(){logSeen=logs.length;scr(`<h2>Crônica</h2><div class="loglist">${logs.map(l=>`<p>› ${esc(l)}</p>`).join('')||'<p>Nada aconteceu ainda.</p>'}</div><button data-s="close" class="end">Voltar</button>`)}
+  scr(`<h2>Conselho · turno ${turn}</h2><p class="c">${c.done?'Você já seguiu um conselho neste turno.':'Seus generais trazem propostas. Siga uma por turno.'}</p><div class="cgrid">`+
+    c.list.map((o,k)=>{const G=gs(o.i),po=postOf(o.i);return`<div class="gcard ccard ${c.done?'dim':''}">${img(o.i,S[o.i][4])}<div class="tb"><b>${S[o.i][4]}</b><small>${po?'Cargo: '+POSTS[po][0]+' · ':''}proposta pela ${o.attr}</small>
+      <div class="attrs">${[['Liderança',G[0]],['Astúcia',G[1]],['Política',G[2]]].map(([n,v])=>`<div class="at ${n.toLowerCase().startsWith(o.attr.slice(0,3))?'hi':''}"><span>${n}</span><i><u style="width:${v}%"></u></i><em>${v}</em></div>`).join('')}</div>
+      <div class="prop"><b>${o.nome}</b><small>${o.txt}</small></div>${c.done?'<span class="st">Conselho já seguido</span>':gold[me]<o.custo?`<span class="st no">Faltam ${o.custo-gold[me]} ouro<small>custa ${o.custo}</small></span>`:`<button data-s="cs-${k}" class="buy wide">Seguir<small>${o.custo?o.custo+' ouro':'grátis'}</small></button>`}</div></div>`}).join('')+
+    `</div><div class="opt"><span>Delegar ao conselho</span><button data-s="deleg">‹ ${CFG.deleg?'Sim: escolhe sozinho':'Não'} ›</button></div><button data-s="close" class="end">Voltar ao mapa</button>`);$('card').classList.add('wide')}
+function showLog(){const nw=Math.max(0,logs.length-logSeen);logSeen=logs.length; /* crônica como linha do tempo; o que é novo vem marcado */
+  scr(`<h2>Crônica</h2><p class="c">${logs.length} registro${logs.length==1?'':'s'}${nw?` · ${nw} novo${nw>1?'s':''}`:''}</p><div class="tline">${logs.map((l,k)=>`<p class="${k<nw?'nw':''}"><i></i><span>${esc(l)}</span>${k<nw?'<em>novo</em>':''}</p>`).join('')||'<p><span>Nada aconteceu ainda.</span></p>'}</div><button data-s="close" class="end">Voltar</button>`)}
 function load(){try{const d=JSON.parse(localStorage.getItem(SAVE));undoS=[];summ=null;if(!d||d.owner.length!=N)return false;
   reset(d.scn||0);({owner,troops,gold,me,turn,logs,fort,stats}=d);setGoal();moved=new Set(d.moved);sel=me;if(d.hq)hq=d.hq;hq.tech.art??=0;if(d.xp)xp=d.xp;if(d.hand){hand=d.hand;cmd=d.cmd;posts=d.posts;boost=d.boost}council=null;if(d.port)port=d.port;pact=d.pact||{};ally=d.ally||{};trib=d.trib||{};angry=d.angry||{};betray=d.betray||0;perk=d.perk||{};tld=d.tld||[];if(d.price){price=d.price;priceOld=d.priceOld||{...price}}linkPorts();return true}catch{return false}}
 const wipe=()=>{try{localStorage.removeItem(SAVE)}catch{}};
@@ -99,11 +99,11 @@ const TUT=[['menu',`Bem-vindo! Clique no seu ${TW1} no mapa (plaquinha escura) p
   ['rec','No menu, escolha Recrutar: cada tropa custa ouro. A barra de Ajuda, embaixo do mapa, explica tudo o que estiver sob o mouse.','#cmd [data-a=rec]'],
   ['march',`Abra o menu de novo e escolha Marchar / Atacar. As rotas mostram a chance de vitória contra cada vizinho.`,()=>cenOf(me)],
   ['battle',`Clique num ${TW1} vizinho inimigo para atacar.`,null],
-  ['bmove','Na batalha, clique numa unidade sua e depois numa casa hachurada para andar.','.ulist button:not(.done)'],
+  ['bmove','Na batalha, clique numa unidade sua e depois numa casa hachurada para andar. Arraste o campo para mover a câmera.',()=>{const u=B&&!B.prep&&alive(B.ps).find(v=>!v.done);return u&&inView(...toScreen(u.x*CS+CS/2,u.y*CS+CS/2))?toScreen(u.x*CS+CS/2,u.y*CS+CS/2):null}],
   ['bcmd','Depois de andar, o menu ao lado da unidade pede a ação: Atacar, Esperar ou o poder do líder.','#cmd button:not(.off)'],
   ['bdone','Derrube o comandante inimigo (retrato dourado). Quando todas as suas unidades agirem, a rodada passa sozinha.','[data-a=bend]'],
-  ['end','Clique em Fim do turno: a IA joga e você recebe ouro.','[data-a=end]'],
-  ['hq','Abra o Quartel-General para doutrinas, generais e diplomacia. A Ficha histórica de cada líder conta quem ele foi. Bom jogo!','[data-a=hq]']];
+  ['end','Clique em Fim do turno, o botão dourado: a IA joga e você recebe ouro. Arraste o mapa e use a roda do mouse para aproximar.','[data-a=end]'],
+  ['hq','Abra o Quartel-General (botão da casinha) para doutrinas, generais e diplomacia. A Ficha histórica de cada líder conta quem ele foi. Bom jogo!','[data-a=hq]']];
 let tut=-1;
 const tutStart=()=>{let seen=false;try{seen=localStorage.getItem('tb-tut')}catch{}if(!seen)tut=0};
 function tutEv(ev){if(tut<0)return;const k=TUT.findIndex((s,i)=>i>=tut&&s[0]==ev);if(k<0)return;tut=k+1;
@@ -221,7 +221,7 @@ const onScr=e=>{const k=e.target.closest('button')?.dataset.s;if(!k)return;sfx.s
   else if(k.startsWith('ld-')){const d=localStorage.getItem(SLOT(k.slice(3)));if(d){localStorage.setItem(SAVE,d);if(load()){regionCheck(true);scr();note('Partida carregada');ui()}}}
   else if(k.startsWith('cs-')){followCouncil(+k.slice(3));showCouncil();ui()}
   else if(k=='deleg'){CFG.deleg=CFG.deleg?0:1;saveCfg();showCouncil()}
-  else if(k.startsWith('go-')){sel=+k.slice(3);marching=false;scr();ui()}
+  else if(k.startsWith('go-')){sel=+k.slice(3);marching=false;mapSee(sel,true,1.8);scr();ui()}
   else if(k=='saves')showSaves('title');
   else if(k=='tut'){tut=0;scr();ui()}
   else if(k=='hq-dip'){const b=e.target.closest('button');dipAct(b.dataset.k,+b.dataset.f)?sfx.win():sfx.lose();save();showRoom(HQ.room);ui()}

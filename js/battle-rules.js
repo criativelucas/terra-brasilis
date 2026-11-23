@@ -1,7 +1,7 @@
 // batalha tática: grade, unidades, elite, alcance e dano
 // ---------- batalha tática: grade 14x9, atacante à esquerda ----------
 let GW=16,GH=10; /* tamanho do campo: muda a cada batalha, conforme os exércitos */
-const CS=48,OX=0,OY=0,VX=21,VY=112,VW=768,VH=480,MAXR=14,SPD=[1.8,1,.45]; // OX/OY: o campo é desenhado em coordenadas de mundo; VX..VH: janela da câmera no canvas
+const CS=48,OX=0,OY=0,SPD=[1.8,1,.45];let VX=21,VY=112,VW=768,VH=480,MAXR=14; /* VX..VH: janela da câmera; MAXR cresce com o campo */ // OX/OY: o campo é desenhado em coordenadas de mundo; VX..VH: janela da câmera no canvas
 const A0=()=>Math.max(1,Math.round((GW-16)/2)); /* coluna onde o atacante se posiciona; o defensor fica no espelho */
 let bFast=1;try{bFast=+localStorage.getItem('tb-fast')||1}catch{} // velocidade do turno inimigo: 1, 2 ou 4
 const UT={inf:['Infantaria',3,1,1],cav:['Cavalaria',5,1,1.1],ati:['Atiradores',3,3,.7],art:['Artilharia',2,4,.9],can:['Canoeiros',4,2,.8],lan:['Lanceiros',5,1,1.25],jag:['Jagunços',4,3,.75]}; // artilharia não atira em casa vizinha nem revida // nome, passos, alcance, dano
@@ -16,7 +16,8 @@ const rgOf=u=>Math.max(1,UT[u.type][2]+(u.el?.[2].rng||0)-(B.wx=='rain'&&UT[u.ty
 const inR=(a,t)=>dist(a,t)<=rgOf(a)&&(a.type!='art'||dist(a,t)>1);
 const dist=(a,b)=>Math.abs(a.x-b.x)+Math.abs(a.y-b.y), alive=s=>B.units.filter(u=>u.side==s&&u.hp>0);
 const total=s=>alive(s).reduce((a,u)=>a+u.hp,0), ld=s=>B.units.find(u=>u.side==s&&u.ld).hp>0;
-const bOver=()=>!ld(0)||!ld(1)||B.round>MAXR||!!B.taken; // B.taken: praça tomada no cerco // comandante caiu = exército debanda
+const rout=s=>{const t0=B.units.filter(u=>u.side==s&&u.j>=0).reduce((a,u)=>a+u.hp0,0);return t0>0&&total(s)<=t0*.3}; // perdeu 70% das tropas: o exército debanda
+const bOver=()=>!ld(0)||!ld(1)||B.round>MAXR||!!B.taken||rout(0)||rout(1); // B.taken: praça tomada no cerco // comandante caiu = exército debanda
 const cover=t=>'fvQ'.includes(B.T[t.y][t.x]);
 const est=(a,t,back)=>a.hp*.5*UT[a.type][3]*(back?.5:1)*(beats(a,t)?1.5:1)*(a.side?1:1+trait(B.from,'atk'))*(a.side==B.ps?1+.1*(hq.tech[CL(a.type)]||0):1)
   /(t.side?1+defOf(B.to):1)/(cover(t)?1.3:1)/(t.el?.[2].def||1)*(a.el?.[2].dmg||1)*(1+(gs(stOf(a))[0]-40)/400)*(1+.08*a.lv)
@@ -47,10 +48,11 @@ const bCell=e=>{const[px,py]=bPt(e),c=B.cam;if(!inView(px,py))return[-1,-1];retu
 const zMin=()=>Math.min(1,VW/(GW*CS),VH/(GH*CS)); // afastado ao máximo: o campo inteiro cabe
 function camClamp(c){const z=c.tz=Math.max(zMin(),Math.min(1.6,c.tz)),w=VW/z,h=VH/z,WW=GW*CS,WH=GH*CS;
   c.tx=w>=WW?(WW-w)/2:Math.max(0,Math.min(WW-w,c.tx));c.ty=h>=WH?(WH-h)/2:Math.max(0,Math.min(WH-h,c.ty))}
-function camTo(gx,gy,z){const c=B.cam;if(z)c.tz=z;c.tz=Math.max(zMin(),Math.min(1.6,c.tz));c.tx=(gx+.5)*CS-VW/c.tz/2;c.ty=(gy+.5)*CS-VH/c.tz/2;camClamp(c)}
+const bSafe=()=>VX?[VX,VY,VX+VW,VY+VH]:[16,118,VW-420,VH-30]; // tela cheia: área que o placar e a ficha não cobrem
+function camTo(gx,gy,z){const c=B.cam,[L,T,R,Bt]=bSafe();if(z)c.tz=z;c.tz=Math.max(zMin(),Math.min(1.6,c.tz));c.tx=(gx+.5)*CS-((L+R)/2-VX)/c.tz;c.ty=(gy+.5)*CS-((T+Bt)/2-VY)/c.tz;camClamp(c)}
 function camZoom(f,px=VX+VW/2,py=VY+VH/2){const c=B.cam,wx=(px-VX)/c.tz+c.tx,wy=(py-VY)/c.tz+c.ty;c.tz*=f;camClamp(c);c.tx=wx-(px-VX)/c.tz;c.ty=wy-(py-VY)/c.tz;camClamp(c)}
-function camFrame(...us){const c=B.cam,w=VW/c.tz,h=VH/c.tz,M=CS*1.4; /* só move se alguma casa sair da margem; devolve true se moveu */
-  if(us.every(u=>{const px=(u.x+.5)*CS,py=(u.y+.5)*CS;return px>c.tx+M&&px<c.tx+w-M&&py>c.ty+M&&py<c.ty+h-M}))return false;
+function camFrame(...us){const c=B.cam,[L,T,R,Bt]=bSafe(),M=CS*1.4*c.tz,sc=u=>[VX+((u.x+.5)*CS-c.tx)*c.tz,VY+((u.y+.5)*CS-c.ty)*c.tz]; /* só move se alguma casa sair da área livre; devolve true se moveu */
+  if(us.every(u=>{const[px,py]=sc(u);return px>L+M&&px<R-M&&py>T+M&&py<Bt-M}))return false;
   camTo(us.reduce((s,u)=>s+u.x,0)/us.length,us.reduce((s,u)=>s+u.y,0)/us.length);return true}
 function camStep(now){const c=B.cam,k=Math.min(1,(now-(c.t||now))/110);c.t=now;c.x+=(c.tx-c.x)*k;c.y+=(c.ty-c.y)*k;c.z+=(c.tz-c.z)*k;
   if(Math.abs(c.tz-c.z)<.002)c.z=c.tz}

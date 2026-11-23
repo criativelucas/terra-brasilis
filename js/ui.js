@@ -33,7 +33,7 @@ function ui(){
       <div id="tcard">${terrCard()}</div>
       <div class="grp"><span class="lbl">Comandos</span><div class="row"><button data-a="bnext" ${left&&!B.busy&&!B.prep?'':'disabled'} data-help="Escolhe a próxima unidade que ainda pode agir">Próxima (${left})</button><button data-a="brally" ${B.rl[B.ps]||B.busy?'disabled':''} data-help="Brado do comandante: +40% de dano em todas as suas unidades nesta rodada. Uma vez por batalha.">Brado</button><button data-a="bpow" ${B.pw[B.ps]||B.busy?'disabled':''} data-help="${esc(`Poder de ${S[pf][4]}, uma vez por batalha: ${POW[pkey][1]}`)}">${I('star')}${POW[pkey][0]}</button></div></div>
       <button data-a="bend" class="end${armed?' danger':''}" ${dis}>${armed?`Encerrar mesmo assim? ${left} ainda pode${left>1?'m':''} agir`:'Encerrar rodada ▶'}</button>
-      <div class="minor"><button data-a="bauto" class="mini" ${dis} data-help="A IA joga por você até o fim da batalha">Automático</button><button data-a="bhelp" class="mini ${bHelp?'on':''}" data-help="Vantagens, terreno e o que cada tipo de batalha muda">? Regras</button></div>
+      <div class="minor"><button data-a="bauto" class="mini" ${dis} data-help="A IA joga por você até o fim da batalha">Automático</button><button data-a="bhelp" class="mini ${bHelp?'on':''}" data-help="Vantagens, terreno e o que cada tipo de batalha muda">? Regras</button><button data-a="pmenu" class="mini" data-help="Pausa, opções e salvamentos (Esc)">☰ Menu</button></div>
       ${bHelp?`<div class="helpbox"><p>${KIND[B.kind][1]}</p><div class="tri">${ic('inf')}▶${ic('cav')}▶${ic('ati')}▶${ic('inf')}</div><p class="c">A seta aponta quem leva +50% de dano.</p><p>Mata e vila: +30% de defesa; vila cura 2 por rodada e rende 2 ouro. Morro baixo: +20% de defesa e tiro +1. Serra, água e muralha bloqueiam.</p>${B.rl[1-B.ps]?'<p><i>O inimigo já usou o brado.</i></p>':''}${B.pw[1-B.ps]?`<p><i>O inimigo usou ${POW[B.pw[1-B.ps].k][0]}.</i></p>`:''}</div>`:''}`;
     $('roster').hidden=true;handUI();help();return}
   let h='',act='';
@@ -116,6 +116,7 @@ const onPanel=e=>{const b=e.target.closest('button');if(!b||cam||aiShow)return;c
   if(a=='mtgt'){const t=sel,src=adj[t].filter(j=>owner[j]==me&&!moved.has(j)&&troops[j]>1).sort((p,q)=>troops[q]-troops[p])[0];if(src!=null){sel=src;marching=true;hov=t;tutEv('march')}return ui()}
   if(a=='mdip')return showDip(b.dataset.f!=null?+b.dataset.f:-1);
   if(a=='bhelp'){bHelp=!bHelp;return ui()}
+  if(a=='pmenu')return menu(true);
   if(a=='tab'){tab=b.dataset.t;return ui()}
   if(a=='aimx'){aim=null;rKey='';return ui()}
   if(a=='summx'){summ=null;return ui()}
@@ -266,18 +267,21 @@ cv.addEventListener('touchmove',()=>clearTimeout(lpT),{passive:true});
 cv.addEventListener('touchend',e=>{clearTimeout(lpT);if(lpOn){e.preventDefault();lpOn=false}},{passive:false});
 
 // ---------- mercado: preço de cada recurso, tendência e o que você produz ----------
-function showMarket(){scr(`<h2>Mercado</h2><p class="c">Cada ${TW1} produz um recurso. O preço muda a cada turno. Com três ou mais do mesmo recurso você tem monopólio (+1 ouro em cada); porto rende 25% a mais.</p>`+
+function showMarket(){ /* mercado em cartões: preço grande, tendência, quanto você produz */
+  scr(`<h2>Mercado</h2><p class="c">Cada ${TW1} produz um recurso. O preço muda a cada turno. Com três ou mais do mesmo recurso você tem monopólio (+1 ouro em cada); porto rende 25% a mais.</p><div class="mgrid">`+
   Object.entries(RESN).map(([k,[n]])=>{const mine=owner.filter((o,i)=>o==me&&resOf(i)==k).length,tot=S.filter((_,i)=>resOf(i)==k).length,tr=price[k]-(priceOld[k]??price[k]);if(!tot)return'';
-    return`<div class="mk">${I('r_'+k)}<b>${n}</b><span class="pr ${tr>.005?'up':tr<-.005?'dn':''}">${price[k].toFixed(2)} ${tr>.005?'▲':tr<-.005?'▼':'·'}</span><span>${mine}/${tot} seus${mine>=3?' · monopólio':''}</span></div>`}).join('')+
-  '<button data-s="close" class="end">Fechar</button>')}
+    return`<div class="mcard ${mine>=3?'mono':mine?'own':''}"><span class="di">${I('r_'+k)}</span><b>${n}</b><span class="pr ${tr>.005?'up':tr<-.005?'dn':''}">${price[k].toFixed(2)}<i>${tr>.005?'▲':tr<-.005?'▼':'·'}</i></span>
+      <div class="pb"><i style="width:${mine/tot*100}%"></i></div><small>${mine}/${tot} seus${mine>=3?' · monopólio':mine?` · faltam ${Math.max(0,3-mine)} para monopólio`:''}</small></div>`}).join('')+
+  '</div><button data-s="close" class="end">Fechar</button>');$('card').classList.add('wide')}
 $('bar').addEventListener('click',e=>{if(e.target.closest('[data-a=market]')){sfx.sel();showMarket()}});
 
 // ---------- tela que cabe na janela: o mapa cresce até o espaço livre ----------
 const relTxt=f=>pact[f]>turn?(ally[f]>turn?'aliado':`pacto até o turno ${pact[f]}`):angry[f]>turn?'hostil':'sem acordo';
-function fit(){const view=$('view');if(!view)return;const mapOn=!B&&!HQ;document.body.classList.toggle('mapv',mapOn);
-  if(mapOn&&floatUI()){const w=Math.min(2600,innerWidth),h=Math.min(1600,innerHeight); /* mapa em tela cheia: o canvas tem o tamanho da janela */
-    if(cv.width!=w||cv.height!=h){cv.width=w;cv.height=h;x.imageSmoothingEnabled=false;mapFit(true);rKey=''}cv.style.width=cv.style.height='100%';return}
-  if(cv.width!=810||cv.height!=610){cv.width=810;cv.height=610;x.imageSmoothingEnabled=false;if(mapOn)mapFit(true)}
+function fit(){const view=$('view');if(!view)return;const mapOn=!B&&!HQ,full=!HQ&&innerWidth>900;document.body.classList.toggle('mapv',mapOn);document.body.classList.toggle('full',full);
+  if(full){const w=Math.min(2600,innerWidth),h=Math.min(1600,innerHeight); /* tela cheia no computador: mapa e batalha usam a janela inteira */
+    if(cv.width!=w||cv.height!=h){cv.width=w;cv.height=h;x.imageSmoothingEnabled=false;mapFit(true);rKey='';if(B)camClamp(B.cam)}VX=0;VY=0;VW=cv.width;VH=cv.height;cv.style.width=cv.style.height='100%';return}
+  VX=21;VY=112;VW=768;VH=480;
+  if(cv.width!=810||cv.height!=610){cv.width=810;cv.height=610;x.imageSmoothingEnabled=false;mapFit(true)}
   if(HQ){const s=Math.min(innerWidth/810,innerHeight/610);cv.style.width=810*s+'px';cv.style.height=610*s+'px';return}
   if(matchMedia('(max-width:900px)').matches){cv.style.width='100%';cv.style.height='auto';return}
   const s=Math.max(.5,Math.min((view.clientWidth-12)/810,(view.clientHeight-12)/610));cv.style.width=Math.floor(810*s)+'px';cv.style.height=Math.floor(610*s)+'px'}

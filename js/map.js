@@ -236,19 +236,44 @@ function pspr(k,v){const key=k+v;if(PSP[key])return PSP[key];const W0={mesa:20,h
 const PK={ama:['jtree','jtree','jtree','palm','jtree'],ser:['cactus','cactus','mesa','cactus','taipa'],cer:['twist','twist','ipe','buriti','twist'],sud:['round','hill','coffee','round','hill'],
   sul:['pine','pine','hill','pine','estancia'],mata:['round','palm','round','mill','round'],pampa:['grass','grass','horse','grass','estancia']};
 let PROPS=null;
-function props(now,zr){const a=Math.max(0,Math.min(1,(zr-1.3)/.45));if(!a)return; /* só quando a câmera chega perto */
+const[PL,plg]=mk(16,16);let plKey='';
+function props(now,zr){const a=Math.max(0,Math.min(1,(zr-1.15)/.35));if(!a)return; /* só quando a câmera chega perto; tudo vai para uma camada pronta */
+  const ph=CFG.calm||!CFG.q?0:Math.floor(now/320)%4,key=[cv.width,cv.height,MC.cx.toFixed(1),MC.cy.toFixed(1),MC.z.toFixed(3),ph,a.toFixed(2),owner.join()].join('|');
+  if(key!=plKey){plKey=key;if(PL.width!=cv.width||PL.height!=cv.height){PL.width=cv.width;PL.height=cv.height}plg.clearRect(0,0,PL.width,PL.height);
+    roads(zr,plg);rivers(zr,plg);propsDraw(ph,zr,plg)}
+  x.drawImage(PL,0,0)}
+let ROADS=null;
+function roads(zr,g){const a=Math.max(0,Math.min(1,(zr-1.15)/.3));if(!a)return; /* estradas de terra ligando as capitais vizinhas por terra */
+  if(!ROADS){const sea=new Set([...SEA,...portLinks].map(([p,q])=>Math.min(p,q)+'-'+Math.max(p,q)));ROADS=[];S.forEach((_,i)=>adj[i].forEach(j=>{if(j>i&&!sea.has(i+'-'+j))ROADS.push([i,j])}))}
+  g.save();g.globalAlpha=a*.5;g.lineCap='round';g.setLineDash([MC.z*3,MC.z*2.4]); // trilha tracejada, discreta
+  ROADS.forEach(([i,j])=>{const[ax,ay]=proj(...px(i)),[bx,by]=proj(...px(j)),h=hash(i,j),mx=(ax+bx)/2+((h%21)-10)*MC.z*.9,my=(ay+by)/2+(((h>>5)%21)-10)*MC.z*.9;
+    [['rgba(60,36,16,.8)',Math.max(2,MC.z*1.2)],['#e0c48a',Math.max(1,MC.z*.6)]].forEach(([c,w])=>{g.strokeStyle=c;g.lineWidth=w;g.beginPath();g.moveTo(ax,ay+4);g.quadraticCurveTo(mx,my+4,bx,by+4);g.stroke()})});
+  g.setLineDash([]);
+  g.restore()}
+function rivers(zr,g){const a=Math.max(0,Math.min(1,(zr-1.15)/.3));if(!a)return; /* rios por cima, lisos e largos, quando a câmera aproxima */
+  g.save();g.globalAlpha=a;g.lineCap=g.lineJoin='round';
+  RIOS.forEach(r=>{const pts=r.map(([lon,lat])=>proj((lon-X0)/D*C,(Y0-lat)/D*C));[['#1f5f9a',Math.max(3,MC.z*2.2)],['#4f9ae0',Math.max(1.6,MC.z*1.3)],['rgba(200,235,255,.6)',Math.max(.6,MC.z*.35)]].forEach(([c,w])=>{
+    g.strokeStyle=c;g.lineWidth=w;g.beginPath();pts.forEach((p,k)=>k?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.stroke()})});
+  g.restore()}
+function propsDraw(ph,zr,g){const a=Math.max(0,Math.min(1,(zr-1.3)/.45));if(!a)return;
   if(!PROPS){PROPS=[];const caps=S.map((_,i)=>px(i).map(v=>v/C));
     for(let cy=0;cy<H;cy++)for(let cx=0;cx<W;cx++){const s=cell[cy*W+cx],h=hash(cx*3+1,cy*5+2);if(s<0||h%5)continue;
       if(caps.some(([qx,qy])=>Math.abs(qx-cx)<6&&Math.abs(qy-cy)<4))continue; // deixa espaço para a cidade e o exército
       const L=PK[BOF[s]]||PK.mata,k=L[(h>>4)%L.length];PROPS.push([(cx+.5)*C+(h>>8)%3-1,(cy+.5)*C,k,(h>>11)%3])}}
-  x.save();x.globalAlpha=a;x.imageSmoothingEnabled=false;const cw=cv.width,ch=cv.height;
-  for(const[fx_,fy,k,v]of PROPS){const[X,Y,sc]=proj(fx_,fy);if(X<-40||Y<-40||X>cw+40||Y>ch+60)continue;const im=pspr(k,v),f=sc*.55;
-    x.drawImage(im,Math.round(X-im.width*f/2),Math.round(Y-im.height*f),Math.round(im.width*f),Math.round(im.height*f))}
-  x.restore()}
+  g.save();g.globalAlpha=a;g.imageSmoothingEnabled=false;const cw=cv.width,ch=cv.height,SW_=new Set(['jtree','palm','round','pine','twist','ipe','buriti']);
+  for(const[fx_,fy,k,v]of PROPS){const[X,Y,sc]=proj(fx_,fy);if(X<-40||Y<-40||X>cw+40||Y>ch+60)continue;const im=pspr(k,v),f=sc*.55,
+      sw=SW_.has(k)?Math.round([0,1,0,-1][(ph+(fx_|0)%4)%4]*f*.6):0; // copas balançando ao vento, em passos de pixel
+    g.drawImage(im,Math.round(X-im.width*f/2)+sw,Math.round(Y-im.height*f),Math.round(im.width*f),Math.round(im.height*f))}
+  g.restore()}
 function town(i,X,Y,sc,zr){const a=Math.max(0,Math.min(1,(zr-1.15)/.35));if(!a)return; /* capital em 3D simples: cresce com as tropas, ganha muralha com o forte e barco no porto */
   const n=2+Math.min(5,troops[i]/6|0),f=sc*.6,im=pspr('house',0),pos=[[0,0],[-9,3],[8,4],[-3,7],[5,-4],[-12,-2],[12,-1]];x.save();x.globalAlpha=a;x.imageSmoothingEnabled=false;
   if(fort[i]){x.strokeStyle='#6b6258';x.lineWidth=Math.max(2,2.5*f);x.beginPath();x.ellipse(X+6*f,Y+4*f,22*f,10*f,0,0,7);x.stroke();x.strokeStyle='#a89c88';x.lineWidth=Math.max(1,f);x.stroke()}
   pos.slice(0,n).sort((p,q)=>p[1]-q[1]).forEach(([dx,dy])=>x.drawImage(im,Math.round(X+(dx+4)*f-im.width*f/2),Math.round(Y+dy*f-im.height*f+6*f),Math.round(im.width*f),Math.round(im.height*f)));
   {const ch=pspr('mill',0);x.drawImage(ch,Math.round(X+2*f),Math.round(Y-14*f),Math.round(ch.width*f*.9),Math.round(ch.height*f*.9))} // igreja/casa grande no centro
   if(port[i]){x.fillStyle='#5a3a1c';x.fillRect(X+24*f,Y+8*f,10*f,3*f);x.fillStyle='#f1e9d6';x.fillRect(X+27*f,Y,4*f,7*f)}
+  if(dayTint[3]>.25){x.globalCompositeOperation='lighter';pos.slice(0,n).forEach(([dx,dy],k)=>{x.fillStyle=`rgba(255,210,110,${.55*a})`;x.fillRect(X+(dx+3)*f,Y+(dy-2)*f+6*f,Math.max(1,1.4*f),Math.max(1,1.4*f))});x.globalCompositeOperation='source-over'} // janelas acesas à noite
+  if(CFG.q&&!CFG.calm){const now=Date.now();for(let k=0;k<3;k++){const t=(now/2200+k/3+i*.13)%1,sz=(2+t*5)*f;x.fillStyle=`rgba(225,225,225,${(1-t)*.5*a})`;x.fillRect(X+(12.5+Math.sin(t*5+k)*2)*f-sz/2,Y-(14+t*22)*f,sz,sz)}} // fumaça da chaminé
   x.restore()}
+
+let lastAct=Date.now();['pointermove','pointerdown','keydown','wheel'].forEach(ev=>addEventListener(ev,()=>lastAct=Date.now(),{passive:true}));
+const mapIdle=()=>Date.now()-lastAct>3000&&!aiShow&&!cele&&!mfx&&!cam&&!intro&&Math.abs(MC.tz-MC.z)<1e-3&&Math.abs(MC.tx-MC.cx)<.05&&Math.abs(MC.ty-MC.cy)<.05; // parado: o mapa anima mais devagar

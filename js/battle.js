@@ -9,7 +9,7 @@ const startBattle=(from,to,n,ps)=>{tutEv('battle'); // ps: lado do jogador (0 at
   const af=owner[from],was=owner[to],bio=BIO[BOF[to]],rnd=Math.random(),
     kind=fort[to]||to==was&&Math.random()<.35?'cerco':rnd<(bio.river?.5:.12)?'travessia':rnd>(bio.f>=18?.75:.9)?'emboscada':'campo';
   const kOf=tot=>Math.min(12,Math.max(1,Math.ceil(tot/3))),km=Math.max(kOf(n),kOf(troops[to])); /* o campo cresce com os exércitos: de 24x16 a 30x20 */
-  GW=km>9?30:km>6?27:24;GH=km>9?20:km>6?18:16;const T=genMap(bio,kind),a0=A0(),bg=bake(T,bio);
+  GW=km>9?30:km>6?27:24;GH=km>9?20:km>6?18:16;MAXR=14+(GW>=30?4:GW>=27?2:0);const T=genMap(bio,kind),a0=A0(),bg=bake(T,bio);
   B={from,to,n,ps,af,was,T,bg,bio,kind,wc:GW-a0-4,rl:[0,0],pw:[null,null],vil:new Map,qt:new Map,qn:{},wx:BOF[to]=='ama'&&Math.random()<.5?'rain':BOF[to]=='ser'&&Math.random()<.5?'dry':null,units:[],round:1,selU:null,pops:[],fxs:[],parts:[],busy:false,hov:null,t0:Date.now(),nextBolt:Date.now()+2500,
     cam:{x:0,y:0,z:1,tx:0,ty:0,tz:1}};
   const OFF=[0,1,-1,2,-2,3,-3,4,-4,5,-5,6]; // da linha do meio para fora
@@ -105,7 +105,7 @@ function hit(a,t,back){ // aplica o dano na hora; a cena de combate é só a enc
 const CLASH=2000,SLOTS=[[160,196],[84,222],[236,226],[122,268],[208,274]];
 function drawClash(now){ // dois quadros: corrida, golpe, queda e revide. Tempos: ataque .08–.32, revide .54–.78
   const c=B.clash,p=(now-c.start)/c.dur,w=320,h=300,by=178,boxes=[[c.a.side?c.t:c.a,70],[c.a.side?c.a:c.t,420]];
-  x.fillStyle='rgba(10,6,20,.62)';x.fillRect(0,VY-5,cv.width,VH+10);
+  x.fillStyle='rgba(10,6,20,.62)';x.fillRect(0,VY-5,cv.width,VH+10);x.save();x.translate(Math.round((cv.width-810)/2),Math.round((cv.height-610)/2)); // tela cheia: a cena de combate fica no centro
   boxes.forEach(([u,bx])=>{
     const isA=u==c.a,f=u.side?B.was:B.af,mine=u.side==B.ps,dir=u.side?-1:1,s0=isA?.08:.54,hitT=isA?.32:.78,myHit=isA?.78:.32,
       acts=isA||c.d1>0,ranged=c.shot||u.type=='art',h0=isA?c.ha0:c.ht0,dmg=isA?c.d1:c.d0,hp=p>myHit?h0-dmg:h0,
@@ -145,7 +145,7 @@ function drawClash(now){ // dois quadros: corrida, golpe, queda e revide. Tempos
     if(p>hitT&&p<hitT+.12){const q=(p-hitT)/.12;
       if(ranged){x.fillStyle=`rgba(255,200,80,${1-q})`;x.beginPath();x.arc(tx,y+20,10+q*50,0,7);x.fill()}
       else{x.strokeStyle=`rgba(255,255,255,${1-q})`;x.lineWidth=7;x.beginPath();x.arc(tx,y+20,70,-2.6+q*1.8,-1.2+q*1.8);x.stroke();x.beginPath();x.arc(tx,y+30,55,-2.2+q*1.8,-.8+q*1.8);x.stroke()}
-      for(let i=0;i<10;i++){const an=i*.628,r=20+q*70;x.fillStyle=i%2?'#ffd23f':'#fff';x.fillRect(tx+Math.cos(an)*r-3,y+20+Math.sin(an)*r-3,6,6)}}})}
+      for(let i=0;i<10;i++){const an=i*.628,r=20+q*70;x.fillStyle=i%2?'#ffd23f':'#fff';x.fillRect(tx+Math.cos(an)*r-3,y+20+Math.sin(an)*r-3,6,6)}}});x.restore()}
 async function aiSide(sd,ms){
   const b0=B,ldr=B.units.find(u=>u.side==sd&&u.ld),pk=S[sd?B.was:B.af][5],press=()=>B.round>=4||ldr.hp<ldr.max/2||(B.round>=2&&total(sd)<total(1-sd)),wait=()=>sleep(quick()?0:ms*SPD[CFG.speed]/bFast+clashLeft());
   if(!B.pw[sd]&&sd!=B.ps&&pk!='gold'&&press()){usePower(sd);await sleep(quick()?60:1750/bFast);if(B!==b0)return}
@@ -153,7 +153,7 @@ async function aiSide(sd,ms){
     B.pops.push({x:ldr.x,y:ldr.y,txt:'BRADO!',until:Date.now()+1100});sfx.win();await sleep(quick()?0:500/bFast);if(B!==b0)return}
   for(const u of alive(sd)){
     if(B!==b0||bOver())return;
-    const pri=p=>dist(u,p)*.9-(beats(u,p)?1.5:0)-(p.ld?2:0)-(est(u,p)>=p.hp?3:0)-(1-p.hp/p.max)*2,t=alive(1-sd).sort((p,q)=>pri(p)-pri(q))[0]; if(u.hp<=0||!t)continue; // prefere quem ela vence e o comandante
+    const late=B.round>=MAXR-5,pri=p=>dist(u,p)*(late&&p.ld?.4:.9)-(beats(u,p)?1.5:0)-(p.ld?(late?6:3):0)-(est(u,p)>=p.hp?3:0)-(1-p.hp/p.max)*2,t=alive(1-sd).sort((p,q)=>pri(p)-pri(q))[0]; if(u.hp<=0||!t)continue; // prefere quem ela vence e o comandante
     if(!quick()&&seen(u)&&camFrame(u,t)){await sleep(420/bFast);if(B!==b0)return} /* a câmera vai até a ação */
     const gl=sd==0&&B.goals&&!B.taken&&(B.obj=='saida'?u.ld:u.j%2==0||u.j<0)?B.goals.map(([gx,gy])=>({x:gx,y:gy})).sort((p,q)=>dist(u,p)-dist(u,q))[0]:null; // parte do ataque corre para o objetivo
     const br=sd==1&&B.kind=='travessia'&&!inR(u,t)?bridgeNear(u):null;
@@ -179,10 +179,11 @@ async function bEnd(auto){
       await aiSide(1-B.ps,auto?140:320)}
     if(B!==b0)return;
     if(B.ps==0)prCheck();roundEnd();
+    [0,1].forEach(s=>{if(rout(s)&&!B.routed){B.routed=1;banner(`O exército de ${S[s?B.was:B.af][4]} debandou!`,s==B.ps?'#d0452f':'#e2a83c')}});
     B.round++;B.units.forEach(u=>u.moved=u.done=false);B.skip=false;if(!auto&&!bOver())phase('Sua fase',`Rodada ${Math.min(B.round,MAXR)} de ${MAXR}`,true);if(B.round==4&&!bOver())reinforce()}while(auto&&!bOver());
   B.busy=false;bOver()?bFinish():ui()}
 function bFinish(){tutEv('bdone');closeCmd();const stg=$('stage');stg.classList.remove('fade');void stg.offsetWidth;stg.classList.add('fade');
-  const{from,to,n,was,af,ps,kind}=B,a=total(0),d=total(1),won=(B.taken||!ld(1))&&ld(0),e=ps?af:was,wonP=ps?!won:won; // won = atacante venceu
+  const{from,to,n,was,af,ps,kind}=B,a=total(0),d=total(1),won=(B.taken||!ld(1)||rout(1))&&ld(0)&&!rout(0),e=ps?af:was,wonP=ps?!won:won; // won = atacante venceu
   const loss=sd=>Math.max(0,B.units.filter(u=>u.side==sd).reduce((s,u)=>s+u.hp0,0)-total(sd)),lvUp=[],
     best=B.units.filter(u=>u.side==ps&&u.hits).sort((p,q)=>q.hits-p.hits)[0],vg=2*[...B.vil.values()].filter(v=>v==ps).length,
     R={perks:[],to,kind,e,win:wonP,l0:loss(ps),l1:loss(1-ps),vg,lv:lvUp,best:best&&`${nmOf(best)}${best.ld?' (comandante)':''}, ${best.hits} golpe${best.hits>1?'s':''}`};
@@ -276,12 +277,7 @@ function drawBattle(){
   {const bgr=x.createRadialGradient(cw/2,0,40,cw/2,0,cv.height);bgr.addColorStop(0,'#3d2b31');bgr.addColorStop(1,'#1a1215');x.fillStyle=bgr;x.fillRect(0,0,cw,cv.height)}x.textBaseline='top';
   const ent=Math.min(1,(now-B.t0)/550),es=1+.3*Math.pow(1-ent,2); // entrada: o campo cresce e clareia
   x.save();if(es>1){x.translate(cw/2,cv.height/2);x.scale(es,es);x.translate(-cw/2,-cv.height/2)}
-  B.hud=[];teamBar(0,VX,now);teamBar(1,cw-VX-262,now); // placar dos dois lados: líder e uma ficha por unidade
-  lac(x,cw/2-118,8,236,94,12);scriptT(x,`Rodada ${Math.min(B.round,MAXR)}`,cw/2-14,11,26,'center');
-  x.textAlign='left';x.font=FONT(8);x.fillStyle='#d9c8a8';x.fillText('/'+MAXR,cw/2+38,24); // placa central da rodada, no estilo da placa de turno
-  const hc=B.hov&&B.T[B.hov[1]]?.[B.hov[0]],hu=hc&&B.units.find(v=>v.hp>0&&v.x==B.hov[0]&&v.y==B.hov[1]&&seen(v));
-  x.textAlign='center';x.font=FONT(9);x.fillStyle='#f3e7cf';x.fillText(S[B.to][1],cw/2,48,220);
-  x.font=FONT(7.5);x.fillStyle='#d9c8a8';x.fillText(hc?TN[hc]+(hu?` · ${nmOf(hu)} ${hu.hp}`:''):KIND[B.kind][0]+' · '+B.bio.nome+(B.wx=='rain'?' · chuva':B.wx=='dry'?' · seca':''),cw/2,73,222);
+  B.hud=[];
   camStep(now);x.save();x.beginPath();x.rect(VX,VY,VW,VH);x.clip();x.fillStyle='#120c10';x.fillRect(VX,VY,VW,VH); /* janela da câmera */
   {const c=B.cam;let z=c.z,cx=c.x,cy=c.y;if(B.punch){const p=(now-B.punch.start)/320;if(p>=1)B.punch=null;else{const wx=(B.punch.x+.5)*CS,wy=(B.punch.y+.5)*CS,sx=(wx-cx)*z,sy=(wy-cy)*z;z*=1+.14*Math.sin(Math.PI*p);cx=wx-sx/z;cy=wy-sy/z}} // crítico: zoom rápido no alvo
     x.translate(VX,VY);x.scale(z,z);x.translate(-cx,-cy);if(B.shake>now&&CFG.shake&&!CFG.calm){const a=B.shakeA||8;x.translate((Math.random()-.5)*a,(Math.random()-.5)*a)}}
@@ -372,6 +368,12 @@ function drawBattle(){
   B.pops.forEach(p=>{const age=now-p.until+(p.txt.length>4?1100:800),[sx,sy0]=toScreen(p.x*CS+CS/2,p.y*CS+14),sy=sy0-age/22,dmg=p.txt[0]=='-',heal=p.txt[0]=='+',
     sc=age<140?1.6-.6*age/140:1;if(!inView(sx,sy0))return;x.save();x.translate(sx,sy);x.scale(sc,sc);x.font=FONT(p.big?17:dmg?14:heal?11:9);
     x.lineWidth=p.big?7:5;x.strokeStyle='#1a1220';x.strokeText(p.txt,0,0);x.fillStyle=p.big?'#ff6a3c':dmg?'#ffd23f':heal?'#8fe88a':'#fff3c0';x.fillText(p.txt,0,0);x.restore()});
+  const hx=VX||16;teamBar(0,hx,now);teamBar(1,cw-hx-262,now); // placar dos dois lados: líder e uma ficha por unidade
+  lac(x,cw/2-118,8,236,94,12);scriptT(x,`Rodada ${Math.min(B.round,MAXR)}`,cw/2-14,11,26,'center');
+  x.textAlign='left';x.font=FONT(8);x.fillStyle='#d9c8a8';x.fillText('/'+MAXR,cw/2+38,24); // placa central da rodada, no estilo da placa de turno
+  const hc=B.hov&&B.T[B.hov[1]]?.[B.hov[0]],hu=hc&&B.units.find(v=>v.hp>0&&v.x==B.hov[0]&&v.y==B.hov[1]&&seen(v));
+  x.textAlign='center';x.font=FONT(9);x.fillStyle='#f3e7cf';x.fillText(S[B.to][1],cw/2,48,220);
+  x.font=FONT(7.5);x.fillStyle='#d9c8a8';x.fillText(hc?TN[hc]+(hu?` · ${nmOf(hu)} ${hu.hp}`:''):KIND[B.kind][0]+' · '+B.bio.nome+(B.wx=='rain'?' · chuva':B.wx=='dry'?' · seca':''),cw/2,73,222); /* placar e placa da rodada por cima do campo */
   if(aimT)foreChip(s,aimT);
   if(!B.prep)speedBtns(now);if(miniOn)miniDraw();
   if(B.banner){const Tb=now-B.banner.start;if(Tb>1500)B.banner=null;else{ // balão de pergaminho no meio do campo, com a setinha de continuar
@@ -438,13 +440,14 @@ function foreChip(s,t){ /* prévia colada no alvo: quanto tira, vida antes → d
   if(d1){x.fillStyle='rgba(255,255,255,.15)';x.fillRect(bx+8,by+52,w-16,1);x.drawImage(sprite(s,fs,s.side==B.ps,0),bx+8,by+54,22,20);
     x.font=FONT(7.5);x.fillStyle='#d9c8a8';x.fillText(`Revide −${d1}: você ${s.hp} → `,bx+34,by+57,w-60);const rw=Math.min(w-60,x.measureText(`Revide −${d1}: você ${s.hp} → `).width);x.fillStyle=s.hp-d1<=0?'#ff6a3c':'#ffb3a6';x.fillText(''+(s.hp-d1),bx+34+rw,by+57)}}
 function speedBtns(){ /* velocidade do turno inimigo e "pular": valem durante a fase do inimigo */
-  const items=[['×1',{spd:1}],['×2',{spd:2}],['×4',{spd:4}],...(B.busy&&!B.auto?[['Pular ▸▸',{skip:1}]]:[])];let X=VX+VW-6;const Y=VY+6;x.font=FONT(7.5);x.textAlign='center';
+  const items=[['×1',{spd:1}],['×2',{spd:2}],['×4',{spd:4}],...(B.busy&&!B.auto?[['Pular ▸▸',{skip:1}]]:[])];x.font=FONT(7.5);const tw=items.reduce((a,[t])=>a+Math.ceil(x.measureText(t).width)+20,0);
+  let X=VX?VX+VW-6:16+tw+90;const Y=VX?VY+6:112;x.textAlign='center'; // tela cheia: embaixo do placar da esquerda
   for(let i=items.length-1;i>=0;i--){const[t,a]=items[i],w=Math.ceil(x.measureText(t).width)+16,on=a.spd==bFast;X-=w;
     x.fillStyle='rgba(20,12,14,.82)';rr(x,X,Y,w,24,6);x.fill();if(on||a.skip){x.strokeStyle=a.skip?'#ff8a1e':'#ffd23f';x.lineWidth=2;rr(x,X+1,Y+1,w-2,22,5);x.stroke()}
     x.fillStyle=on?'#ffd23f':'#f3e7cf';x.fillText(t,X+w/2,Y+3);B.hud.push({x:X,y:Y,w,h:24,...a});X-=4}
   x.textAlign='right';x.font=FONT(6.5);x.lineWidth=4;x.strokeStyle='#1a1220';x.strokeText('Turno inimigo',X-2,Y+6);x.fillStyle='#f3e7cf';x.fillText('Turno inimigo',X-2,Y+6)}
 let miniOn=true;
-function miniDraw(){const mm=B.bg.mini,k=Math.min(150/GW,96/GH),w=GW*k,h=GH*k,X=VX+VW-w-8,Y=VY+VH-h-8,c=B.cam; /* minimapa: terreno, unidades, objetivos e o quadro da câmera */
+function miniDraw(){const mm=B.bg.mini,k=Math.min(150/GW,96/GH),w=GW*k,h=GH*k,X=VX+VW-w-(VX?8:20),Y=VY+VH-h-(VX?8:20),c=B.cam; /* minimapa: terreno, unidades, objetivos e o quadro da câmera */
   x.fillStyle='rgba(20,12,14,.85)';x.fillRect(X-4,Y-4,w+8,h+8);x.imageSmoothingEnabled=false;x.globalAlpha=.9;x.drawImage(mm,X,Y,w,h);x.globalAlpha=1;
   (B.goals||[]).forEach(([gx,gy])=>{x.fillStyle='#ffd23f';x.fillRect(X+gx*k-1,Y+gy*k-1,k+2,k+2)});
   B.units.forEach(u=>{if(u.hp<=0||!seen(u))return;x.fillStyle='#1a1220';x.fillRect(X+u.x*k+k/2-3,Y+u.y*k+k/2-3,6,6);x.fillStyle=u.side==B.ps?'#6fb0ff':'#ff5a48';x.fillRect(X+u.x*k+k/2-2,Y+u.y*k+k/2-2,4,4)});
