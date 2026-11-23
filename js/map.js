@@ -41,22 +41,21 @@ function render(){ // terreno em cache: só redesenha quando algo do mapa muda
   for(let cy=0;cy<H;cy++)for(let cx=0;cx<W;cx++){
     const s=cell[cy*W+cx];if(s<0||revealAt[s]>el)continue;
     const h=hash(cx,cy),f=owner[s],X=cx*C,Y=cy*C,d=(a,b,w,hh)=>fg.fillRect(X+a*C/10,Y+b*C/10,w*C/10,hh*C/10);const edge=(dx,dy)=>{const t=cell[(cy+dy)*W+cx+dx];return t==null||t<0||owner[t]!=f};
-    let l=46+h%3*2+relief[cy*W+cx]*30+(edge(0,-1)||edge(-1,0)?7:edge(0,1)||edge(1,0)?-9:0);
+    let l=50+relief[cy*W+cx]*14+(edge(0,-1)||edge(-1,0)?4:edge(0,1)||edge(1,0)?-5:0); /* mapa limpo: relevo suave, sem ruído por casa */
     if(s==hov)l+=6;
     const foc=sel>=0&&me>=0&&!marching&&!aim; /* estado escolhido: os outros escurecem um pouco */
     if(foc&&s!=sel)l-=12;else if(s==sel)l+=5;
     if((blink||CFG.calm)&&tgt.includes(s))l+=9;
-    fg.fillStyle=s==hot?((Date.now()/90|0)%2?'#fff':'#b3312a'):`hsl(${hue(f)},${f==me?88:62}%,${l}%)`;d(0,0,10,10);
-    if(h%4==1){fg.fillStyle='rgba(255,255,255,.1)';d(1,1,4,2)}
+    fg.fillStyle=s==hot?((Date.now()/90|0)%2?'#fff':'#b3312a'):`hsl(${hue(f)},${f==me?72:40}%,${l}%)`;d(0,0,10,10);
     if(CFG.cb){const pt=f%6;fg.fillStyle='rgba(0,0,0,.32)'; // modo daltônico: textura por facção além da cor
       if(pt==1&&(cx+cy)%3==0)d(0,4,10,2);else if(pt==2&&cx%2==0&&cy%2==0)d(3,3,4,4);else if(pt==3&&cx%2==0)d(4,0,2,10);
       else if(pt==4&&(cx-cy+99)%3==0){d(0,0,3,3);d(3,3,3,3);d(6,6,3,3)}else if(pt==5&&(cx+cy)%2==0){d(4,1,2,8);d(1,4,8,2)}}
-    const bio=BOF[s]; // relevo por bioma, em tinta translúcida para não esconder a cor do dono
-    if(bio=='ama'&&h%3==0){fg.fillStyle='rgba(0,45,10,.38)';d(2,2,7,6);fg.fillStyle='rgba(190,255,160,.16)';d(3,2,3,2)}
-    else if(bio=='ser'&&h%5==0){fg.fillStyle='rgba(255,225,150,.32)';d(2,5,6,2);d(4,3,2,2)}
-    else if(bio=='cer'&&h%6==0){fg.fillStyle=h%12?'rgba(40,60,0,.3)':'rgba(255,220,60,.6)';d(3,3,4,4)}
-    else if(bio=='sud'&&h%4==0){fg.fillStyle='rgba(0,0,0,.3)';d(1,6,8,3);d(3,3,4,3);fg.fillStyle='rgba(255,255,255,.3)';d(3,3,2,2)}
-    else if(bio=='sul'&&h%5==0){fg.fillStyle='rgba(0,50,20,.35)';d(2,2,6,2);d(4,4,2,5)}}
+    const bio=h%2?'':BOF[s]; // relevo por bioma, em tinta translúcida para não esconder a cor do dono
+    if(bio=='ama'&&h%3==0){fg.fillStyle='rgba(0,45,10,0.17)';d(2,2,7,6);fg.fillStyle='rgba(190,255,160,0.07)';d(3,2,3,2)}
+    else if(bio=='ser'&&h%5==0){fg.fillStyle='rgba(255,225,150,0.14)';d(2,5,6,2);d(4,3,2,2)}
+    else if(bio=='cer'&&h%6==0){fg.fillStyle=h%12?'rgba(40,60,0,0.14)':'rgba(255,220,60,0.27)';d(3,3,4,4)}
+    else if(bio=='sud'&&h%4==0){fg.fillStyle='rgba(0,0,0,0.14)';d(1,6,8,3);d(3,3,4,3);fg.fillStyle='rgba(255,255,255,0.14)';d(3,3,2,2)}
+    else if(bio=='sul'&&h%5==0){fg.fillStyle='rgba(0,50,20,0.16)';d(2,2,6,2);d(4,4,2,5)}}
   RIOS.forEach(r=>{for(let k=0;k<r.length-1;k++)for(let t=0;t<1;t+=.03){ // rios em quadradinhos, só sobre o Brasil
     const lon=r[k][0]+(r[k+1][0]-r[k][0])*t,lat=r[k][1]+(r[k+1][1]-r[k][1])*t,sx=(lon-X0)/D*C,sy=(Y0-lat)/D*C;
     if(cell[(sy/C|0)*W+(sx/C|0)]<0)continue;
@@ -68,11 +67,11 @@ function render(){ // terreno em cache: só redesenha quando algo do mapa muda
       if((s>=0&&revealAt[s]>el)||(t>=0&&revealAt[t]>el))return;
       const coast=s==-1||t==-1,ext=!coast&&(s<0||t<0),war=!coast&&!ext&&owner[s]!=owner[t]; // ext: divisa com terra vizinha
       const hl=sel>=0&&(s==sel)!=(t==sel); // contorno dourado do estado escolhido, pulsando devagar
-      fg.fillStyle=hl?(blink&&!CFG.calm?'#fff3b0':'#ffd23f'):coast?'#f1e3a8':war||ext?'#120a1c':'rgba(0,0,0,.35)';
-      const w=(hl?7:coast||war||ext?4:2)*Math.max(.75,C/10);
+      fg.fillStyle=hl?(blink&&!CFG.calm?'#fff3b0':'#ffd23f'):coast?'#f1e3a8':war||ext?'rgba(18,10,28,.7)':'rgba(0,0,0,.14)';
+      const w=(hl?7:coast?3:war||ext?3:1.5)*Math.max(.75,C/10);
       dx?fg.fillRect((cx+1)*C-w/2,cy*C,w,C):fg.fillRect(cx*C,(cy+1)*C-w/2,C,w);
-      if(war&&!hl)[[s,-1],[t,1]].forEach(([q,sd])=>{fg.fillStyle=`hsla(${hue(owner[q])},90%,${owner[q]==me?72:64}%,.85)`;const o=sd<0?-w/2-1.5:w/2; /* filete na cor de cada dono dos dois lados da divisa */
-        dx?fg.fillRect((cx+1)*C+o,cy*C,1.5,C):fg.fillRect(cx*C,(cy+1)*C+o,C,1.5)})})}
+      if(war&&!hl)[[s,-1],[t,1]].forEach(([q,sd])=>{fg.fillStyle=`hsla(${hue(owner[q])},80%,${owner[q]==me?72:66}%,.5)`;const o=sd<0?-w/2-1:w/2; /* filete na cor de cada dono dos dois lados da divisa */
+        dx?fg.fillRect((cx+1)*C+o,cy*C,1,C):fg.fillRect(cx*C,(cy+1)*C+o,C,1)})})}
   sg.clearRect(0,0,scene.width,scene.height);
   // cada linha da tela puxa uma linha do mapa plano; as silhuetas esticadas para baixo formam o barranco
   [[world,1],[sil[0],1,.4,18,36],[sil[0],18],[sil[1],11],[flat,1]].forEach(([src,th,al=1,ox=0,oy=0])=>{sg.globalAlpha=al; // primeiro, a sombra do continente no mar
@@ -90,14 +89,14 @@ function draw(){
   const camOn=cam;
   if(camOn){const p=Math.min(1,(now-cam.start)/cam.dur),e=1-Math.pow(1-Math.min(1,p*1.8),3),[tx,ty]=proj(...px(cam.to));
     x.save();x.translate(cw/2,ch/2);x.scale(1+.8*e,1+.8*e);x.translate(-(cw/2+(tx-cw/2)*e),-(ch/2+(ty-ch/2)*e))}
-  for(let k=0;k<(CFG.q?170:50)*Math.max(1,cw*ch/494100);k++){const h=Math.imul(k+1,2654435761)>>>0,y=8+h%(ch-14),sc=.4+y/650,wx=((h>>>9)%cv.width+tick*(1+k%3))%cv.width;
-    x.fillStyle=k%4?'#5fb0e6':'#c8ecfa';x.fillRect(wx,y,7*sc,2);x.fillRect(wx+7*sc,y-2,5*sc,2)}
+  for(let k=0;k<(CFG.q?70:30)*Math.max(1,cw*ch/494100);k++){const h=Math.imul(k+1,2654435761)>>>0,y=8+h%(ch-14),sc=.4+y/650,wx=((h>>>9)%cv.width+tick*(1+k%3))%cv.width;
+    x.fillStyle=k%4?'rgba(95,176,230,.55)':'rgba(200,236,250,.6)';x.fillRect(wx,y,7*sc,2);x.fillRect(wx+7*sc,y-2,5*sc,2)}
   {const a=toScr((tick*1.2+590)%900-50,250),b=toScr(860-(tick*.8+300)%900,505);ship(a[0],a[1],false);ship(b[0],b[1],true)}
   {const[ox,oy]=toScr(0,0);x.imageSmoothingEnabled=false;x.drawImage(scene,ox,oy,810*MC.z,610*MC.z)} // a cena com a câmera
   regionNames(zr);props(now,zr);
   if(TH.NBL){x.font=FONT(9);x.textAlign='center';TH.NBL.forEach(([n,lon,lat])=>{const[lx,ly]=proj((lon-X0)/D*C,(Y0-lat)/D*C),sea=n.startsWith('OCEANO'); // nomes dos vizinhos e do mar
     x.fillStyle='rgba(0,0,0,.4)';x.fillText(n,lx+1,ly+1);x.fillStyle=sea?'rgba(190,225,255,.6)':'rgba(240,232,205,.7)';x.fillText(n,lx,ly)});x.textAlign='left'}
-  if(CFG.q)for(let k=0;k<5;k++){const cx_=(tick*(.6+k*.25)+k*330)%(cw+150)-120,cy_=30+k*46*ch/610;x.fillStyle='rgba(10,20,40,.13)';x.fillRect(cx_+40,cy_+150,66,12);x.fillRect(cx_+52,cy_+141,36,9)} // sombra das nuvens
+
   if(CFG.q)RIOS.forEach((r,ri)=>{const n=r.length-1,t=(now/42000+ri*.37)%1,u=t<.5?t*2:2-t*2,fi=u*n,k=Math.min(n-1,fi|0),q=fi-k, // canoas subindo e descendo os rios
     lon=r[k][0]+(r[k+1][0]-r[k][0])*q,lat=r[k][1]+(r[k+1][1]-r[k][1])*q,sx=(lon-X0)/D*C,sy=(Y0-lat)/D*C;if(!(cell[(sy/C|0)*W+(sx/C|0)]>=0))return;
     const[bx,by]=proj(sx,sy);x.fillStyle='#5a3a1c';x.fillRect(bx-6,by-1,12,3);x.fillStyle='#3a2413';x.fillRect(bx-5,by+2,10,1);x.fillStyle='#22140c';x.fillRect(bx-1,by-6,2,5);x.fillStyle='#e8c99a';x.fillRect(bx-1,by-8,2,2)});
@@ -129,18 +128,17 @@ function draw(){
     if(lastOwner[i]!==f){if(lastOwner[i]!=null)flagT[i]=now;lastOwner[i]=f} // bandeira desce e sobe na cor nova
     const fp=flagT[i]?(now-flagT[i])/900:1,fb=by+(fp<1?(fp<.45?fp/.45:1-(fp-.45)/.55)*20:0);
     town(i,fx_,fy,proj(...px(i))[2],MC.z/MC.fz);
-    const ar=area[i]*C*C/100,nA=Math.min(ar<30?1:ar<80?2:4,1+(troops[i]/7|0)); // exército: cresce com as tropas
+    const ar=area[i]*C*C/100,zr_=MC.z/MC.fz,nA=zr_<1.3?1:Math.min(ar<30?1:ar<80?2:4,1+(troops[i]/7|0)); // exército: de longe um soldado só; perto, cresce com as tropas
     if(mv=='trp')for(let k=nA-1;k>=0;k--){const sp=sprite({type:['inf','cav','ati','inf'][k],sk:'LTBDT'[(f+k)%5]},f,f==me,CFG.q?Math.floor(now/450+i*.3+k*.5)%2:0),
       ax=bx-14-k*11,ay=Math.round(fy)+(k%2)*3;x.fillStyle='rgba(0,0,0,.3)';x.fillRect(ax-9,ay-1,18,3);x.drawImage(sp,ax-13,ay-24,26,24)}
     if(burn[i]>=turn-1){for(let k=0;k<3;k++){const fl=CFG.calm?k:Math.floor(now/90+k*3)%3;x.fillStyle=['#ff5a1e','#ffb030','#ffe27a'][(k+fl)%3];x.fillRect(bx+6+k*4,Math.round(fy)-8-fl*2-k%2*2,4,7+fl*2)} // fogo e fumaça
       for(let k=0;k<4;k++){const q=(now/1700+k/4)%1,s=5+q*11;x.fillStyle=`rgba(80,80,80,${.5*(1-q)})`;x.fillRect(bx+10-s/2+Math.sin(q*6+k)*5,Math.round(fy)-12-q*50,s,s)}}
-    x.fillStyle='rgba(0,0,0,.4)';x.fillRect(bx-3,by0+27,7,2);
-    x.fillStyle='#22140c';x.fillRect(bx-8,by0+18,16,11);x.fillStyle='#f6ecc4';x.fillRect(bx-6,by0+22,12,6);x.fillStyle='#b3312a';x.fillRect(bx-7,by0+19,14,4);x.fillStyle='#3a2413';x.fillRect(bx-1,by0+25,3,3); // capital
+    if(zr_<1.15){x.fillStyle='#22140c';x.beginPath();x.arc(bx,by0+26,3.5,0,7);x.fill();x.fillStyle='#f6ecc4';x.beginPath();x.arc(bx,by0+26,2,0,7);x.fill()} // capital: um ponto; de perto a vila em 3D toma o lugar
     if(port[i]){const ax=bx+11,ay=by0+16;x.fillStyle='#22140c';x.fillRect(ax-5,ay-2,11,13);x.fillStyle='#9fd0ff';x.fillRect(ax,ay,1,9);x.fillRect(ax-2,ay+1,5,1);x.fillRect(ax-3,ay+7,7,1);x.fillRect(ax-3,ay+6,1,1);x.fillRect(ax+3,ay+6,1,1)} // âncora
-    x.fillStyle='#120a1c';x.fillRect(bx-1,by,2,by0+28-by);if(by<by0){x.fillStyle='rgba(255,240,200,.35)';x.fillRect(bx,by,1,by0-by)}
-    const LH=Math.round(TS*1.45)+6,mineT=owner[i]==me;x.fillStyle='#2a1810';x.fillRect(rx-1,fb-1,w+2,LH+2);x.fillStyle=mineT?'#4d3238':'#efe3c6';x.fillRect(rx,fb,w,LH);x.fillStyle=mineT?'rgba(255,230,180,.18)':'rgba(255,255,255,.6)';x.fillRect(rx,fb,w,1); // plaquinha: pergaminho, ou laca se for sua
-    x.fillStyle=`hsl(${hue(owner[i])},70%,${CFG.cb?40:55}%)`;x.fillRect(left?rx+w-11:rx,fb,11,LH);emblem(x,(left?rx+w-11:rx)+2,fb+(LH-7)/2|0,owner[i],'#fff'); // faixa com emblema da facção
-    if(i==sel||i==hov){x.strokeStyle='#f08a3a';x.lineWidth=2;x.strokeRect(rx-1,fb-1,w+2,LH+2)}
+    if(by<by0-4){x.fillStyle='rgba(18,10,28,.55)';x.fillRect(bx,by+10,1,by0+24-by-10)} // fio só quando a plaquinha foi afastada para não sobrepor
+    const LH=Math.round(TS*1.45)+6,mineT=owner[i]==me;x.fillStyle='rgba(30,18,12,.85)';x.beginPath();x.roundRect(rx-1,fb-1,w+2,LH+2,6);x.fill();x.fillStyle=mineT?'#4d3238':'#efe3c6';x.beginPath();x.roundRect(rx,fb,w,LH,5);x.fill(); // plaquinha: pergaminho, ou laca se for sua
+    x.fillStyle=`hsl(${hue(owner[i])},70%,${CFG.cb?40:55}%)`;x.beginPath();x.roundRect(left?rx+w-11:rx,fb,11,LH,left?[0,5,5,0]:[5,0,0,5]);x.fill();emblem(x,(left?rx+w-11:rx)+2,fb+(LH-7)/2|0,owner[i],'#fff'); // faixa com emblema da facção
+    if(i==sel||i==hov){x.strokeStyle='#f08a3a';x.lineWidth=2;x.beginPath();x.roundRect(rx-1,fb-1,w+2,LH+2,6);x.stroke()}
     x.font=FONT(TS);x.fillStyle=mineT?(moved.has(i)?'#a89880':'#f3e7cf'):'#3a2a1f';x.fillText(t,rx+(left?4:14),fb+2);
     if(mv=='eco'&&r){const im=RIM[r]||(RIM[r]=Object.assign(new Image(),{src:pxIcon('r_'+r)}));if(im.complete){x.imageSmoothingEnabled=false;x.drawImage(im,left?rx-17:rx+w+2,fb,LH,LH)}} // modo economia: ícone do recurso
     if(f==me&&danger(i)){const ax=rx-12,ay=fb+1,on=CFG.calm||Math.floor(now/400)%2;x.fillStyle='#22140c';x.beginPath();x.moveTo(ax+6,ay-2);x.lineTo(ax+14,ay+14);x.lineTo(ax-2,ay+14);x.fill(); // em perigo
@@ -162,8 +160,8 @@ function draw(){
     if(!CFG.calm)for(let k=0;k<cele.n;k++){const h=Math.imul(k+7,2654435761)>>>0,t=T/1000,cx_=h%cw+Math.sin(t*3+k)*14,cy_=-30-(h>>>10)%160+t*(150+(h>>>20)%170);
       if(cy_>-10&&cy_<ch+10){x.fillStyle=['#ffd23f','#ff5a48','#52c8d6','#74d05c','#fff'][k%5];x.fillRect(cx_,cy_,(k%3)+3,(k%2)+3)}}}}
   if(camOn){route(camOn.from,camOn.to,'#ff4a3a',Math.min(1,(now-camOn.start)/camOn.dur*1.5));x.restore()}
-  for(let k=0;k<5;k++){const cx_=(tick*(.6+k*.25)+k*330)%(cw+150)-120,cy_=30+k*46*ch/610; // nuvens
-    x.fillStyle=`rgba(255,255,255,${.5-dayTint[3]*.5})`;x.fillRect(cx_,cy_,66,12);x.fillRect(cx_+12,cy_-9,36,9);x.fillRect(cx_+24,cy_+12,30,6)}
+  for(let k=0;k<3;k++){const cx_=(tick*(.6+k*.25)+k*330)%(cw+150)-120,cy_=30+k*70*ch/610; // nuvens, poucas e leves
+    x.fillStyle=`rgba(255,255,255,${.3-dayTint[3]*.3})`;x.fillRect(cx_,cy_,66,12);x.fillRect(cx_+12,cy_-9,36,9);x.fillRect(cx_+24,cy_+12,30,6)}
   if(CFG.q){const t=(now/17000)%1,bx=-80+t*(cw+170),by=110+Math.sin(t*9)*22,wh=TKEY=='cabanagem',fl=Math.floor(now/170)%2; // revoada (garças brancas no Marajó)
     x.fillStyle=wh?'#fff':'#22140c';[[0,0],[-12,-7],[-12,7],[-24,-14],[-24,14],[-36,-21],[-36,21]].forEach(([ox,oy])=>{const X=bx+ox,Y=by+oy,s=wh?2:1;
       if(fl){x.fillRect(X-4*s,Y,3*s,s);x.fillRect(X+s,Y,3*s,s);x.fillRect(X-s,Y+s,2*s,s)}else{x.fillRect(X-4*s,Y-2*s,s,2*s);x.fillRect(X+3*s,Y-2*s,s,2*s);x.fillRect(X-3*s,Y,6*s,s)}})}
@@ -205,10 +203,10 @@ function mapSee(i,force,z){const p=proj0(...px(i)),[L,T,R,Bm]=mapPad();if(z)MC.t
 
 // ---------- nomes das regiões: grandes, de longe; somem ao aproximar ----------
 let RGN=null;
-function regionNames(zr){const a=Math.max(0,Math.min(1,(1.45-zr)/.35));if(!a||!TH.REG)return;
+function regionNames(zr){const a=Math.max(0,Math.min(1,(1.45-zr)/.35));if(!a||!TH.REG||(CFG.mv||'trp')!='ter')return; // só na vista Territórios: nas outras, competiria com as plaquinhas
   if(!RGN)RGN=REG.map(([n,st])=>{let sx=0,sy=0,k=0;for(let q=0;q<cell.length;q+=2)if(st.includes(cell[q])){sx+=q%W;sy+=q/W|0;k++}return k?[n,(sx/k+.5)*C,(sy/k+.5)*C]:null}).filter(Boolean);
   x.save();x.textAlign='center';x.textBaseline='middle';try{x.letterSpacing='6px'}catch{}
-  RGN.forEach(([n,fx_,fy])=>{const[X,Y]=proj(fx_,fy);x.font=`italic 800 ${Math.round(22*MC.z)}px "Alegreya",Georgia,serif`;x.globalAlpha=.42*a;
+  RGN.forEach(([n,fx_,fy])=>{const[X,Y]=proj(fx_,fy);x.font=`italic 800 ${Math.round(22*MC.z)}px "Alegreya",Georgia,serif`;x.globalAlpha=.4*a;
     x.lineWidth=5;x.strokeStyle='rgba(30,16,8,.8)';x.strokeText(n.toUpperCase(),X,Y+24*MC.z);x.fillStyle='#fff3d6';x.fillText(n.toUpperCase(),X,Y+24*MC.z)});
   try{x.letterSpacing='0px'}catch{}x.restore()}
 
