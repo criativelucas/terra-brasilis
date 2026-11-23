@@ -100,7 +100,7 @@ const TUT=[['menu',`Bem-vindo! Clique no seu ${TW1} no mapa (plaquinha escura) p
   ['march',`Abra o menu de novo e escolha Marchar / Atacar. As rotas mostram a chance de vitória contra cada vizinho.`,()=>cenOf(me)],
   ['battle',`Clique num ${TW1} vizinho inimigo para atacar.`,null],
   ['bmove','Na batalha, clique numa unidade sua e depois numa casa hachurada para andar.','.ulist button:not(.done)'],
-  ['bcmd','Depois de andar, o menu ao lado da unidade pede a ação: Atacar, Esperar ou o poder do líder.','#cmd button:not(:disabled)'],
+  ['bcmd','Depois de andar, o menu ao lado da unidade pede a ação: Atacar, Esperar ou o poder do líder.','#cmd button:not(.off)'],
   ['bdone','Derrube o comandante inimigo (retrato dourado). Quando todas as suas unidades agirem, a rodada passa sozinha.','[data-a=bend]'],
   ['end','Clique em Fim do turno: a IA joga e você recebe ouro.','[data-a=end]'],
   ['hq','Abra o Quartel-General para doutrinas, generais e diplomacia. A Ficha histórica de cada líder conta quem ele foi. Bom jogo!','[data-a=hq]']];

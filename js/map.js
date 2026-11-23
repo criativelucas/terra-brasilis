@@ -28,13 +28,13 @@ function route(a,b,col,prog=1){ // rota de marcha: tracejado andando, contorno e
   [['#120a1c',9],[col,5]].forEach(([c,w],k)=>{x.strokeStyle=x.fillStyle=c;x.lineWidth=w;x.setLineDash(k?[12,8]:[]);x.lineDashOffset=-Date.now()/40;
     x.beginPath();x.moveTo(ax,ay);x.lineTo(bx,by);x.stroke();x.setLineDash([]);const s=k?11:15;
     x.beginPath();x.moveTo(bx+Math.cos(an)*s,by+Math.sin(an)*s);x.lineTo(bx+Math.cos(an+2.4)*s,by+Math.sin(an+2.4)*s);x.lineTo(bx+Math.cos(an-2.4)*s,by+Math.sin(an-2.4)*s);x.fill()})}
-let mfx=null;
+let mfx=null;const RIM={}; // ícones de recurso para o modo economia
 onMarch=(a,b)=>{const m=mfx={a,b,start:Date.now()};sfx.move();setTimeout(()=>{if(mfx===m)mfx=null},700)};
 function zoomTo(from,to,then){const c=cam={from,to,start:Date.now(),dur:1100};sfx.move();
   setTimeout(()=>{if(cam===c){cam=null;then()}},c.dur)} // o fim vem por timer: rAF pausa em aba de fundo e travaria o jogo
 function render(){ // terreno em cache: só redesenha quando algo do mapa muda
   const hot0=fx&&Date.now()<fx.until?fx.s:-1,el=intro?Date.now()-intro:1e9,stepI=el<1500?el/60|0:-1,
-    key=[owner.join(),hov,sel,blink,marching,aim,CFG.cb,CFG.calm,hot0>=0?(Date.now()/90|0)%2:'',stepI].join('|');
+    key=[owner.join(),hov,sel,blink,marching,aim,CFG.cb,CFG.calm,me,hot0>=0?(Date.now()/90|0)%2:'',stepI].join('|');
   if(key==rKey)return;rKey=key;if(stepI<0)intro=null;
   fg.clearRect(0,0,SW,SH);
   const tgt=marching?adj[sel]:aim?S.map((_,j)=>j).filter(j=>cardOk(aim,j)):[],hot=fx&&Date.now()<fx.until?fx.s:-1;
@@ -43,7 +43,9 @@ function render(){ // terreno em cache: só redesenha quando algo do mapa muda
     const h=hash(cx,cy),f=owner[s],X=cx*C,Y=cy*C,d=(a,b,w,hh)=>fg.fillRect(X+a*C/10,Y+b*C/10,w*C/10,hh*C/10);const edge=(dx,dy)=>{const t=cell[(cy+dy)*W+cx+dx];return t==null||t<0||owner[t]!=f};
     let l=46+h%3*2+relief[cy*W+cx]*30+(edge(0,-1)||edge(-1,0)?7:edge(0,1)||edge(1,0)?-9:0);
     if(s==hov)l+=6;
-    if((blink||CFG.calm)&&(s==sel||tgt.includes(s)))l+=s==sel?16:9;
+    const foc=sel>=0&&me>=0&&!marching&&!aim; /* estado escolhido: os outros escurecem um pouco */
+    if(foc&&s!=sel)l-=12;else if(s==sel)l+=5;
+    if((blink||CFG.calm)&&tgt.includes(s))l+=9;
     fg.fillStyle=s==hot?((Date.now()/90|0)%2?'#fff':'#b3312a'):`hsl(${hue(f)},${f==me?88:62}%,${l}%)`;d(0,0,10,10);
     if(h%4==1){fg.fillStyle='rgba(255,255,255,.1)';d(1,1,4,2)}
     if(CFG.cb){const pt=f%6;fg.fillStyle='rgba(0,0,0,.32)'; // modo daltônico: textura por facção além da cor
@@ -65,8 +67,9 @@ function render(){ // terreno em cache: só redesenha quando algo do mapa muda
       const t=cx+dx<W&&cy+dy<H?cell[(cy+dy)*W+cx+dx]:-1;if(t==s||(s<0&&t<0))return;
       if((s>=0&&revealAt[s]>el)||(t>=0&&revealAt[t]>el))return;
       const coast=s==-1||t==-1,ext=!coast&&(s<0||t<0),war=!coast&&!ext&&owner[s]!=owner[t]; // ext: divisa com terra vizinha
-      fg.fillStyle=coast?'#f1e3a8':war||ext?'#120a1c':'rgba(0,0,0,.35)';
-      const w=(coast||war||ext?4:2)*Math.max(.75,C/10);
+      const hl=sel>=0&&(s==sel)!=(t==sel); // contorno dourado do estado escolhido, pulsando devagar
+      fg.fillStyle=hl?(blink&&!CFG.calm?'#fff3b0':'#ffd23f'):coast?'#f1e3a8':war||ext?'#120a1c':'rgba(0,0,0,.35)';
+      const w=(hl?10:coast||war||ext?4:2)*Math.max(.75,C/10);
       dx?fg.fillRect((cx+1)*C-w/2,cy*C,w,C):fg.fillRect(cx*C,(cy+1)*C-w/2,C,w)})}
   sg.clearRect(0,0,scene.width,scene.height);
   // cada linha da tela puxa uma linha do mapa plano; as silhuetas esticadas para baixo formam o barranco
@@ -118,12 +121,12 @@ function draw(){
   const LB=labelOffsets();
   S.map((_,i)=>i).sort((a,b)=>S[b][3]-S[a][3]).forEach(i=>{
     if(intro&&revealAt[i]>now-intro)return;
-    const TS=CFG.big?12:10,[fx_,fy]=proj(...px(i)),t=S[i][0]+troops[i],w=(x.font=FONT(TS),Math.ceil(x.measureText(t).width)+20),bx=Math.round(fx_),by0=Math.round(fy)-30-(TS-10),by=by0+LB[i],
+    const mv=CFG.mv||'trp',r=resOf(i),TS=CFG.big?12:10,[fx_,fy]=proj(...px(i)),t=S[i][0]+(mv=='trp'?troops[i]:mv=='eco'?' +'+inc(i):''),w=(x.font=FONT(TS),Math.ceil(x.measureText(t).width)+20),bx=Math.round(fx_),by0=Math.round(fy)-30-(TS-10),by=by0+LB[i],
       left=LEFT.has(S[i][0]),rx=left?bx-w-1:bx+1,f=owner[i];
     if(lastOwner[i]!==f){if(lastOwner[i]!=null)flagT[i]=now;lastOwner[i]=f} // bandeira desce e sobe na cor nova
     const fp=flagT[i]?(now-flagT[i])/900:1,fb=by+(fp<1?(fp<.45?fp/.45:1-(fp-.45)/.55)*20:0);
     const ar=area[i]*C*C/100,nA=Math.min(ar<30?1:ar<80?2:4,1+(troops[i]/7|0)); // exército: cresce com as tropas
-    for(let k=nA-1;k>=0;k--){const sp=sprite({type:['inf','cav','ati','inf'][k],sk:'LTBDT'[(f+k)%5]},f,f==me,CFG.q?Math.floor(now/450+i*.3+k*.5)%2:0),
+    if(mv=='trp')for(let k=nA-1;k>=0;k--){const sp=sprite({type:['inf','cav','ati','inf'][k],sk:'LTBDT'[(f+k)%5]},f,f==me,CFG.q?Math.floor(now/450+i*.3+k*.5)%2:0),
       ax=bx-14-k*11,ay=Math.round(fy)+(k%2)*3;x.fillStyle='rgba(0,0,0,.3)';x.fillRect(ax-9,ay-1,18,3);x.drawImage(sp,ax-13,ay-24,26,24)}
     if(burn[i]>=turn-1){for(let k=0;k<3;k++){const fl=CFG.calm?k:Math.floor(now/90+k*3)%3;x.fillStyle=['#ff5a1e','#ffb030','#ffe27a'][(k+fl)%3];x.fillRect(bx+6+k*4,Math.round(fy)-8-fl*2-k%2*2,4,7+fl*2)} // fogo e fumaça
       for(let k=0;k<4;k++){const q=(now/1700+k/4)%1,s=5+q*11;x.fillStyle=`rgba(80,80,80,${.5*(1-q)})`;x.fillRect(bx+10-s/2+Math.sin(q*6+k)*5,Math.round(fy)-12-q*50,s,s)}}
@@ -135,6 +138,7 @@ function draw(){
     x.fillStyle=`hsl(${hue(owner[i])},70%,${CFG.cb?40:55}%)`;x.fillRect(left?rx+w-11:rx,fb,11,LH);emblem(x,(left?rx+w-11:rx)+2,fb+(LH-7)/2|0,owner[i],'#fff'); // faixa com emblema da facção
     if(i==sel||i==hov){x.strokeStyle='#f08a3a';x.lineWidth=2;x.strokeRect(rx-1,fb-1,w+2,LH+2)}
     x.font=FONT(TS);x.fillStyle=mineT?(moved.has(i)?'#a89880':'#f3e7cf'):'#3a2a1f';x.fillText(t,rx+(left?4:14),fb+2);
+    if(mv=='eco'&&r){const im=RIM[r]||(RIM[r]=Object.assign(new Image(),{src:pxIcon('r_'+r)}));if(im.complete){x.imageSmoothingEnabled=false;x.drawImage(im,left?rx-17:rx+w+2,fb,LH,LH)}} // modo economia: ícone do recurso
     if(f==me&&danger(i)){const ax=rx-12,ay=fb+1,on=CFG.calm||Math.floor(now/400)%2;x.fillStyle='#22140c';x.beginPath();x.moveTo(ax+6,ay-2);x.lineTo(ax+14,ay+14);x.lineTo(ax-2,ay+14);x.fill(); // em perigo
       x.fillStyle=on?'#ff3b30':'#b3312a';x.beginPath();x.moveTo(ax+6,ay+1);x.lineTo(ax+12,ay+12);x.lineTo(ax,ay+12);x.fill();x.fillStyle='#fff';x.fillRect(ax+5,ay+4,2,5);x.fillRect(ax+5,ay+10,2,2)}
     for(let k=0;k<fort[i];k++){x.fillStyle='#22140c';x.fillRect(rx+1+k*9,fb-9,8,8);x.fillStyle='#ffd23f';x.fillRect(rx+2+k*9,fb-6,6,5);x.fillRect(rx+2+k*9,fb-8,2,2);x.fillRect(rx+6+k*9,fb-8,2,2)}
