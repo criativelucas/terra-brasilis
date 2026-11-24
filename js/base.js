@@ -6,13 +6,14 @@ const FONT=n=>`700 ${Math.round(n*1.6)}px ${n<9?'"Alegreya Sans",system-ui,sans-
 // caixas no canvas no tema de crônica: pergaminho, laca escura e letreiro caligráfico
 const rr=(g,X,Y,w,h,r)=>{g.beginPath();g.roundRect(X,Y,w,h,Math.max(0,r))};
 function parch(g,X,Y,w,h,r=12){g.save();g.shadowColor='rgba(0,0,0,.45)';g.shadowBlur=10;g.shadowOffsetY=4;g.fillStyle='#3b2618';rr(g,X,Y,w,h,r);g.fill();g.restore();
-  const gr=g.createLinearGradient(0,Y,0,Y+h);gr.addColorStop(0,'#f6ecd4');gr.addColorStop(1,'#dcc9a2');g.fillStyle=gr;rr(g,X+2,Y+2,w-4,h-4,r-2);g.fill();
-  g.lineWidth=1;g.strokeStyle='#6b4a2e';rr(g,X+2.5,Y+2.5,w-5,h-5,r-2);g.stroke();g.strokeStyle='rgba(168,135,90,.6)';g.lineWidth=1.5;rr(g,X+6,Y+6,w-12,h-12,r-5);g.stroke()}
+  r=Math.min(r,4);g.fillStyle='#e9e2cc';rr(g,X+2,Y+2,w-4,h-4,r);g.fill(); /* papel vergé com moldura de dois filetes */
+  g.strokeStyle='rgba(36,28,19,.06)';g.lineWidth=1;for(let yy=Y+5;yy<Y+h-3;yy+=3){g.beginPath();g.moveTo(X+3,yy+.5);g.lineTo(X+w-3,yy+.5);g.stroke()}
+  g.strokeStyle='#241c13';rr(g,X+2.5,Y+2.5,w-5,h-5,r);g.stroke();g.strokeStyle='#cda23a';rr(g,X+6.5,Y+6.5,w-13,h-13,Math.max(0,r-2));g.stroke()}
 function lac(g,X,Y,w,h,r=10){g.save();g.shadowColor='rgba(0,0,0,.5)';g.shadowBlur=8;g.shadowOffsetY=3;g.fillStyle='#140c0e';rr(g,X,Y,w,h,r);g.fill();g.restore();
-  const gr=g.createLinearGradient(0,Y,0,Y+h);gr.addColorStop(0,'#5a3a41');gr.addColorStop(1,'#2a1a1f');g.fillStyle=gr;rr(g,X+1,Y+1,w-2,h-2,r-1);g.fill();
-  g.strokeStyle='#b8955a';g.lineWidth=1.5;rr(g,X+3.5,Y+3.5,w-7,h-7,r-3);g.stroke()}
-function scriptT(g,t,X,Y,n,al='center',mw){g.font=`italic 800 ${n}px "Alegreya",Georgia,serif`;g.textAlign=al;g.lineJoin='round';g.lineWidth=Math.max(3,n/5);g.strokeStyle='#3a1a0c';g.strokeText(t,X,Y,mw);
-  const gr=g.createLinearGradient(0,Y,0,Y+n*1.1);gr.addColorStop(0,'#ffd88a');gr.addColorStop(.75,'#f08a3a');g.fillStyle=gr;g.fillText(t,X,Y,mw)} // fonte de pixel moderna; n segue a escala antiga
+  r=Math.min(r,5);const gr=g.createLinearGradient(0,Y,0,Y+h);gr.addColorStop(0,'#24533d');gr.addColorStop(1,'#163625');g.fillStyle=gr;rr(g,X+1,Y+1,w-2,h-2,r);g.fill(); /* insígnia: verde Bragança com filete de ouro */
+  g.strokeStyle='#cda23a';g.lineWidth=1;rr(g,X+3.5,Y+3.5,w-7,h-7,Math.max(0,r-2));g.stroke()}
+function scriptT(g,t,X,Y,n,al='center',mw){g.font=`italic 400 ${Math.round(n*1.05)}px "Old Standard TT",Georgia,serif`;g.textAlign=al;g.lineJoin='round';g.lineWidth=Math.max(2.5,n/7);g.strokeStyle='#14321f';g.strokeText(t,X,Y,mw); /* letreiro: tipo moderno do século XIX, em ouro */
+  g.fillStyle='#ebd38a';g.fillText(t,X,Y,mw)} // fonte de pixel moderna; n segue a escala antiga
 CFG.q=2;CFG.big=0;CFG.cb=0;CFG.confirm=1;CFG.calm=matchMedia('(prefers-reduced-motion: reduce)').matches?1:0; // q: qualidade dos efeitos; calm: efeitos fortes reduzidos
 try{Object.assign(CFG,JSON.parse(localStorage.getItem('tb-cfg')||'{}'))}catch{}
 const applyCfg=()=>{document.body.classList.toggle('big',!!CFG.big);document.documentElement.style.setProperty('--uiz',[.9,1,1.15,1.3][CFG.uiz??1])};applyCfg(); // --uiz: tamanho da interface

@@ -137,7 +137,7 @@ function draw(){
     if(zr_<1.15){x.fillStyle='#22140c';x.beginPath();x.arc(bx,by0+26,3.5,0,7);x.fill();x.fillStyle='#f6ecc4';x.beginPath();x.arc(bx,by0+26,2,0,7);x.fill()} // capital: um ponto; de perto a vila em 3D toma o lugar
     if(port[i]){const ax=bx+11,ay=by0+16;x.fillStyle='#22140c';x.fillRect(ax-5,ay-2,11,13);x.fillStyle='#9fd0ff';x.fillRect(ax,ay,1,9);x.fillRect(ax-2,ay+1,5,1);x.fillRect(ax-3,ay+7,7,1);x.fillRect(ax-3,ay+6,1,1);x.fillRect(ax+3,ay+6,1,1)} // âncora
     if(by<by0-4){x.fillStyle='rgba(18,10,28,.55)';x.fillRect(bx,by+10,1,by0+24-by-10)} // fio só quando a plaquinha foi afastada para não sobrepor
-    const LH=Math.round(TS*1.45)+6,mineT=owner[i]==me;x.fillStyle='rgba(30,18,12,.85)';x.beginPath();x.roundRect(rx-1,fb-1,w+2,LH+2,6);x.fill();x.fillStyle=mineT?'#4d3238':'#efe3c6';x.beginPath();x.roundRect(rx,fb,w,LH,5);x.fill(); // plaquinha: pergaminho, ou laca se for sua
+    const LH=Math.round(TS*1.45)+6,mineT=owner[i]==me;x.fillStyle='rgba(30,18,12,.85)';x.beginPath();x.roundRect(rx-1,fb-1,w+2,LH+2,6);x.fill();x.fillStyle=mineT?'#1f4a36':'#ebe4cf';x.beginPath();x.roundRect(rx,fb,w,LH,5);x.fill(); // plaquinha: pergaminho, ou laca se for sua
     x.fillStyle=`hsl(${hue(owner[i])},70%,${CFG.cb?40:55}%)`;x.beginPath();x.roundRect(left?rx+w-11:rx,fb,11,LH,left?[0,5,5,0]:[5,0,0,5]);x.fill();emblem(x,(left?rx+w-11:rx)+2,fb+(LH-7)/2|0,owner[i],'#fff'); // faixa com emblema da facção
     if(i==sel||i==hov){x.strokeStyle='#f08a3a';x.lineWidth=2;x.beginPath();x.roundRect(rx-1,fb-1,w+2,LH+2,6);x.stroke()}
     x.font=FONT(TS);x.fillStyle=mineT?(moved.has(i)?'#a89880':'#f3e7cf'):'#3a2a1f';x.fillText(t,rx+(left?4:14),fb+2);

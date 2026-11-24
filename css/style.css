@@ -888,3 +888,127 @@ body.full.hq #stage{z-index:12;position:fixed;inset:0}
 .rtabs .badge{position:absolute;top:-6px;right:-4px;margin:0}
 
 .rtabs button{flex:0 0 auto}.rtabs button span{display:none}.rtabs button.on{flex:1 0 auto}.rtabs button.on span{display:inline}
+
+/* =====================================================================================
+   TEMA IMPERIAL: gabinete de guerra do Império, 1822.
+   Papéis oficiais em papel vergé com moldura de dois filetes; insígnia verde Bragança e ouro;
+   tipo moderno do século XIX (Old Standard TT) nos títulos e números; livro-razão no lugar de blocos.
+   ===================================================================================== */
+:root{
+  --papel:#e9e2cc;--papel2:#ddd3b6;--tinta:#241c13;--sepia:#6e5d45;--sepia2:#9a8a6c;
+  --brag:#1f4a36;--brag2:#14321f;--ouro:#cda23a;--ouro2:#ebd38a;--lacre:#9e2a1d;--anil:#2e5a9a;
+  --old:"Old Standard TT",Georgia,"Times New Roman",serif;
+  --parch:var(--papel);--parch2:var(--papel2);--parch3:#c9bd9c;--parch-edge:#9c8a62;--ink:var(--tinta);--ink2:var(--sepia);--ink3:var(--sepia2);
+  --lac:#24533d;--lac2:var(--brag2);--lac-text:#efe6cc;--frame:#3a2e1f;--frame2:var(--tinta);--gilt:var(--ouro2);--gilt2:var(--ouro);
+  --script:var(--ouro2);--script2:var(--ouro2);--script-edge:var(--brag2);
+  --verge:repeating-linear-gradient(0deg,rgba(36,28,19,.035) 0 1px,transparent 1px 3px); /* papel vergé: linhas finas da forma do papel */
+  --grain:var(--verge)}
+body{background:#10241a}
+/* ---------- documentos: ficha, janelas, salas ---------- */
+aside,#card,#menuBox,#room,body.full aside{background:var(--verge),var(--papel);color:var(--tinta);border:1px solid var(--tinta);border-radius:4px;
+  box-shadow:inset 0 0 0 4px var(--papel),inset 0 0 0 5px var(--ouro),0 2px 0 rgba(0,0,0,.4),0 14px 34px rgba(0,0,0,.45)}
+body.full aside{background:var(--verge),rgba(233,226,204,.97)}
+/* ---------- títulos: sem laranja contornado; tinta e tipo do século XIX ---------- */
+aside h2,#menuBox h2,#card h2,#room h2,.hhead b,#tut b,.summ b{font:400 26px/1.1 var(--old);color:var(--tinta);-webkit-text-fill-color:var(--tinta);background:none;filter:none;letter-spacing:0;text-shadow:none}
+aside h2::after{display:none}
+#card h2,#menuBox h2,#room h2{align-self:center;clip-path:none;border:0;border-radius:0;box-shadow:none;background:none;padding:0 0 10px;font-size:30px;color:var(--tinta);-webkit-text-fill-color:var(--tinta);position:relative}
+#card h2::after,#menuBox h2::after{content:"";position:absolute;left:50%;bottom:0;width:64px;height:5px;transform:translateX(-50%);
+  background:linear-gradient(var(--ouro),var(--ouro)) center/100% 1px no-repeat,radial-gradient(circle,var(--ouro) 2.5px,transparent 3px) center/8px 5px no-repeat;display:block}
+#card h2.big{font:700 54px/1 var(--old);letter-spacing:6px;color:var(--brag);-webkit-text-fill-color:var(--brag);filter:none;background:none}
+#card h2.big::after{display:none}
+#room .rhd h2{font:400 22px var(--old);color:var(--ouro2);-webkit-text-fill-color:var(--ouro2);padding:0}
+/* ---------- títulos de seção: itálico em caixa normal, sem versalete nem filete ---------- */
+.box>b,.grp>.lbl,#card h3,#room .cat,.perks>b{font:italic 400 17px/1.2 var(--old);letter-spacing:0;text-transform:none;color:var(--sepia);border:0;padding:0;margin:0 0 4px}
+.box>b .ico,.grp>.lbl .ico{display:none}
+.box.safe>b{color:var(--brag)}.box.threat>b{color:var(--lacre)}
+/* ---------- blocos: sem cartão dentro de cartão; o espaço e um pontilhado separam ---------- */
+.box,.objbar,.summ,.helpbox,.perks{background:none;border:0;border-top:1px dotted var(--sepia2);border-radius:0;box-shadow:none;padding:10px 0 0}
+.box.safe,.box.threat{border-top:0;border-left:3px solid var(--brag);padding:2px 0 2px 12px;background:none}
+.box.threat{border-left-color:var(--lacre)}
+.ucard,.stat,.terr,.forces,.slot,.mk,.tcard,.dcard,.gcard,.mcard,.medal,.pows>div,button.scard,.evh{background:rgba(255,255,255,.28);border:1px solid rgba(36,28,19,.28);border-radius:3px;box-shadow:none}
+/* ---------- livro-razão: rótulo, pontilhado, número ---------- */
+.kpis,.kpis.k4{display:grid;grid-template-columns:1fr;gap:2px}
+.kpis.k4{grid-template-columns:1fr 1fr;column-gap:24px}
+.kpi,.kpi.hot{display:flex;flex-direction:row;align-items:baseline;padding:0;background:none;border:0;box-shadow:none;border-radius:0}
+.kpi span{order:1;font:500 15px var(--ui);color:var(--tinta);text-transform:none;letter-spacing:0}
+.kpi span::first-letter{text-transform:uppercase}
+.kpi::after{content:"";order:2;flex:1;margin:0 6px;border-bottom:2px dotted rgba(36,28,19,.35);transform:translateY(-4px)}
+.kpi b{order:3;font:700 20px/1.2 var(--old);color:var(--tinta)}
+.kpi.hot b,.kpi.hot span{color:var(--lacre)}
+/* ---------- etiquetas: selos discretos, sem degradê ---------- */
+.chips>span,.foes button.thr,.foes>span,.tst span{background:none;border:1px solid rgba(36,28,19,.32);border-radius:2px;box-shadow:none;color:var(--tinta);font-weight:600}
+.chips .warn,.foes button.thr.hot{background:none;border-color:var(--lacre);color:var(--lacre)}
+.gl::after{background:none;border:1px solid currentColor;width:11px;height:11px;font-size:8px}
+/* ---------- botões: papel com filete de tinta; principal em verde e ouro; perigo em lacre ---------- */
+button{border-radius:3px;background:var(--papel);border:1px solid var(--tinta);color:var(--tinta);box-shadow:0 1px 0 rgba(36,28,19,.35);font-family:var(--ui);font-weight:700}
+button:hover:not(:disabled):not(.off),button:focus-visible{background:#f3edda;transform:none;filter:none;border-color:var(--tinta)}
+button.end,button.buy{background:var(--brag);border-color:var(--brag2);color:var(--ouro2);text-shadow:none;box-shadow:inset 0 0 0 2px var(--brag),inset 0 0 0 3px var(--ouro),0 1px 0 rgba(0,0,0,.4)}
+button.end:hover:not(:disabled),button.buy:hover:not(:disabled){background:#27593f;color:#f6e6ad}
+button.buy small{color:rgba(235,211,138,.8)}
+button.danger{background:var(--lacre);border-color:#5a160e;color:#f6ead0;box-shadow:inset 0 0 0 2px var(--lacre),inset 0 0 0 3px rgba(246,234,208,.5)}
+button.on,.tabs button.on,.pgrid button.on{background:var(--ouro2);border-color:var(--tinta);color:var(--tinta);box-shadow:none}
+.st.ok{background:none;border:1px solid var(--brag);color:var(--brag)}.st.no{background:none;border:1px dashed var(--lacre);color:var(--lacre)}
+/* ---------- moldura do jogo sobre o mapa: insígnia verde e ouro ---------- */
+body.full #bar,.dock,.hqs,#mapMode,body.full header>button,#bar .mkt{background:linear-gradient(180deg,#24533d,var(--brag2));border:1px solid var(--ouro);color:#efe6cc;box-shadow:0 2px 0 rgba(0,0,0,.35),0 8px 20px rgba(0,0,0,.3)}
+body.full #bar{border-radius:30px 6px 6px 30px}
+body.full #bar>span:not(.crest),body.full #bar .mkt,#hqBar .hqs span{background:none;border:0;border-left:1px solid rgba(205,162,58,.35);border-radius:0;color:#efe6cc}
+body.full #bar .crest .cn b{font:italic 400 19px var(--old);color:var(--ouro2);text-shadow:none}
+body.full #bar .crest img{border:2px solid var(--ouro);box-shadow:0 0 0 2px var(--brag2)}
+body.full header>button{border-radius:4px}body.full header>button:hover{background:#2c6a4c}
+#mapMode button{color:#d9cfae}#mapMode button.on{background:var(--ouro2);color:var(--tinta);border-color:var(--tinta)}
+.dock{border-radius:40px}
+.dock .rb{background:radial-gradient(circle at 40% 30%,#2c6a4c,var(--brag2) 72%);border:2px solid var(--ouro);color:#efe6cc;box-shadow:0 2px 0 rgba(0,0,0,.4)}
+.dock .rb:hover:not(.off){border-color:var(--ouro2);background:radial-gradient(circle at 40% 30%,#357a58,var(--brag2) 72%)}
+.dock .rb.on{background:radial-gradient(circle at 40% 30%,#f2dc93,var(--ouro) 75%);color:var(--tinta)}
+.dock .rb small{font:600 12px var(--ui);color:#e6dcbd}
+.endr{background:radial-gradient(circle at 38% 30%,#f6e3a0,var(--ouro) 58%,#8f6c1c);border:3px solid var(--brag2);box-shadow:0 0 0 4px var(--brag),0 0 0 5px var(--ouro),0 12px 26px rgba(0,0,0,.5);color:var(--brag2)}
+.endr b{font:italic 400 21px/1 var(--old)}.endr small,.endr em{color:var(--brag)}
+.endr.danger{background:radial-gradient(circle at 38% 30%,#e88a72,var(--lacre) 60%,#5a160e);color:#f6ead0}
+/* ---------- barra de ajuda, avisos, dica e placa de turno no mesmo tecido verde ---------- */
+#help,body.full #help{background:linear-gradient(180deg,#24533d,var(--brag2));border:1px solid var(--ouro);border-radius:4px;color:#efe6cc}
+#help>b{font:italic 400 19px var(--old);color:var(--ouro2);text-shadow:none}
+.toast,#tipx,#gloss,#tip,#coach{background:linear-gradient(180deg,#24533d,var(--brag2));border:1px solid var(--ouro);border-radius:4px;color:#efe6cc}
+.toast{border-left:4px solid var(--ouro2)}.toast.ok{border-left-color:#8fd08a}.toast.bad{border-left-color:#e8735e}
+#coach b{font:italic 400 17px var(--old);color:var(--ouro2);letter-spacing:0}
+#plaque .pl{background:linear-gradient(180deg,#24533d,var(--brag2));border:1px solid var(--ouro);border-radius:4px;box-shadow:inset 0 0 0 4px var(--brag2),inset 0 0 0 5px rgba(205,162,58,.6),0 12px 30px rgba(0,0,0,.5)}
+#plaque em{font:italic 400 30px var(--old);color:var(--ouro2);text-shadow:none}#plaque .pl b{font:700 60px/1 var(--old);color:#f6ead0}
+#plaque .sumk div{background:var(--verge),var(--papel);border:1px solid var(--tinta);border-radius:3px;box-shadow:inset 0 0 0 3px var(--papel),inset 0 0 0 4px var(--ouro)}
+#plaque .sumk b{font:700 30px var(--old);color:var(--tinta)}#plaque .sumk .hot{background:var(--papel)}#plaque .sumk .hot b{color:var(--lacre)}
+#plaque p{background:var(--papel);border:1px solid var(--tinta);border-radius:3px}
+/* ---------- ficha do estado: retrato em medalhão oval, nome em tipo grande ---------- */
+.who.sm{align-items:center;gap:14px}
+.who.sm>img,.who img:not(.ico){width:76px;height:92px;border-radius:50%;object-fit:cover;border:2px solid var(--ouro);box-shadow:0 0 0 3px var(--papel),0 0 0 4px var(--tinta);background:#2e2a3a}
+.who.sm h2{font:400 30px/1.05 var(--old)}
+.who p{font:500 14px/1.35 var(--ui);color:var(--sepia)}.who p b{color:var(--tinta)}
+.empchip b{font:italic 400 19px var(--old);color:var(--tinta);text-shadow:none}
+.empchip img{border-radius:50%;border:2px solid var(--ouro)}
+/* ---------- cartas e textos pequenos ---------- */
+.card{border-radius:4px}.card b{font:italic 400 16px var(--old)}
+.hint{color:var(--sepia)}
+.acts4 button small{color:var(--sepia);font-weight:600}.acts4 button.off small{color:var(--lacre)}
+.rtabs button.on{background:var(--ouro2);color:var(--tinta)}
+.vsr .me{background:linear-gradient(180deg,#2e5a9a,#1c3a68)}.vsr .them{background:linear-gradient(180deg,#9e2a1d,#5a160e)}
+.vsr figure{border-radius:3px;border:1px solid var(--tinta);box-shadow:inset 0 0 0 3px rgba(0,0,0,.2),inset 0 0 0 4px var(--ouro)}
+.vsr figure>span,.vsr b{font-family:var(--old)}.vsr em{font:italic 400 30px var(--old);color:var(--ouro)}
+.ldr{border-radius:3px}.ldr b,.camp .cl>b,.glory{font-family:var(--old)}
+/* sem versalete nem caixa-alta em rótulos: o rótulo é frase comum */
+:root{--sc:var(--ui)}
+#plaque .sumk span,.glory span,.rl,.medal b,.b3l,.at,.kr em{letter-spacing:0;text-transform:none}
+#plaque .sumk span{font:600 13px var(--ui);color:var(--sepia)}
+.glory{font:700 44px/1 var(--old);color:var(--ouro2)}.glory span{font:italic 400 15px var(--old);color:#d9cfae}
+.rivs em{font:600 12px var(--ui);color:var(--sepia);text-shadow:none}
+.pb{background:rgba(36,28,19,.12);border:1px solid rgba(36,28,19,.35);border-radius:1px;box-shadow:none}
+.pb i{background:var(--brag)}
+.medal .hx{background:#7c7462}.medal.t1 .hx{background:#9a6a3c}.medal.t2 .hx{background:#a9adb1}.medal.t3 .hx{background:var(--ouro)}
+.medal.t3{background:rgba(205,162,58,.18);border-color:var(--ouro)}
+.pows>div.me{background:rgba(205,162,58,.22);border-color:var(--ouro)}
+.camp .cl{background:linear-gradient(180deg,#24533d,var(--brag2));border:1px solid var(--ouro);border-radius:3px}
+.camp .cl img{border-radius:50%/46%;border:2px solid var(--ouro);box-shadow:0 0 0 3px var(--brag2)}
+#cmd{background:var(--verge),var(--papel);border:1px solid var(--tinta);border-radius:3px;box-shadow:inset 0 0 0 3px var(--papel),inset 0 0 0 4px var(--ouro),0 10px 24px rgba(0,0,0,.45)}
+#cmd .ch b{font:italic 400 19px var(--old);color:var(--tinta);text-shadow:none}#cmd .ch span{color:var(--sepia)}
+#cmd>button{background:none;border:0;border-bottom:1px dotted rgba(36,28,19,.3);border-radius:0;box-shadow:none;font:600 15px var(--ui)}
+#cmd>button:hover:not(.off),#cmd>button:focus{background:rgba(205,162,58,.22);box-shadow:inset 3px 0 0 var(--brag)}
+#menuBox .opt,#card .opt{background:none;border:0;border-bottom:1px dotted rgba(36,28,19,.3);border-radius:0;padding:6px 0}
+.tabs{border-bottom:1px solid var(--tinta)}.tabs button{border-bottom:0;border-radius:3px 3px 0 0}
+.stars{color:var(--ouro);text-shadow:none}
+#panel.swap>*,.medal{animation:none!important} /* sem entradas escalonadas: só a janela que abre responde ao clique */
