@@ -3,17 +3,21 @@ const $=id=>document.getElementById(id),cv=$('map'),x=cv.getContext('2d');
 const hue=f=>f*137.508%360, px=i=>[(S[i][2]-X0)/D*C,(Y0-S[i][3])/D*C];
 const mk=(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');g.imageSmoothingEnabled=false;return[c,g]};
 const FONT=n=>`700 ${Math.round(n*1.6)}px ${n<9?'"Alegreya Sans",system-ui,sans-serif':'"Alegreya",Georgia,serif'}`; // textos pequenos do canvas na mesma fonte simples da interface
-// caixas no canvas no tema de crônica: pergaminho, laca escura e letreiro caligráfico
+// caixas no canvas no tema de jogo: pergaminho pintalgado com contorno, tábua de jacarandá com rebites de latão, letreiro gordo com contorno
 const rr=(g,X,Y,w,h,r)=>{g.beginPath();g.roundRect(X,Y,w,h,Math.max(0,r))};
-function parch(g,X,Y,w,h,r=12){g.save();g.shadowColor='rgba(0,0,0,.45)';g.shadowBlur=10;g.shadowOffsetY=4;g.fillStyle='#3b2618';rr(g,X,Y,w,h,r);g.fill();g.restore();
-  r=Math.min(r,4);g.fillStyle='#e9e2cc';rr(g,X+2,Y+2,w-4,h-4,r);g.fill(); /* papel vergé com moldura de dois filetes */
-  g.strokeStyle='rgba(36,28,19,.06)';g.lineWidth=1;for(let yy=Y+5;yy<Y+h-3;yy+=3){g.beginPath();g.moveTo(X+3,yy+.5);g.lineTo(X+w-3,yy+.5);g.stroke()}
-  g.strokeStyle='#241c13';rr(g,X+2.5,Y+2.5,w-5,h-5,r);g.stroke();g.strokeStyle='#cda23a';rr(g,X+6.5,Y+6.5,w-13,h-13,Math.max(0,r-2));g.stroke()}
-function lac(g,X,Y,w,h,r=10){g.save();g.shadowColor='rgba(0,0,0,.5)';g.shadowBlur=8;g.shadowOffsetY=3;g.fillStyle='#140c0e';rr(g,X,Y,w,h,r);g.fill();g.restore();
-  r=Math.min(r,5);const gr=g.createLinearGradient(0,Y,0,Y+h);gr.addColorStop(0,'#24533d');gr.addColorStop(1,'#163625');g.fillStyle=gr;rr(g,X+1,Y+1,w-2,h-2,r);g.fill(); /* insígnia: verde Bragança com filete de ouro */
-  g.strokeStyle='#cda23a';g.lineWidth=1;rr(g,X+3.5,Y+3.5,w-7,h-7,Math.max(0,r-2));g.stroke()}
-function scriptT(g,t,X,Y,n,al='center',mw){g.font=`italic 400 ${Math.round(n*1.05)}px "Old Standard TT",Georgia,serif`;g.textAlign=al;g.lineJoin='round';g.lineWidth=Math.max(2.5,n/7);g.strokeStyle='#14321f';g.strokeText(t,X,Y,mw); /* letreiro: tipo moderno do século XIX, em ouro */
-  g.fillStyle='#ebd38a';g.fillText(t,X,Y,mw)} // fonte de pixel moderna; n segue a escala antiga
+let SPK=null;const speck=g=>{if(!SPK){const[c,s]=mk(14,14);s.fillStyle='rgba(122,70,30,.18)';[[1,2],[8,5],[4,10],[11,12],[6,1]].forEach(([a,b])=>s.fillRect(a,b,1,1));SPK=c}return g.createPattern(SPK,'repeat')};
+function rivets(g,X,Y,w,h){if(w<60||h<34)return;for(const[cx,cy]of[[X+8,Y+8],[X+w-8,Y+8],[X+8,Y+h-8],[X+w-8,Y+h-8]]){g.fillStyle='#2a160d';g.fillRect(cx-3,cy-3,6,6);g.fillStyle='#f2cd63';g.fillRect(cx-2,cy-2,4,4);g.fillStyle='#8a5c18';g.fillRect(cx,cy,2,2)}}
+function parch(g,X,Y,w,h,r=12){g.save();g.shadowColor='rgba(0,0,0,.45)';g.shadowBlur=10;g.shadowOffsetY=5;g.fillStyle='#2a160d';rr(g,X,Y,w,h,r);g.fill();g.restore();
+  r=Math.min(r,9);g.save();rr(g,X+3,Y+3,w-6,h-6,r);g.clip();g.fillStyle='#f3dfae';g.fillRect(X,Y,w,h);g.fillStyle=speck(g);g.fillRect(X,Y,w,h);
+  g.strokeStyle='rgba(150,90,30,.35)';g.lineWidth=5;rr(g,X+3,Y+3,w-6,h-6,r);g.stroke();g.restore();
+  g.setLineDash([5,4]);g.strokeStyle='rgba(122,74,42,.45)';g.lineWidth=1.5;rr(g,X+9.5,Y+9.5,w-19,h-19,Math.max(0,r-4));g.stroke();g.setLineDash([])}
+function lac(g,X,Y,w,h,r=10){g.save();g.shadowColor='rgba(0,0,0,.5)';g.shadowBlur=8;g.shadowOffsetY=4;g.fillStyle='#2a160d';rr(g,X,Y,w,h,r);g.fill();g.restore();
+  r=Math.min(r,9);g.save();rr(g,X+3,Y+3,w-6,h-6,r);g.clip();const gr=g.createLinearGradient(0,Y,0,Y+h);gr.addColorStop(0,'#81492a');gr.addColorStop(1,'#5e331d');g.fillStyle=gr;g.fillRect(X,Y,w,h);
+  g.fillStyle='rgba(40,18,8,.2)';for(let yy=Y+10;yy<Y+h-4;yy+=7)g.fillRect(X,yy,w,1);g.fillStyle='rgba(255,200,140,.25)';g.fillRect(X,Y+3,w,2);g.fillStyle='rgba(0,0,0,.25)';g.fillRect(X,Y+h-7,w,4);g.restore();
+  rivets(g,X,Y,w,h)}
+function scriptT(g,t,X,Y,n,al='center',mw){g.font=`400 ${Math.round(n*.95)}px "Lilita One","Alegreya Sans",sans-serif`;g.textAlign=al;g.lineJoin='round';g.lineWidth=Math.max(3,n/5);g.strokeStyle='#2a160d';
+  g.strokeText(t,X,Y+Math.max(2,n/12),mw);g.strokeText(t,X,Y,mw);g.fillStyle='#ffe9a8';g.fillText(t,X,Y,mw)}
+document.fonts?.load('20px "Lilita One"');
 CFG.q=2;CFG.big=0;CFG.cb=0;CFG.confirm=1;CFG.calm=matchMedia('(prefers-reduced-motion: reduce)').matches?1:0; // q: qualidade dos efeitos; calm: efeitos fortes reduzidos
 try{Object.assign(CFG,JSON.parse(localStorage.getItem('tb-cfg')||'{}'))}catch{}
 const applyCfg=()=>{document.body.classList.toggle('big',!!CFG.big);document.documentElement.style.setProperty('--uiz',[.9,1,1.15,1.3][CFG.uiz??1])};applyCfg(); // --uiz: tamanho da interface
