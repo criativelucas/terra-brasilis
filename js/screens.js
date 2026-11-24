@@ -253,7 +253,7 @@ document.addEventListener('keydown',e=>{ // atalhos: clicam o botão corresponde
     if(k=='enter'&&marching&&adj[sel].includes(hov)){e.preventDefault();if(tryAct(hov))hov=-1;return ui()}}
   if(k=='q')return HQ?$('panel').querySelector('[data-a=hqexit]').click():openHQ();
   const a=B?{e:'bend',a:'bauto',z:'bcancel',w:'bwait'}[k]:{e:'end',m:'march',r:'rec',f:'fort',z:'undo',n:'next'}[k];
-  if(a)document.querySelector(`#cmd:not([hidden]) [data-a="${a}"]:not(:disabled), aside [data-a="${a}"]:not(:disabled)`)?.click()});
+  if(a)document.querySelector(`#cmd:not([hidden]) [data-a="${a}"]:not(:disabled), aside [data-a="${a}"]:not(:disabled), #hud [data-a="${a}"]:not(.off)`)?.click()});
 
 
 function showKeys(){const K=(k,t)=>`<div class="kr"><span>${k.split(' ').map(q=>`<kbd>${q}</kbd>`).join(' ')}</span><em>${t}</em></div>`; /* todos os atalhos numa tela, a tecla ? abre e fecha */
