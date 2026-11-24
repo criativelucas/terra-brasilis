@@ -80,6 +80,19 @@ const TIMELINE={
     [8,'CAM','Chegada de Andréa','1836. O marechal Andréa chega com reforços do Império.',5],
     [11,'XIN','Resistência no interior','1837. Expulsos de Belém, os cabanos resistem nos rios do interior.',3]]};
 function storyTurn(){const L=(TIMELINE[TKEY]||[]).find(e=>e[0]==turn&&!tld.includes(e[2]));if(!L||me<0||over)return false;
-  const[,code,title,txt,n]=L,i=ix[code];if(i==null)return false;tld.push(title);troops[i]+=n;note(`${title}: +${n} tropas em ${S[i][1]}`);
+  const[,code,title,txt,n]=L,i=ix[code];if(i==null)return false;tld.push(title);
+  const mine=owner[i]==me,nb=!mine&&adj[i].some(j=>owner[j]==me),ch=(mine||nb)?histOpts(i,title,n,mine):null; /* acontecimento perto de você: você decide */
+  if(!ch){troops[i]+=n;note(`${title}: +${n} tropas em ${S[i][1]}`)}
   const lines=[[-1,`${title}. ${txt}`]];if(owner[i]==i)lines.push([i,LN(i).a||`${S[i][1]} se levanta!`]);
-  setTimeout(()=>talk(lines,ui),600);return true}
+  setTimeout(()=>talk(lines,()=>{ui();if(ch)showHist(title,txt,i,ch)}),600);return true}
+const REVOLTA=/Confedera|Cabanagem|cabano|Farroupilha|Balaiada|Seival|Laguna|Resist|Porongos/; // levantes contra quem governa
+function histOpts(i,title,n,mine){const f=owner[i],X=S[i][1],rev=REVOLTA.test(title);
+  if(mine&&rev)return[['Negociar com os revoltosos',`−5 ouro, +${n} tropas em ${X}`,5,()=>troops[i]+=n],
+    ['Reprimir o levante',`−2 tropas em ${X}, +2 de experiência nos regimentos de ${X}`,0,()=>{troops[i]=Math.max(1,troops[i]-2);xp[i]=xp[i].map(v=>v+2)}]];
+  if(mine)return[['Grande celebração',`−4 ouro, +${n+2} tropas em ${X}`,4,()=>troops[i]+=n+2],['Celebração simples',`+${n} tropas em ${X}, +3 ouro`,0,()=>{troops[i]+=n;gold[me]+=3}]];
+  if(rev)return[['Apoiar os revoltosos',`−4 ouro, ${X} perde ${n} tropas, ${S[f][4]} fica hostil`,4,()=>{troops[i]=Math.max(1,troops[i]-n);angry[f]=turn+4}],
+    ['Ficar de fora',`${X} ganha +${n} tropas`,0,()=>troops[i]+=n]];
+  return[['Mandar uma embaixada',`−3 ouro, pacto de 4 turnos com ${S[f][4]}`,3,()=>{troops[i]+=n;pact[f]=Math.max(pact[f]||0,turn+4)}],['Ficar de fora',`${X} ganha +${n} tropas`,0,()=>troops[i]+=n]]}
+function showHist(title,txt,i,ch){window.HEV={ch,title,i};const fx=t=>t.split(/,\s*/).map(q=>`<span class="${/[−-]|perde|hostil/.test(q)?'bad':'good'}">${q}</span>`).join('');
+  scr(`<h2>${title}</h2><div class="evh"><span class="medal1">${I('scroll')}</span><div><p>${txt}</p><small>${S[i][1]}, ${owner[i]==me?'sob o seu governo':'sob '+S[owner[i]][4]}. Ouro em caixa: ${gold[me]}</small></div></div><div class="evo">`+
+    ch.map(([nm,ef,c],k)=>`<button data-s="hev-${k}" class="${gold[me]<c?'off':''}" ${gold[me]<c?'disabled':''}><b>${nm}</b><span class="fx">${fx(ef)}</span>${gold[me]<c?`<small>faltam ${c-gold[me]} ouro</small>`:''}</button>`).join('')+'</div>')}

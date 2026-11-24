@@ -1012,3 +1012,12 @@ body.full header>button{border-radius:4px}body.full header>button:hover{backgrou
 .tabs{border-bottom:1px solid var(--tinta)}.tabs button{border-bottom:0;border-radius:3px 3px 0 0}
 .stars{color:var(--ouro);text-shadow:none}
 #panel.swap>*,.medal{animation:none!important} /* sem entradas escalonadas: só a janela que abre responde ao clique */
+.stat .mor{position:relative;height:14px;margin-top:3px;background:rgba(36,28,19,.15);border:1px solid rgba(36,28,19,.35);border-radius:1px}
+.stat .mor i{display:block;height:100%;background:linear-gradient(180deg,#e2c26a,#b8902e)}.stat .mor span{position:absolute;inset:0;display:grid;place-items:center;font:700 11px/1 var(--ui);color:var(--tinta)}
+.tmp{font:500 14px/1.35 var(--ui);color:var(--sepia);text-align:center}.tmp b{font:italic 400 16px var(--old);color:var(--tinta)}.ldr i{font-style:italic;color:var(--ouro2);cursor:help}
+/* balanço: gráfico de territórios e mapa por turno */
+.hist{display:grid;grid-template-columns:minmax(0,1fr) 190px;gap:var(--s3);align-items:start}
+.hist canvas{width:100%;height:auto;background:rgba(255,255,255,.3);border:1px solid rgba(36,28,19,.3);border-radius:2px}
+.hmap{display:flex;flex-direction:column;gap:4px}.hmap img{width:100%;image-rendering:pixelated;background:#1d3b5c;border:1px solid var(--tinta);border-radius:2px}
+.hmap label{font:600 13px var(--ui);color:var(--sepia)}.hmap b{font:700 15px var(--old);color:var(--tinta)}
+.hleg{display:flex;flex-wrap:wrap;gap:12px;font:600 13px var(--ui);margin:4px 0 0}.hleg span::before{content:"";display:inline-block;width:14px;height:3px;margin-right:5px;vertical-align:3px;background:var(--c)}

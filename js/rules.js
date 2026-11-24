@@ -30,7 +30,12 @@ let hand=[],cmd=0,posts={},boost=[]; // mão de cartas, pontos de Comando, cargo
 const postOk=k=>posts[k]>=0&&owner[posts[k]]==me;
 const cmdMax=()=>3+(postOk('est')?1:0);
 const postGold=()=>postOk('com')?Math.floor(gs(posts.com)[2]/25):0, postTroops=()=>postOk('mil')?Math.floor(gs(posts.mil)[0]/30):0;
-const dipCost=k=>Math.ceil(DIP[k][1]*(postOk('dip')?.5:1));
+// temperamento: cada líder negocia e guerreia de um jeito, conforme a vocação
+const TEMP={atk:['Belicoso','ataca mais cedo e com menos vantagem; só firma pacto com quem é forte'],def:['Cauteloso','ataca pouco; só aceita aliança depois de um pacto'],
+  gold:['Negociante','tratados custam 30% menos; aceita tributo com mais facilidade'],rec:['Populista','recruta muito; nunca paga tributo']};
+const tempOf=f=>TEMP[S[f][5]]||TEMP.def,tk=f=>S[f][5]||'def';
+const strength=f=>owner.reduce((a,o,i)=>a+(o==f?troops[i]:0),0);
+const dipCost=(k,f)=>Math.ceil(DIP[k][1]*(postOk('dip')?.5:1)*(f!=null&&tk(f)=='gold'?.7:1));
 function drawCards(n){const ks=Object.keys(CARDS);for(let k=0;k<n&&hand.length<6;k++)hand.push(ks[Math.random()*ks.length|0])}
 function cardOk(id,t){const c=CARDS[id];if(!c||cmd<c[2]||c[1]!='mapa')return false;
   if(c[3]=='own')return t>=0&&owner[t]==me&&(id!='marcha'||moved.has(t))&&(id!='palic'||fort[t]<2);
@@ -47,8 +52,8 @@ function playCard(id,t){const c=CARDS[id];cmd-=c[2];hand.splice(hand.indexOf(id)
   if(id=='embax'){pact[owner[t]]=Math.max(pact[owner[t]]||0,turn+4);note(`Embaixada: pacto com ${S[owner[t]][4]} até o turno ${turn+4}`)}
   if(id=='correio'){drawCards(2);note('Correio a cavalo: 2 cartas novas')}
   check()}
-let evts=[],burn=[],lastLoss=-9,onNote=()=>{},scn=0,goal=null,victory=false,fort,stats,endShown,hq,xp,port,pact,ally,trib,angry,betray,perk={},tld=[],price={},priceOld={},onTurn=()=>{}; // xp: experiência dos 6 regimentos de cada estado; pact/ally/trib/angry: facção -> turno em que acaba // hq: treino por tipo de unidade, doutrinas, turno do último imposto // fort: nível do forte por estado (0-2), +20% defesa cada
-function reset(sc=0){scn=sc;hand=[];cmd=0;posts={com:-1,mil:-1,est:-1,dip:-1};boost=S.map(()=>0);evts=[];burn=S.map(()=>-9);lastLoss=-9;goal=null;victory=false;owner=S.map((_,i)=>i);troops=S.map(()=>4+Math.floor(Math.random()*5));gold=S.map(()=>6);
+let hist=[],evts=[],burn=[],lastLoss=-9,onNote=()=>{},scn=0,goal=null,victory=false,fort,stats,endShown,hq,xp,port,pact,ally,trib,angry,betray,perk={},tld=[],price={},priceOld={},onTurn=()=>{}; // xp: experiência dos 6 regimentos de cada estado; pact/ally/trib/angry: facção -> turno em que acaba // hq: treino por tipo de unidade, doutrinas, turno do último imposto // fort: nível do forte por estado (0-2), +20% defesa cada
+function reset(sc=0){scn=sc;hist=[];hand=[];cmd=0;posts={com:-1,mil:-1,est:-1,dip:-1};boost=S.map(()=>0);evts=[];burn=S.map(()=>-9);lastLoss=-9;goal=null;victory=false;owner=S.map((_,i)=>i);troops=S.map(()=>4+Math.floor(Math.random()*5));gold=S.map(()=>6);
   const own=SCN[sc].own||{},bon=SCN[sc].bonus||{};for(const f in own)own[f].forEach(i=>{owner[i]=+f;troops[i]+=3+(bon[f]||0)});
   me=-1;sel=-1;moved=new Set;turn=1;over='';marching=false;logs=[];raids=[];fort=S.map(()=>0);stats={won:0,lost:0,taken:0};endShown=false;hq={tech:{inf:0,cav:0,ati:0,art:0},doc:{},tax:0};xp=S.map(()=>Array(12).fill(0));port=S.map(()=>0);pact={};ally={};trib={};angry={};betray=0;perk={};tld=[];price=Object.fromEntries(Object.keys(RESN).map(r=>[r,1]));priceOld={...price};linkPorts()}
 const lvl=v=>Math.min(3,v/2|0); // nível do regimento: a cada 2 de experiência, até 3
@@ -59,13 +64,14 @@ function buildPort(i){port[i]=1;linkPorts()}
 const DIP={pact:['Pacto de não agressão',6,5],ally:['Aliança',12,8]};
 const border=f=>owner.map((o,i)=>o==me&&adj[i].some(j=>owner[j]==f)?i:-1).filter(i=>i>=0);
 function dipState(k,f){ // devolve motivo de bloqueio, ou '' se pode
-  if(k=='trib')return trib[f]>turn?`Já cobrado; de novo no turno ${trib[f]}`:!border(f).length?'Sem fronteira com você':'';
-  return ally[f]>turn?(k=='pact'?'Incluso na aliança':'Aliança em vigor'):k=='pact'&&pact[f]>turn?'Pacto em vigor':betray>turn?'Não confiam em traidores':gold[me]<dipCost(k)?'Ouro insuficiente':''}
+  if(k=='trib')return trib[f]>turn?`Já cobrado; de novo no turno ${trib[f]}`:!border(f).length?'Sem fronteira com você':tk(f)=='rec'?'Populista: nunca paga tributo':'';
+  return ally[f]>turn?(k=='pact'?'Incluso na aliança':'Aliança em vigor'):k=='pact'&&pact[f]>turn?'Pacto em vigor':betray>turn?'Não confiam em traidores':
+    tk(f)=='atk'&&strength(me)<strength(f)*.8?'Belicoso: só trata com quem é forte':k=='ally'&&tk(f)=='def'&&!(pact[f]>turn)?'Cauteloso: quer um pacto antes':gold[me]<dipCost(k,f)?'Ouro insuficiente':''}
 function dipAct(k,f){
   if(k=='trib'){trib[f]=turn+3;const mine=border(f).reduce((a,i)=>a+troops[i],0),theirs=owner.reduce((a,o,i)=>a+(o==f?troops[i]:0),0);
-    if(mine>theirs*1.8){const g=Math.ceil(income(f)*1.5);gold[f]-=g;gold[me]+=g;note(`${S[f][4]} paga tributo de ${g} ouro`);return true}
+    if(mine>theirs*(tk(f)=='gold'?1.4:1.8)){const g=Math.ceil(income(f)*1.5);gold[f]-=g;gold[me]+=g;note(`${S[f][4]} paga tributo de ${g} ouro`);return true}
     angry[f]=turn+4;note(`${S[f][4]} recusa o tributo e jura vingança`);return false}
-  const[n,,d]=DIP[k];gold[me]-=dipCost(k);pact[f]=Math.max(pact[f]||0,turn+d);if(k=='ally')ally[f]=turn+d;note(`${n} ${k=='ally'?'firmada':'firmado'} com ${S[f][4]}`);return true}
+  const[n,,d]=DIP[k];gold[me]-=dipCost(k,f);pact[f]=Math.max(pact[f]||0,turn+d);if(k=='ally')ally[f]=turn+d;note(`${n} ${k=='ally'?'firmada':'firmado'} com ${S[f][4]}`);return true}
 const income=f=>(f==me?postGold():0)+(SCN[scn].sub?.[f]&&owner.includes(f)?SCN[scn].sub[f]:0)+owner.reduce((a,o,i)=>a+(o==f?inc(i):0),0)+ // sub: reforços da Corte por turno
   REG.reduce((a,[,st,b])=>a+(st.every(i=>owner[i]==f)?b:0),0);
 const defOf=i=>trait(i,'def')+.2*fort[i]+(docOn(owner[i],'gue')?.15:0);
@@ -76,12 +82,12 @@ function fight(a,b,n){ // n tropas de a atacam b; devolve true se conquistou
   xp[b]=xp[b].map(v=>v+1);troops[b]=Math.max(1,Math.round(troops[b]*(1-.7*pa/pd)));troops[a]+=Math.round(n*.3);return false}
 function ai(f){
   gold[f]+=income(f);
-  const mine=owner.map((o,i)=>o==f?i:-1).filter(i=>i>=0),[need,chance]=AGG[CFG.diff];
+  const mine=owner.map((o,i)=>o==f?i:-1).filter(i=>i>=0),[need0,chance0]=AGG[CFG.diff],T_=tk(f),need=need0*(T_=='atk'?.88:T_=='def'?1.15:1),chance=chance0*(T_=='atk'?1.3:T_=='def'?.7:T_=='gold'?.85:1); /* temperamento mexe na agressão */
   const foes=i=>adj[i].filter(j=>owner[j]!=f);
   const threat=i=>foes(i).reduce((a,j)=>a+troops[j],0);
   const border=mine.filter(i=>foes(i).length).sort((a,b)=>threat(b)-threat(a));
   if(border.length){const t=border[0];if(gold[f]>=8&&fort[t]<2&&Math.random()<.3){fort[t]++;gold[f]-=3} // a IA também ergue fortes na fronteira
-    const n=Math.max(0,Math.floor(gold[f]/cost(t)));troops[t]+=n;gold[f]-=n*cost(t)}
+    const n=Math.max(0,Math.floor(gold[f]/cost(t)));troops[t]+=n+(T_=='rec'&&turn%2?1:0);gold[f]-=n*cost(t)} /* populista ganha voluntários */
   if(gold[f]>=5&&Math.random()<.08){const c=mine.find(i=>COAST.includes(i)&&!port[i]);if(c!=null){buildPort(c);gold[f]-=5}} // a IA também constrói portos
   for(const i of mine){
     if(owner[i]!=f||troops[i]<2)continue;
@@ -118,7 +124,7 @@ const resInc=i=>{const r=resOf(i);if(!r||!price[r])return 0;return Math.round(RE
 function updPrices(){priceOld={...price};for(const r in RESN){let p=price[r]||1;p+=(1-p)*.12+(Math.random()-.5)*.22;
   if(Math.random()<.06){const up=Math.random()<.5;p*=up?1.45:.65;if(me>=0&&owner.some((o,j)=>o==me&&resOf(j)==r))note(`${up?'Alta':'Queda'} no preço ${RESN[r][2]}`)}
   price[r]=Math.round(Math.max(.5,Math.min(2.2,p))*100)/100}}
-function closeTurn(){updPrices();
+function closeTurn(){updPrices();hist.push(owner.slice());if(hist.length>200)hist.shift(); /* histórico para o balanço */
   for(const k in posts)if(posts[k]>=0&&owner[posts[k]]!=me){note(`${S[posts[k]][4]} deixou o cargo de ${POSTS[k][0]}: ${TW1} perdido`);posts[k]=-1} // cargo vago quando o território cai
   {const t=postTroops();if(t){const own=owner.map((o,i)=>o==me?i:-1).filter(i=>i>=0),b=own.find(danger)??own.find(i=>adj[i].some(j=>owner[j]!=me))??own[0];if(b!=null){troops[b]+=t;onNote(`Guerra: +${t} tropas em ${S[b][1]}`)}}}
   cmd=cmdMax();drawCards(1+(postOk('est')&&gs(posts.est)[1]>=60?1:0));
