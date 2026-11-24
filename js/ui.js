@@ -4,7 +4,10 @@ function ui(){
   {const mm=$('mapMode'),mv=CFG.mv||'trp';mm.hidden=!!B||!!HQ||me<0||!!over; /* vista do mapa: cada modo mostra só o que importa */
     mm.innerHTML=[['ter','flag','Territórios','Só as siglas: o mapa limpo para ver quem domina o quê'],['trp','swords','Tropas','Siglas, tropas e exércitos'],['eco','coin','Economia','Renda e recurso de cada '+TW1]].map(([k,ic,t,h])=>`<button data-mv="${k}" class="${mv==k?'on':''}" data-help="${h}" aria-pressed="${mv==k}">${I(ic)}<span>${t}</span></button>`).join('')}
   $('hqBar').hidden=!HQ;$('act').innerHTML='';$('act').hidden=true;$('hud').innerHTML='';
-  if(HQ){$('hqBar').innerHTML=`<span>${I('coin')}Ouro ${gold[me]} (+${income(me)}) · Turno ${turn}</span><button data-a="hqexit" class="end">Voltar ao mapa${I('play')}</button>`;
+  if(HQ){const own=owner.map((o,i)=>o==me?i:-1).filter(i=>i>=0),tl=['inf','cav','ati','art'].reduce((a,t)=>a+(hq.tech[t]||0),0),pc=Object.keys(POSTS).filter(p=>posts[p]>=0&&owner[posts[p]]==me).length; /* barra de status do quartel-general */
+    $('hqBar').innerHTML=`<div class="hqs"><span data-help="Ouro em caixa e renda por turno">${I('coin')}<b>${gold[me]}</b><small>+${income(me)}/turno</small></span><span data-help="Tropas em todos os seus ${TW}">${I('swords')}<b>${own.reduce((a,i)=>a+troops[i],0)}</b><small>tropas</small></span>
+      <span data-help="Generais com cargo">${I('star')}<b>${pc}/${Object.keys(POSTS).length}</b><small>cargos</small></span><span data-help="Doutrinas adotadas">${I('flag')}<b>${DOC.filter(([id])=>hq.doc[id]).length}/${DOC.length}</b><small>doutrinas</small></span>
+      <span data-help="Níveis de treino somados">${I('up')}<b>${tl}/12</b><small>treino</small></span><span>${I(turn%4==3?'moon':'sun')}<b>Turno ${turn}</b><small>${TOD[turn%4][0]}</small></span></div><button data-a="hqexit" class="end">Voltar ao mapa${I('play')}</button>`;
     $('panel').innerHTML=`<h2>Quartel-General</h2><div class="chips"><span>${I('coin')}Ouro ${gold[me]} (+${income(me)})</span><span>Turno ${turn}</span></div>
       <p>Clique numa sala da maquete ou escolha abaixo.</p>`+ROOMS.map(R=>`<button data-a="room" data-r="${R.k}">${R.n}: ${R.s}</button>`).join('')+
       '<button data-a="room" data-r="dip">Chancelaria: Diplomacia</button><button data-a="room" data-r="cam">Torre de Vigia: Campanha</button><button data-a="hqexit" class="end">Voltar ao mapa</button>';
@@ -13,8 +16,10 @@ function ui(){
       ic=t=>`<img src="${icon(t,pf,true,false)}" alt="${UT[t][0]}" title="${UT[t][0]}">`,eld=B.units.find(u=>u.side!=B.ps&&u.ld),myld=B.units.find(u=>u.side==B.ps&&u.ld),
       left=alive(B.ps).filter(v=>!v.done).length,armed=B.endArm>Date.now();
     let obj,prog,ptxt; /* objetivo numa frase e um indicador de progresso */
-    if(B.kind=='cerco'&&!B.ps&&B.gate?.hp>0){obj='arrombe o portão';prog=1-B.gate.hp/B.gate.max;ptxt=`Portão ${B.gate.hp}/${B.gate.max}`}
-    else if(B.kind=='cerco'&&!B.ps){obj='leve uma unidade até a praça (bandeira)';prog=B.taken?1:.5;ptxt='Portão aberto'}
+    const bks=[...(B.brk?.values()||[])],gates=bks.filter(b=>b.t=='D'),lads=B.T.flat().filter(t=>t=='L').length,rub=B.T.flat().filter(t=>t=='R').length; /* cerco: várias formas de entrar */
+    if(B.kind=='cerco'&&!B.ps&&!breached()){obj='abra caminho: arrombe um portão, derrube um trecho da muralha com canhões ou encoste escadas com a infantaria';prog=Math.max(0,...gates.map(g=>1-g.hp/g.max),...bks.map(b=>1-b.hp/b.max));ptxt=`${gates.length} portões · muralha mais fraca ${Math.round(prog*100)}% danificada`}
+    else if(B.kind=='cerco'&&!B.ps){obj='leve uma unidade até a praça (bandeira)';prog=B.taken?1:.5;ptxt=`${rub} brecha${rub==1?'':'s'} · ${lads} escada${lads==1?'':'s'}`}
+    else if(B.kind=='cerco'&&B.ps){obj='segure a cidade: derrube as escadas, use as torres e não deixe tomarem a praça';prog=Math.min(1,(B.round-1)/MAXR);ptxt=`Rodada ${Math.min(B.round,MAXR)}/${MAXR} · ${lads} escada${lads==1?'':'s'} · ${rub} brecha${rub==1?'':'s'}`}
     else if(B.goals&&!B.taken){const held=B.goals.filter(([gx,gy])=>B.obj=='vilas'?B.vil.get(gx+','+gy)===0:B.units.some(u=>u.side==0&&u.hp>0&&u.x==gx&&u.y==gy)).length, /* objetivo extra do mapa */
       ld0=B.units.find(u=>u.side==0&&u.ld),dg=B.obj=='saida'?Math.abs(ld0.x-B.goals[0][0])+Math.abs(ld0.y-B.goals[0][1]):0;
       obj=OBJ[B.obj][B.ps?2:1]+(B.ps?', até a última rodada':', ou derrube o comandante');prog=B.obj=='saida'?1-dg/GW:held/B.goals.length;if(B.ps)prog=1-prog;
@@ -27,7 +32,7 @@ function ui(){
       :`<div class="forces"><div><span>Suas tropas</span><b>${total(B.ps)}</b></div><div class="fb"><i style="width:${Math.round(total(B.ps)/Math.max(1,total(0)+total(1))*100)}%"></i></div><div><span>Inimigo</span><b>${B.kind=='emboscada'?'?':total(1-B.ps)}</b></div></div>`;
     $('panel').innerHTML=`<h2>${B.ps?'Defesa':'Batalha'} de ${S[B.to][1]}</h2>
       <div class="objbar"><p><b>Objetivo:</b> ${obj}.</p><div class="prog"><i style="width:${Math.round(prog*100)}%"></i></div><small>${ptxt}</small></div>
-      <div class="chips"><span data-help="${esc(KIND[B.kind][1])}">${KIND[B.kind][0]}</span><span>${B.bio.nome}</span>${B.obj?`<span data-help="${esc(OBJ[B.obj][B.ps?2:1])}">${I('star')}${OBJ[B.obj][0]}</span>`:''}${[...B.vil.values()].some(v=>v==B.ps)?`<span data-help="Cada vila sua no fim da batalha rende 2 ouro">${I('coin')}Vilas +${2*[...B.vil.values()].filter(v=>v==B.ps).length}</span>`:''}${[...B.qt.values()].some(v=>v==B.ps)?'<span data-help="Seu quartel recruta 1 regimento a cada 2 rodadas">Quartel</span>':''}${B.wx=='rain'?'<span data-help="Chuva: tiro com 1 casa a menos de alcance">Chuva</span>':B.wx=='dry'?'<span data-help="Seca: infantaria anda 1 casa a menos">Seca</span>':''}${pwOn(B.ps,B.pw[B.ps]?.k)?`<span>${POW[B.pw[B.ps].k][0]} ativo</span>`:''}${B.rl[B.ps]==B.round?'<span>Brado ativo</span>':''}${B.amb==B.round?'<span>Emboscada</span>':''}${B.chg==B.round?'<span>Carga</span>':''}</div>
+      <div class="chips"><span data-help="${esc(KIND[B.kind][1])}">${KIND[B.kind][0]}</span><span>${B.bio.nome}</span>${B.obj?`<span data-help="${esc(OBJ[B.obj][B.ps?2:1])}">${I('star')}${OBJ[B.obj][0]}</span>`:''}${[...B.vil.values()].some(v=>v==B.ps)?`<span data-help="Cada vila sua no fim da batalha rende 2 ouro">${I('coin')}Vilas +${vgTot(B.ps)}</span>`:''}${[...B.qt.values()].some(v=>v==B.ps)?'<span data-help="Seu quartel recruta 1 regimento a cada 2 rodadas">Quartel</span>':''}${B.wx=='rain'?'<span data-help="Chuva: tiro com 1 casa a menos de alcance">Chuva</span>':B.wx=='dry'?'<span data-help="Seca: infantaria anda 1 casa a menos">Seca</span>':''}${pwOn(B.ps,B.pw[B.ps]?.k)?`<span>${POW[B.pw[B.ps].k][0]} ativo</span>`:''}${B.rl[B.ps]==B.round?'<span>Brado ativo</span>':''}${B.amb==B.round?'<span>Emboscada</span>':''}${B.chg==B.round?'<span>Carga</span>':''}</div>
       ${B.aim?'<p class="warn">Ataque de fogo: clique numa unidade inimiga.</p>':''}
       <div class="ctx">${ctx}</div>
       <div id="tcard">${terrCard()}</div>
@@ -148,10 +153,12 @@ const onPanel=e=>{const b=e.target.closest('button');if(!b||cam||aiShow)return;c
   if(a=='brally'){B.rl[B.ps]=B.round;sfx.win()}
   if(a=='bpow'&&!B.pw[B.ps]&&!B.busy)usePower(B.ps);
   if(a=='bburn'&&B.selU){const br=bridgeNear(B.selU);if(br)burnBridge(B.selU,br);B.selU=B.undo=null}
+  if(a=='bladder'&&B.selU){const ls=ladderSpot(B.selU);if(ls)placeLadder(B.selU,ls);B.selU=B.undo=null}
+  if(a=='bdrop'&&B.selU){const ln=ladderNear(B.selU);if(ln)dropLadder(B.selU,ln);B.selU=B.undo=null}
   if(a=='bwait'&&B.selU){B.selU.done=true;B.selU=B.undo=null}
   if(a=='bcancel'){if(B.undo){const{u,x:ux,y:uy}=B.undo;u.x=ux;u.y=uy;u.moved=u.done=false;B.selU=u;B.undo=null}else B.selU=null}
   if((a=='bpow'||a=='brally')&&B.selU&&!B.selU.done){const su=B.selU;setTimeout(()=>{if(B&&B.selU===su&&!su.done&&!B.busy)battleCmd(su)},B.cut?1750:250)}
-  if(B&&!B.busy&&(a=='bwait'||a=='bburn')&&alive(B.ps).every(v=>v.done))return bEnd();
+  if(B&&!B.busy&&['bwait','bburn','bladder','bdrop'].includes(a)&&alive(B.ps).every(v=>v.done))return bEnd();
   if(a=='bundo'&&B.undo){const{u,x:ux,y:uy}=B.undo;u.x=ux;u.y=uy;u.moved=u.done=false;B.selU=u;B.undo=null}
   if(a=='start'){me=sel;say(`${S[me][4]} ergue a bandeira em ${S[me][1]}`);scr()}
   if(a=='rec'){tutEv('rec');pushU(`recrutar em ${S[sel][1]}`);const n=+b.dataset.n;troops[sel]+=n;gold[me]-=n*cost(sel)}
@@ -178,7 +185,7 @@ cv.addEventListener('click',e=>{if(cam||aiShow||dragEat>Date.now())return;if(HQ)
   if(marching&&adj[sel].includes(i)){if(owner[i]==me)pushU(`marcha para ${S[i][1]}`);else undoS=[];tryAct(i)}else{if(sel!=i)tab='army';sel=i;marching=false;mapSee(i);if(me>=0&&!over){ui();return owner[i]==me?mapCmd(i):otherCmd(i)}}
   ui()});
 cv.addEventListener('mousemove',e=>{const tip=$('tip');if(!owner)return;if(HQ){tip.hidden=true;const hk=hqSpot(e);if(hk&&hk!=HQ.hov)sfx.tick();HQ.hov=hk;cv.style.cursor=hk?'pointer':'';return}if(B){const hh=hudAt(e);cv.style.cursor=hh?'pointer':'';const c=hh?[-1,-1]:bCell(e),k=c.join();if(k!=B.hovK){B.hovK=k;B.hov=c;const tc=$('tcard');if(tc)tc.innerHTML=terrCard();help(cellHelp());
-      const t=B.T[c[1]]?.[c[0]];if(t&&!B.busy&&!B.clash){const n=DEFS[t]||0,blk='mwW'.includes(t)||(t=='D'&&B.gate?.hp>0);tip.innerHTML=`<span><b>${TN[t].split(':')[0]}</b> <span class="stars">${'★'.repeat(n)}${'☆'.repeat(3-n)}</span><br><small>${blk?'intransponível':COSTS[t]?'custa 2 passos':'custa 1 passo'}${n?` · +${n==3?30:20}% defesa`:''}</small></span>`;tip.hidden=false}else tip.hidden=true}
+      const t=B.T[c[1]]?.[c[0]];if(t&&!B.busy&&!B.clash){const n=DEFS[t]||0,blk='mwWD'.includes(t)||(t=='T'&&B.ps!=1);tip.innerHTML=`<span><b>${TN[t].split(':')[0]}</b> <span class="stars">${'★'.repeat(n)}${'☆'.repeat(3-n)}</span><br><small>${blk?'intransponível':COSTS[t]?'custa 2 passos':'custa 1 passo'}${n?` · +${n==3?30:20}% defesa`:''}</small></span>`;tip.hidden=false}else tip.hidden=true}
     if(!tip.hidden){const r=$('stage').getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;tip.style.left=Math.min(mx+18,r.width-tip.offsetWidth-10)+'px';tip.style.top=Math.max(4,my+20)+'px'}return}const i=pick(e);
   if(i!=hov){hov=i;draw();
     if(i>=0){let oddT='';
@@ -202,9 +209,11 @@ function openCmd(items,cx,cy,first,head){ /* items: [rótulo, ação, atributos,
   cmdEl.style.left=Math.max(6,L)+'px';cmdEl.style.top=Math.max(6,Math.min(cv.clientHeight-h-6,T))+'px';
   (cmdEl.querySelector(`[data-a=${first}]:not(.off)`)||cmdEl.querySelector('button:not(.off)'))?.focus({preventScroll:true})}
 function closeCmd(){cmdEl.hidden=true}
-function battleCmd(s){if(!B||B.busy||B.prep||!s||s.done||s.hp<=0)return;const tg=alive(1-B.ps).some(f=>inR(s,f)&&seen(f))||gateFor(s),br=B.kind=='travessia'&&bridgeNear(s),pk=S[B.ps?B.was:B.af][5];
+function battleCmd(s){if(!B||B.busy||B.prep||!s||s.done||s.hp<=0)return;const tg=alive(1-B.ps).some(f=>inR(s,f)&&seen(f))||!!breakFor(s),ls=ladderSpot(s),ln=ladderNear(s),br=B.kind=='travessia'&&bridgeNear(s),pk=S[B.ps?B.was:B.af][5];
   openCmd([['Atacar','batk','',!tg,tg?'Escolha um alvo marcado em vermelho':'Nenhum inimigo ao alcance daqui'],
     ...(br?[['Queimar ponte','bburn','',false,'Destrói a ponte ao lado. Gasta a ação desta unidade']]:[]),
+    ...(ls?[['Encostar escada','bladder','',false,'A muralha ao lado vira passagem (custa 2 passos). Gasta a ação desta unidade']]:[]),
+    ...(ln?[['Derrubar escada','bdrop','',false,'Empurra a escada: a muralha fecha de novo. Gasta a ação desta unidade']]:[]),
     ...(!B.pw[B.ps]?[[POW[pk][0],'bpow','',false,`Poder do líder, uma vez por batalha: ${POW[pk][1]}`]]:[]),
     ...(!B.rl[B.ps]?[['Brado','brally','',false,'+40% de dano em todas as suas unidades nesta rodada']]:[]),
     ['Esperar','bwait','',false,'Encerra a vez desta unidade'],
@@ -229,12 +238,12 @@ function statCard(u){const f=u.side?B.was:B.af,mine=u.side==B.ps,weakT=Object.ke
     <small>${mine?'Sua tropa':'Tropa inimiga'}${u.lv?` · nível ${u.lv}`:''}${u.done&&mine?' · já agiu':''}</small>${u.j>=0&&perk[stOf(u)+'-'+u.j]?.length?`<div class="chips">${perk[stOf(u)+'-'+u.j].map(id=>{const q=PERKS.find(z=>z[0]==id);return`<span data-help="${q[2]}">${q[1]}</span>`}).join('')}</div>`:''}
     <div class="hp ${mine?'me':'foe'}" data-help="Vida: cada ponto é uma tropa"><i style="width:${Math.round(u.hp/u.max*100)}%"></i><span>${u.hp}/${u.max}</span></div>
     <div class="par"><span data-help="Casas que anda por vez">${I('boot')}${mvOf(u)}</span><span data-help="Alcance do ataque, em casas">${I('aim')}${rgOf(u)}</span>${strT?`<span data-help="${esc(`Forte: causa +50% de dano em ${UT[strT][0]}`)}">${I('up')}<img src="${icon(strT,f,mine,false)}" alt="${UT[strT][0]}"></span>`:''}${weakT?`<span data-help="${esc(`Fraca: leva +50% de dano de ${UT[weakT][0]}`)}">${I('down')}<img src="${icon(weakT,f,mine,false)}" alt="${UT[weakT][0]}"></span>`:''}</div></div></div>${u.el?`<p class="elite">${I('star')}<b>${u.el[0]}</b> · ${elTxt(u.el)}</p>`:''}`}
-const DEFS={f:3,v:3,h:2},COSTS={h:2,a:2};
+const DEFS={f:3,v:3,h:2,Q:3,c:2,T:3,K:2},COSTS={h:2,a:2,L:2,R:2};
 function tileThumb(t,[cx,cy]){B.th=B.th||{};if(B.th[t])return B.th[t];const[c,g]=mk(CS,CS);g.drawImage(B.bg,cx*CS,cy*CS,CS,CS,0,0,CS,CS);
   if(t=='f'){const U=CS/18,q=(a,bb,w,hh,col)=>{g.fillStyle=col;g.fillRect(Math.round(a*U),Math.round(bb*U),Math.ceil(w*U),Math.ceil(hh*U))};[[1,0],[9,2],[4,8]].forEach(([a,bb],k)=>tree(q,B.bio.tree,a,bb,k))}
   return B.th[t]=c.toDataURL()}
 function terrCard(){if(!B)return'';const c=B.hov&&B.T[B.hov[1]]?.[B.hov[0]]?B.hov:B.selU?[B.selU.x,B.selU.y]:null;if(!c)return'';
-  const t=B.T[c[1]][c[0]],n=DEFS[t]||0,blk='mwW'.includes(t)||(t=='D'&&B.gate?.hp>0),nome=TN[t].split(':')[0];
+  const t=B.T[c[1]][c[0]],n=DEFS[t]||0,blk='mwWD'.includes(t)||(t=='T'&&B.ps!=1),nome=TN[t].split(':')[0];
   return`<div class="terr"><img src="${tileThumb(t,c)}" alt=""><div><b>${nome}</b><span class="stars" data-help="Defesa do terreno">${'★'.repeat(n)}${'☆'.repeat(3-n)}</span>
     <small>${blk?'Intransponível':COSTS[t]?'Custa 2 passos':'Custa 1 passo'}${n?` · +${n==3?30:20}% defesa`:''}${t=='h'?' · tiro +1':''}${t=='v'?' · cura 2 por rodada':''}${t=='b'?' · pode ser queimada':''}${t=='P'?' · o atacante vence se ficar nela':''}</small></div></div>`}
 function cellHelp(){const[hx,hy]=B.hov||[];const t=B.T[hy]?.[hx];if(!t)return'';const u=B.units.find(v=>v.hp>0&&v.x==hx&&v.y==hy&&seen(v)),s=B.selU;

@@ -215,6 +215,9 @@ const onScr=e=>{const k=e.target.closest('button')?.dataset.s;if(!k)return;sfx.s
   else if(k=='close')scr();
   else if(k.startsWith('enc-'))showEnc(+k.slice(4));
   else if(k.startsWith('pick-')){pickI=+k.slice(5);showSetup()}
+  else if(k=='bgo'){scr();ui()}
+  else if(k=='bauto2'){scr();if(B){B.prep=false;bEnd(true)}}
+  else if(k=='bback'){if(B&&!B.ps){const f=B.from,t=B.to;B=null;moved.add(f);note(`Ataque a ${S[t][1]} cancelado: as tropas ficam em ${S[f][1]}`);scr();ui()}}
   else if(k.startsWith('dipf-'))showDip(+k.slice(5));
   else if(k.startsWith('dipt-')){window.dipTab=k.slice(5);showDip(window.dipF)}
   else if(k=='dipx'){const b=e.target.closest('button'),ok=dipAct(b.dataset.k,+b.dataset.f);ok?sfx.win():sfx.lose();if(ok&&b.dataset.k=='ally')storyAlly(+b.dataset.f);showDip(window.dipF);ui()}
@@ -230,6 +233,7 @@ const onScr=e=>{const k=e.target.closest('button')?.dataset.s;if(!k)return;sfx.s
   else if(k=='hq-dip'){const b=e.target.closest('button');dipAct(b.dataset.k,+b.dataset.f)?sfx.win():sfx.lose();save();showRoom(HQ.room);ui()}
   else if(k.startsWith('hq-')){const[,a,id]=k.split('-');
     if(a=='map')return closeHQ();
+    if(a=='go'){if(id=='cam'){$('room').hidden=true;HQ.zoom=null;return showCampaign()}HQ.zoom={room:id,start:Date.now()-500,dir:1};return showRoom(id)} // aba: troca de sala sem voltar
     if(a=='ghelp'){HQ.ghelp=!HQ.ghelp;return showRoom('gen')}
     if(a=='close'){$('room').hidden=true;const z=HQ.zoom={room:HQ.room,start:Date.now(),dir:-1};setTimeout(()=>{if(HQ&&HQ.zoom===z)HQ.zoom=null},340);return ui()}
     if(a=='doc'){gold[me]-=DOC.find(d=>d[0]==id)[3];hq.doc[id]=1;note('Doutrina adotada: '+DOC.find(d=>d[0]==id)[1])}
@@ -251,7 +255,8 @@ document.addEventListener('keydown',e=>{ // atalhos: clicam o botão corresponde
       let best=-1,bs=1e9;cand.forEach(j=>{if(j==from)return;const[jx,jy]=proj(...px(j)),dx=jx-fx_,dy=jy-fy,al=dx*dv[0]+dy*dv[1];if(al<=0)return;const sc=Math.hypot(dx,dy)+Math.abs(dx*dv[1]-dy*dv[0])*1.5;if(sc<bs){bs=sc;best=j}});
       if(best>=0){if(marching)hov=best;else sel=best;sfx.sel();ui()}return}
     if(k=='enter'&&marching&&adj[sel].includes(hov)){e.preventDefault();if(tryAct(hov))hov=-1;return ui()}}
-  if(k=='q')return HQ?$('panel').querySelector('[data-a=hqexit]').click():openHQ();
+  if(HQ&&/^[1-6]$/.test(k)){const tk=HQTABS[+k-1][0];if(tk=='cam')return showCampaign();HQ.zoom={room:tk,start:Date.now()-500,dir:1};return showRoom(tk)} // atalhos das salas
+  if(k=='q')return HQ?closeHQ():openHQ();
   const a=B?{e:'bend',a:'bauto',z:'bcancel',w:'bwait'}[k]:{e:'end',m:'march',r:'rec',f:'fort',z:'undo',n:'next'}[k];
   if(a)document.querySelector(`#cmd:not([hidden]) [data-a="${a}"]:not(:disabled), aside [data-a="${a}"]:not(:disabled), #hud [data-a="${a}"]:not(.off)`)?.click()});
 

@@ -1,6 +1,6 @@
 // quartel-general: maquete isométrica, salas e menus
 // ---------- quartel-general: maquete isométrica em 810x610, no tamanho da tela (medidas de pixel em dobro, detalhes de 1 px por cima) ----------
-const HW=1600,HHh=1000,HDX=(HW-810)/2,HDY=(HHh-610)/2,HCX=405+HDX,HCY=305+HDY,[hqc,hg]=mk(HW,HHh),IS=26,IH=13,ZS=3.2,HX=404+HDX,HY=248+HDY; /* buffer maior que a tela: a grama vai até as bordas */
+const HW=1800,HHh=1900,HDX=(HW-810)/2,HDY=(HHh-610)/2,HCX=405+HDX,HCY=305+HDY,[hqc,hg]=mk(HW,HHh),IS=26,IH=13,ZS=3.2,HX=404+HDX,HY=248+HDY; /* buffer maior que a tela: a grama vai até as bordas */
 const iso=(a,b,z=0)=>[HX+(a-b)*IS,HY+(a+b)*IH-z*ZS];
 const poly=(g,pts,col)=>{g.fillStyle=col;g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.fill()};
 function ibox(g,a,b,z,w,d,h,top,left,right){ // caixa com canto de trás em (a,b): w ao longo de a, d ao longo de b, h de altura
@@ -27,14 +27,14 @@ function renderHQ(){
   const ball=(p,r,col)=>{g.fillStyle=col;g.beginPath();g.arc(p[0],p[1],r*2,0,7);g.fill()};
   const bx=(a,b,z,w,d,hh,c)=>ibox(g,a,b,z,w,d,hh,...c);
   g.setTransform(1,0,0,1,0,0);g.fillStyle='#1d2418';g.fillRect(0,0,HW,HHh);
-  for(let a=-26;a<40;a++)for(let b=-26;b<40;b++){const p=iso(a,b),v=hash(a+9,b+9);if(p[0]<-40||p[0]>HW+40||p[1]<-30||p[1]>HHh+30)continue; // gramado: tufos, capim, flores, pedrinhas
+  for(let a=-40;a<52;a++)for(let b=-40;b<52;b++){const p=iso(a,b),v=hash(a+9,b+9);if(p[0]<-40||p[0]>HW+40||p[1]<-30||p[1]>HHh+30)continue; // gramado: tufos, capim, flores, pedrinhas
     dm(a,b,0,['#8f9f2c','#84942a','#9aa934','#8a9a2a'][v%4]);
     if(v%2==0)dot(p,-5+v%9,4+v%5,3,1,'#c9c63a');if(v%3==0)dot(p,v%7-3,5+v%4,1,3,'#66791f');if(v%4==0)dot(p,3-v%8,8,2,1,'#a9b83a');
     if(v%7==0){dot(p,2,6,3,1,'#fff');dot(p,3,5,1,3,'#fff');dot(p,3,6,1,1,gold)}
     if(v%23==0){dot(p,-4,5,5,3,'#8d877b');dot(p,-3,4,3,1,'#b9b3a6')}}
   for(let k=0;k<9;k++){const v=hash(k,3);dm(12.7+k*.95,5.2+v%3*.15,0,k%2?'#cfc6b0':'#b9b09a',.8,.8);dm(12.9+k*.95,6.3+v%2*.2,0,k%2?'#b9b09a':'#d8cfba',.7,.7)}
-  [[-5.5,-1],[-4.5,4],[-5,9.5],[5,-5],[10,-4],[-11,3],[-9,13],[-3,-9],[16,-6],[21,2],[22,11],[18,17],[-14,8],[2,21],[12,22],[24,-2],[-8,-6]].forEach(([a,b],k)=>itree(g,a,b,k+1));
-  for(let a=-26;a<40;a++)for(let b=-26;b<40;b++){const p=iso(a,b),v=hash(a+31,b+17);if(p[0]<-40||p[0]>HW+40||p[1]<-30||p[1]>HHh+30)continue; // capim fino
+  [[-5.5,-1],[-4.5,4],[-5,9.5],[5,-5],[10,-4],[-11,3],[-9,13],[-3,-9],[16,-6],[21,2],[22,11],[18,17],[-14,8],[2,21],[12,22],[24,-2],[-8,-6],[-16,-14],[-20,0],[-2,30],[10,30],[26,20],[30,6],[20,28],[-12,22],[-24,12],[6,-16],[-14,-20],[28,-10],[34,14],[16,36]].forEach(([a,b],k)=>itree(g,a,b,k+1));
+  for(let a=-40;a<52;a++)for(let b=-40;b<52;b++){const p=iso(a,b),v=hash(a+31,b+17);if(p[0]<-40||p[0]>HW+40||p[1]<-30||p[1]>HHh+30)continue; // capim fino
     for(let k=0;k<5;k++){const w=hash(v,k);px1(p,-12+w%24,3+(w>>5)%10,['#b5c43c','#6f8226','#d2d65a'][k%3],1,2)}}
   bx(-.7,-.7,0,13.4,13.4,3,STONE);
   for(let t=-.6;t<12.7;t+=.45){const p=iso(t,12.7,3),q=iso(12.7,t,3);px1(p,0,1,'rgba(255,255,255,.25)',8,1);px1(q,-8,1,'rgba(255,255,255,.18)',8,1)} // aresta do embasamento
@@ -71,8 +71,10 @@ function renderHQ(){
   [6.9,8.05].forEach(t=>{wp(1,t,17,27,.9,fd);wp(1,t+.1,18,26,.7,fc);wp(1,t+.38,18,26,.14,gold);wp(1,t+.1,21.4,22.6,.7,gold)}); // escudos no quartel
   ln(pt(1,9.1,27),pt(1,9.9,17),'#dfe5ea',1.2);ln(pt(1,9.9,27),pt(1,9.1,17),'#dfe5ea',1.2);
   wp(0,3.2,13,31,2.5,'#6b4524');wp(0,3.35,14.5,29.5,2.2,'#f0dfb0'); // mapa do Brasil na parede
-  {const p=iso(3.35,0,29.5);g.setTransform(2,1,0,2,p[0],p[1]);g.fillStyle='#3fae48';g.fillRect(5,3,16,9);g.fillRect(8,12,11,5);g.fillRect(11,17,6,4);g.fillRect(3,5,3,4);
-    g.fillStyle='#2f6fb0';g.fillRect(6,6,12,1);g.fillStyle='#b3312a';g.fillRect(14,10,2,2);g.fillRect(9,5,2,2);g.setTransform(1,0,0,1,0,0)}
+  {const p=iso(3.35,0,29.5),[mc,mg]=mk(W,H),im=mg.createImageData(W,H); /* mapa da parede: o Brasil de verdade, seus estados na sua cor */
+    for(let k=0;k<cell.length;k++){const st=cell[k];if(st<0)continue;const o=owner[st],mine=o==me,hh=hue(o);
+      const[r,gg,b]=mine?hsl2rgb(hh/360,.85,.5):hsl2rgb(hh/360,.25,.62);im.data.set([r,gg,b,255],k*4)}
+    mg.putImageData(im,0,0);g.setTransform(2,1,0,2,p[0],p[1]);g.imageSmoothingEnabled=false;g.drawImage(mc,1,1,20,19);g.setTransform(1,0,0,1,0,0)}
   const posted=i=>Object.values(posts).includes(i);[...own].sort((p,q)=>posted(q)-posted(p)).slice(0,3).forEach((i,k)=>{wp(0,6.75+k*1.5,16,33,1.45,posted(i)?'#ffd23f':'#7a6a50');wp(0,6.85+k*1.5,17,32,1.25,gd);wp(0,6.95+k*1.5,18,31,1.05,'#3a2413');const p=iso(7+k*1.5,0,30.5); // retratos dos generais
     g.setTransform(2,1,0,2,p[0],p[1]);g.drawImage(fcv[i],0,0,12,17);g.setTransform(1,0,0,1,0,0)});
   bx(-.7,-1.9,36,13.4,1.9,4,TEAL);bx(-1.9,-.7,36,1.9,13.4,4,TEAL); // telhado azul, telha a telha
@@ -139,7 +141,7 @@ function renderHQ(){
   [[-1.5,13],[3.5,17],[8,17.5],[16,3],[17.5,8],[13.6,13.8]].forEach(([a,b],k)=>itree(g,a,b,k+5))}
 function drawHQ(){
   const now=Date.now(),zm=HQ.zoom,own=owner.map((o,i)=>o==me?i:-1).filter(i=>i>=0),fc=`hsl(${hue(me)},80%,50%)`,P=(a,b,z)=>iso(a,b,z);
-  const cw=cv.width,ch=cv.height,hs=Math.min(cw/810,ch/610);HQ.s=hs; /* a maquete cabe na tela; a grama cobre o resto */
+  const cw=cv.width,ch=cv.height,hs=Math.min(cw/(cw<ch?640:810),ch/610);HQ.s=hs; /* em pé (celular), a maquete enche a largura */ /* a maquete cabe na tela; a grama cobre o resto */
   x.fillStyle='#1d2418';x.fillRect(0,0,cw,ch);x.save();x.translate(cw/2,ch/2);x.scale(hs,hs);x.translate(-HCX,-HCY);
   const ip=Math.min(1,(now-HQ.t0)/1300),ie=1-Math.pow(1-ip,3); // entrada: a câmera atravessa o pátio a partir do portão
   if(ip<1){const[gx,gy]=P(14.4,6,0),s=1+1.6*(1-ie);x.translate(HCX,HCY);x.scale(s,s);x.translate(-(HCX+(gx-HCX)*(1-ie)),-(HCY+(gy-HCY)*(1-ie)))}
@@ -163,6 +165,9 @@ function drawHQ(){
   [['inf',1.5,7.9],['cav',3.3,8.2],['ati',3,9.6],['art',5.2,8]].forEach(([t,a,b],k)=>{for(let n=0;n<(hq.tech[t]||0);n++)fig.push([a+n*.35,b+n*.25,{type:t,sk:'LTBD'[(k+n)%4]},me,k%2?-1:1,3])}); // cada nível de treino põe mais um soldado no quartel
   fig.sort((p,q)=>p[0]+p[1]-q[0]-q[1]).forEach(([a,b,u,f,dir,z],k)=>{const[sx,sy]=P(a,b,z),sp=sprite(u,f,true,Math.floor(now/450+k*.3)%2);
     x.fillStyle='rgba(0,0,0,.25)';x.fillRect(sx-18,sy-4,36,6);x.save();x.translate(sx-dir*39,sy-66);x.scale(dir,1);x.drawImage(sp,0,0,78,72);x.restore()});
+  if(!CFG.calm){const tt=now%1400/1400,[dx,dy]=P(4.35,7.25,10.5); /* treino: o boneco leva golpes; o ouro da tesouraria cintila */
+    if(tt<.25){x.fillStyle=`rgba(255,240,170,${1-tt*4})`;for(let i=0;i<6;i++){const an=i*1.05+now/300,r=6+tt*40;x.fillRect(dx+Math.cos(an)*r-2,dy+Math.sin(an)*r*.6-2,4,4)}}
+    for(let k=0;k<4;k++){const ph=(now/700+k*1.7)%3;if(ph>1)continue;const[sx,sy]=P(8.6+k*.55,8.7+(k%2)*.5,6+k%2*2);x.fillStyle=`rgba(255,250,210,${1-Math.abs(ph-.5)*2})`;x.fillRect(sx-1,sy-5,2,10);x.fillRect(sx-5,sy-1,10,2)}}
   {const tod=turn%4,tint=TOD[tod][2],glow=(a,b,z,r,a0)=>{const[gx,gy]=P(a,b,z),gr=x.createRadialGradient(gx,gy,0,gx,gy,r);gr.addColorStop(0,`rgba(255,200,90,${a0})`);gr.addColorStop(1,'rgba(255,200,90,0)');x.fillStyle=gr;x.fillRect(gx-r,gy-r,r*2,r*2)};
     if(tint[3]){x.fillStyle=`rgba(${tint.slice(0,3)},${tint[3]})`;x.fillRect(0,0,HW,HHh)} // período do dia
     const night=tod==3,dusk=tod==2;x.globalCompositeOperation='lighter';
@@ -173,10 +178,11 @@ function drawHQ(){
     if(night)for(let k=0;k<14;k++){const v=hash(k,7),t=now/900+k,[gx,gy]=P(-4+v%22,-4+(v>>5)%22,0); // vaga-lumes
       if((t|0)%3)continue;x.fillStyle=`rgba(220,255,140,${.5+.5*Math.sin(t*3)})`;x.fillRect(gx+Math.sin(t)*10,gy-20+Math.cos(t*1.3)*8,2,2)}}
   x.textBaseline='top';x.textAlign='center';HQ.bub=[];
-  if(!zm&&$('room').hidden)SPOTS.forEach((sp,k)=>{const hot=HQ.hov==sp.k,[cx,cy]=P(...sp.at),bh=hot?34:20,by=cy-sp.up*2+Math.sin(now/400+k)*4-(hot?14:0),w=(x.font=FONT(8),Math.ceil(Math.max(x.measureText(sp.n.toUpperCase()).width,hot?x.measureText(sp.s).width:0))+18),R=ROOMS.find(r=>r.k==sp.k);
+  if(!zm&&$('room').hidden)SPOTS.forEach((sp,k)=>{const hot=HQ.hov==sp.k,[cx,cy]=P(...sp.at),bh=hot?34:20,by=cy-sp.up*2+Math.sin(now/400+k)*4-(hot?14:0),[nb,info]=hqInfo(sp.k),sub=info||sp.s,w=(x.font=FONT(8),Math.ceil(Math.max(x.measureText(sp.n.toUpperCase()).width,hot?x.measureText(sub).width:0))+18),R=ROOMS.find(r=>r.k==sp.k);
     x.fillStyle='#3b2618';x.beginPath();x.moveTo(cx-9,by+bh);x.lineTo(cx+9,by+bh);x.lineTo(cx,by+bh+13);x.fill(); // balão de pergaminho com rabicho
     parch(x,cx-w/2-4,by-4,w+8,bh+8,9);if(hot){x.strokeStyle='#f08a3a';x.lineWidth=2;rr(x,cx-w/2-4,by-4,w+8,bh+8,9);x.stroke()}
-    x.fillStyle='#3a2a1f';x.font=FONT(8);x.fillText(sp.n,cx,by+1);if(hot){x.fillStyle='#6e5843';x.fillText(sp.s,cx,by+17)}
+    x.fillStyle='#3a2a1f';x.font=FONT(8);x.fillText(sp.n,cx,by+1);if(hot){x.fillStyle='#6e5843';x.fillText(sub,cx,by+17)}
+    if(nb){const bx=cx+w/2+2,b2=by-4;x.fillStyle='#22140c';x.beginPath();x.arc(bx,b2,10,0,7);x.fill();x.fillStyle='#d0452f';x.beginPath();x.arc(bx,b2,8,0,7);x.fill();x.fillStyle='#fff';x.font=FONT(7);x.fillText(''+nb,bx,b2-6)} // selo: quantas ações estão à mão
     if(!zm)HQ.bub.push([sp.k,cx-w/2,by,w,bh+13])});
   x.restore();
   if(ip<.55){const hw=cw/2,o=ip/.55*(hw+20);[[-o,0],[hw+o,1]].forEach(([dx,k])=>{x.fillStyle='#6b4524';x.fillRect(dx,0,hw,ch);x.fillStyle='#4a2c17'; // portão abrindo
@@ -199,9 +205,20 @@ $('room').addEventListener('change',e=>{const el=e.target;if(el.dataset.post==nu
   save();renderHQ();sfx.win();showRoom('gen');ui()});
 const GEN_FX={com:g=>`+${Math.floor(g[2]/25)} ouro por turno`,mil:g=>`+${Math.floor(g[0]/30)} tropas por turno na fronteira`,est:g=>`+1 de Comando${g[1]>=60?' e +1 carta por turno':''}`,dip:()=>'pactos e alianças pela metade do preço'};
 const DOC_IC={log:'coin',eng:'shield',gue:'swords'};
+// ---------- estado de cada sala: o que dá para fazer agora (selo no balão e na aba) ----------
+const HQTABS=[['bar','Quartel','swords','1'],['tes','Tesouraria','coin','2'],['war','Sala de Guerra','flag','3'],['gen','Generais','star','4'],['dip','Chancelaria','scroll','5'],['cam','Campanha','eye','6']];
+function hqInfo(k){const g=gold[me],own=owner.map((o,i)=>o==me?i:-1).filter(i=>i>=0);
+  if(k=='bar'){const n=['inf','cav','ati','art'].filter(t=>(hq.tech[t]||0)<3&&g>=6+4*(hq.tech[t]||0)).length;return[n,n?`${n} treino${n>1?'s':''} ao alcance`:'Treino das tropas']}
+  if(k=='tes'){const n=hq.tax==turn?0:1;return[n,`+${income(me)} por turno${n?' · imposto disponível':''}`]}
+  if(k=='war'){const n=DOC.filter(([id,,,c])=>!hq.doc[id]&&g>=c).length,ad=DOC.filter(([id])=>hq.doc[id]).length;return[n,`${ad}/${DOC.length} doutrinas${n?` · ${n} ao alcance`:''}`]}
+  if(k=='gen'){const free=Object.keys(POSTS).filter(p=>!(posts[p]>=0&&owner[posts[p]]==me)).length,n=Math.min(free,own.filter(i=>!Object.values(posts).includes(i)).length);return[n,`${Object.keys(POSTS).length-free}/${Object.keys(POSTS).length} cargos ocupados`]}
+  if(k=='dip'){const nb=[...new Set(own.flatMap(i=>adj[i]).map(j=>owner[j]))].filter(f=>f!=me),n=nb.filter(f=>!dipState('pact',f)).length;return[n,`${nb.length} vizinho${nb.length==1?'':'s'}${n?` · ${n} pacto${n>1?'s':''} possível`:''}`]}
+  if(k=='cam')return[0,`${owner.filter(o=>o==me).length}/${N} ${TW}`];
+  return[0,'']}
 function showRoom(k){ /* cada sala: cabeçalho igual, cartões no lugar de listas, altura só do que precisa */
   const g=gold[me],own=owner.map((o,i)=>o==me?i:-1).filter(i=>i>=0),R=ROOMS.find(r=>r.k==k),nm=k=='dip'?'Chancelaria':R.n,
-    head=sub=>`<div class="rhd"><button data-s="hq-close" class="mini" data-help="Volta à visão do quartel-general">${I('back')}Quartel</button><div class="rt"><h2>${nm}</h2>${sub?`<small>${sub}</small>`:''}</div><span class="rg" data-help="Ouro em caixa">${I('coin')}${g}</span><button data-s="hq-map" class="mini rx" data-help="Sai do quartel-general e volta ao mapa">Mapa${I('close')}</button></div>`,
+    head=sub=>`<div class="rhd"><button data-s="hq-close" class="mini" data-help="Volta à visão do quartel-general">${I('back')}Quartel</button><div class="rt"><h2>${nm}</h2>${sub?`<small>${sub}</small>`:''}</div><span class="rg" data-help="Ouro em caixa">${I('coin')}${g}</span><button data-s="hq-map" class="mini rx" data-help="Sai do quartel-general e volta ao mapa">Mapa${I('close')}</button>
+      <nav class="rtabs">${HQTABS.map(([tk,tn,ic,key])=>{const[n]=hqInfo(tk);return`<button data-s="hq-go-${tk}" class="${tk==k?'on':''}" data-help="${esc(tn+' ('+key+')')}">${I(ic)}<span>${tn}</span>${n?`<i class="badge">${n}</i>`:''}</button>`}).join('')}</nav></div>`,
     buy=(ok,done,c,ds,doneT,lbl)=>done?`<span class="st ok">${I('check')}${doneT}</span>`:ok?`<button data-s="${ds}" class="buy">${lbl}<small>${c} ouro</small></button>`:`<span class="st no" data-help="Custa ${c}, você tem ${g}">Faltam ${c-g} ouro<small>custa ${c}</small></span>`;
   let h='';
   if(k=='bar'){const card=t=>{const lv=hq.tech[t]||0,c=6+4*lv;

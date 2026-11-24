@@ -6,11 +6,11 @@ function nextRaid(){
   tactical(r.from,r.to,troops[r.from]-1,1);ui()}
 tactical=(from,to,n,ps=0)=>zoomTo(from,to,()=>capTalk(from,to,()=>{startBattle(from,to,n,ps);ui()})); // ataque a capital abre com diálogo // câmera fecha no alvo, depois abre o campo
 const startBattle=(from,to,n,ps)=>{tutEv('battle'); // ps: lado do jogador (0 ataca pela esquerda, 1 defende pela direita)
-  const af=owner[from],was=owner[to],bio=BIO[BOF[to]],rnd=Math.random(),
-    kind=fort[to]||to==was&&Math.random()<.35?'cerco':rnd<(bio.river?.5:.12)?'travessia':rnd>(bio.f>=18?.75:.9)?'emboscada':'campo';
+  const af=owner[from],was=owner[to],bio=BIO[BOF[to]],rnd=Math.random(),mf=mapOf(to),wetMap=bio.river||mf.f.includes('rio')||mf.f.includes('ilhas'),
+    kind=fort[to]||to==was&&Math.random()<.35?'cerco':rnd<(wetMap?.5:.12)?'travessia':rnd>(bio.f>=18||mf.f.includes('selva')?.72:.9)?'emboscada':'campo';
   const kOf=tot=>Math.min(12,Math.max(1,Math.ceil(tot/3))),km=Math.max(kOf(n),kOf(troops[to])); /* o campo cresce com os exércitos: de 24x16 a 30x20 */
-  GW=km>9?30:km>6?27:24;GH=km>9?20:km>6?18:16;MAXR=14+(GW>=30?4:GW>=27?2:0);const T=genMap(bio,kind),a0=A0(),bg=bake(T,bio);
-  B={from,to,n,ps,af,was,T,bg,bio,kind,wc:GW-a0-4,rl:[0,0],pw:[null,null],vil:new Map,qt:new Map,qn:{},wx:BOF[to]=='ama'&&Math.random()<.5?'rain':BOF[to]=='ser'&&Math.random()<.5?'dry':null,units:[],round:1,selU:null,pops:[],fxs:[],parts:[],busy:false,hov:null,t0:Date.now(),nextBolt:Date.now()+2500,
+  GW=km>9?30:km>6?27:24;GH=km>9?20:km>6?18:16;MAXR=14+(GW>=30?4:GW>=27?2:0)+(kind=='cerco'?2:0);const T=genMap(bio,kind,to),a0=A0(),bg=bake(T,bio);
+  B={from,to,n,ps,af,was,T,bg,bio,kind,fx:mf.f,mapName:mf.nome,brk:new Map,wc:GW-a0-4,rl:[0,0],pw:[null,null],vil:new Map,qt:new Map,qn:{},wx:BOF[to]=='ama'&&Math.random()<.5?'rain':BOF[to]=='ser'&&Math.random()<.5?'dry':null,units:[],round:1,selU:null,pops:[],fxs:[],parts:[],busy:false,hov:null,t0:Date.now(),nextBolt:Date.now()+2500,
     cam:{x:0,y:0,z:1,tx:0,ty:0,tz:1}};
   const OFF=[0,1,-1,2,-2,3,-3,4,-4,5,-5,6]; // da linha do meio para fora
   const side=(sd,tot)=>{const k=kOf(tot),f=sd?was:af,st=sd?to:from,E=ELITE[S[st][0]],TY=['inf','cav','ati','inf','cav','art','inf','ati','cav','inf','ati','art'],rb=RU[BOF[st]];if(rb)TY[rb[0]]=rb[1];
@@ -20,23 +20,23 @@ const startBattle=(from,to,n,ps)=>{tutEv('battle'); // ps: lado do jogador (0 at
       [u.x,u.y]=freeNear(u.x,u.y,true)||[u.x,u.y];B.units.push(u)}};
   side(0,n);side(1,troops[to]);
   B.forest=[];B.puddles=[];T.forEach((row,y)=>row.forEach((t,c)=>{const h=hash(c,y);if(t=='f')B.forest.push([c,y,h]);else if(t=='g'&&B.wx=='rain'&&h%6==0)B.puddles.push([c,y,h]);
-    if(t=='v')B.vil.set(c+','+y,-1);if(t=='Q')B.qt.set(c+','+y,-1);if(t=='D')B.gate={x:c,y,hp:10+6*fort[to]+(to==was?4:0),max:10+6*fort[to]+(to==was?4:0)};if(t=='P')B.pr={x:c,y}}));
+    if(t=='v')B.vil.set(c+','+y,-1);if(t=='Q')B.qt.set(c+','+y,-1);if(t=='D'||t=='W'){const m=t=='D'?10+6*fort[to]+(to==was?4:0):8+4*fort[to];B.brk.set(c+','+y,{x:c,y,t,hp:m,max:m})} /* portões e trechos de muralha: cada um com vida */if(t=='P')B.pr={x:c,y}}));
   { /* objetivo extra em parte dos mapas: segurar duas vilas, levar o comandante à saída, tomar a ponte */
     const r=Math.random(),vs=[...B.vil.keys()].map(k=>k.split(',').map(Number)).filter(([c])=>c>GW/2).sort((p,q)=>q[0]-p[0]),br=[];T.forEach((row,y)=>row.forEach((t,c)=>{if(t=='b')br.push([c,y])}));
     const ob=kind=='campo'?(r<.3&&vs.length>=2?'vilas':r<.55?'saida':''):kind=='travessia'&&r<.6&&br.length?'ponte':'';
     if(ob){B.obj=ob;B.goals=ob=='vilas'?vs.slice(0,2):ob=='ponte'?[br.sort((p,q)=>Math.abs(p[1]-(GH>>1))-Math.abs(q[1]-(GH>>1)))[0]]:[[GW-1,T.findIndex(row=>row[GW-1]=='r')]]}}
   camTo((GW-1)/2,(GH-1)/2,zMin());Object.assign(B.cam,{x:B.cam.tx,y:B.cam.ty,z:B.cam.tz}); // abre com o campo inteiro e depois aproxima das suas tropas
   banner(`${KIND[kind][0]}: ${ps?'defenda':'ataque'} ${S[to][1]}.`,ps?'#d0452f':'#e2a83c');
-  B.prep=true; /* preparação: o jogador posiciona as tropas antes da rodada 1 */setTimeout(()=>coach('prep','Arraste o campo para mover a câmera e use a roda para aproximar. Posicione as tropas nas casas azuis e comece.'),1600);
+  B.prep=true; /* preparação: o jogador posiciona as tropas antes da rodada 1 */setTimeout(()=>{if(B&&!B.auto)showBrief()},700);setTimeout(()=>coach('prep','Arraste o campo para mover a câmera e use a roda para aproximar. Posicione as tropas nas casas azuis e comece.'),1600);
   const b0=B;setTimeout(()=>{if(B===b0)camTo(ps?GW-1-a0:a0,GH>>1,phoneUI()?1.35:1)},1300); /* no celular, casas maiores para o dedo */let lf=0;(function loop(t){if(B!==b0)return;requestAnimationFrame(loop);if(document.hidden||t-lf<1000/[15,40,60][CFG.q]-2)return;lf=t;drawBattle()})(performance.now())};
 function bake(T,bio){ // fundo fixo do campo; refeito quando uma ponte queima
   const[bg,g]=mk(GW*CS,GH*CS);for(let y=0;y<GH;y++)for(let c=0;c<GW;c++)tile(g,T,c,y,bio);
-  for(let y=0;y<GH;y++)for(let c=0;c<GW;c++)if('mfvW'.includes(T[y][c])){const X=c*CS,Y=y*CS; // sombra projetada para sudeste
+  for(let y=0;y<GH;y++)for(let c=0;c<GW;c++)if('mfvWTDQKc'.includes(T[y][c])){const X=c*CS,Y=y*CS; // sombra projetada para sudeste
     g.fillStyle='rgba(10,20,50,.22)';g.beginPath();g.moveTo(X+6,Y+CS-5);g.lineTo(X+CS+2,Y+CS-5);g.lineTo(X+CS+16,Y+CS+9);g.lineTo(X+20,Y+CS+9);g.fill()}
   const lg=g.createLinearGradient(0,0,GW*CS,GH*CS);lg.addColorStop(0,'rgba(255,236,170,.24)');lg.addColorStop(.5,'rgba(255,255,255,0)');lg.addColorStop(1,'rgba(20,10,60,.3)');
   g.fillStyle=lg;g.fillRect(0,0,GW*CS,GH*CS); // sol de noroeste
   g.strokeStyle='rgba(0,0,0,.07)';g.lineWidth=1;for(let c=1;c<GW;c++)g.strokeRect(c*CS-.5,-1,0,GH*CS+2);for(let y=1;y<GH;y++)g.strokeRect(-1,y*CS-.5,GW*CS+2,0);
-  const[mc,mg]=mk(GW,GH),MC={r:'#c79a5e',b:'#8a5a2b',w:'#3a86cc',a:'#7ab0d8',f:'#2c6a34',m:'#6b6258',h:'#a2925c',v:'#efe2c0',Q:'#c0504a',W:'#555',D:'#8a5a2b',P:'#e2a83c'}; // minimapa: uma casa por pixel
+  const[mc,mg]=mk(GW,GH),MC={r:'#c79a5e',b:'#8a5a2b',w:'#3a86cc',a:'#7ab0d8',f:'#2c6a34',m:'#6b6258',h:'#a2925c',v:'#efe2c0',Q:'#c0504a',W:'#555',T:'#444',D:'#8a5a2b',P:'#e2a83c',c:'#9fc84a',K:'#2f2f36',L:'#c99a5c',R:'#8d877b'}; // minimapa: uma casa por pixel
   for(let y=0;y<GH;y++)for(let c=0;c<GW;c++){mg.fillStyle=MC[T[y][c]]||bio.g[0];mg.fillRect(c,y,1,1)}bg.mini=mc;
   return bg}
 let bCap=null; // general inimigo capturado na última batalha (pode ser libertado na tela de resultado)
@@ -55,14 +55,36 @@ function usePower(sd){ // poder único do líder, uma vez por batalha, conforme 
   if(k=='rec')spawn(sd,2,Math.max(4,Math.round(B.units.filter(u=>u.side==sd).reduce((s,u)=>s+u.hp0,0)*.25)));
   alive(sd).forEach(u=>puff(OX+u.x*CS+CS/2,OY+u.y*CS+CS/2,'rgba(200,140,255,A)',6,90))}
 const bridgeNear=u=>[[1,0],[-1,0],[0,1],[0,-1]].map(([dx,dy])=>[u.x+dx,u.y+dy]).find(([a,b])=>B.T[b]?.[a]=='b'&&!B.units.some(v=>v.hp>0&&v.x==a&&v.y==b));
-function burnBridge(u,[bx,by]){B.T[by][bx]='w';B.bg=bake(B.T,B.bio);u.moved=u.done=true;banner('A ponte foi queimada!','#ff8a1e');sfx.hit();
+function burnBridge(u,[bx,by]){B.T[by][bx]='w';B.dfc=null;B.bg=bake(B.T,B.bio);u.moved=u.done=true;banner('A ponte foi queimada!','#ff8a1e');sfx.hit();
   for(let k=0;k<4;k++)puff(OX+bx*CS+CS/2,OY+by*CS+CS/2,'rgba(255,'+(80+k*50)+',30,A)',10,100)}
-function gateHit(a){ // golpe no portão do cerco: canhão rende muito, cavalaria pouco
-  const g=B.gate,d=Math.max(1,Math.round(a.hp*.5*UT[a.type][3]*(a.type=='art'?2.5:a.type=='cav'?.6:1)*(B.rl[a.side]==B.round?1.4:1)));g.hp=Math.max(0,g.hp-d);a.done=a.moved=true;a.hits++;a.atkT=Date.now();(B.rings=B.rings||[]).push({x:g.x,y:g.y,start:Date.now()});
-  a.lunge={dx:Math.sign(g.x-a.x),dy:Math.sign(g.y-a.y),until:Date.now()+180};B.pops.push({x:g.x,y:g.y,txt:'-'+d,until:Date.now()+800});sfx.hit();B.shake=Date.now()+160;
-  B.fxs.push({a:[a.x,a.y],t:[g.x,g.y],shot:dist(a,g)>1,start:Date.now()});puff(OX+g.x*CS+CS/2,OY+g.y*CS+CS/2,'rgba(160,110,60,A)',12,140);
-  if(!g.hp){banner('O portão caiu!','#ff8a1e');for(let k=0;k<3;k++)puff(OX+g.x*CS+CS/2,OY+g.y*CS+CS/2,'rgba(214,190,140,A)',14,120)}}
-const gateFor=u=>u.side==0&&B.gate?.hp>0&&inR(u,B.gate);
+// ---------- cerco: portões e muralha têm vida; canhões abrem brechas, a infantaria sobe com escadas, o defensor derruba escadas ----------
+const brkAt=(x_,y_)=>B.brk?.get(x_+','+y_), breached=()=>B.T.some(r=>r.includes('R')||r.includes('L')), nLad=()=>B.T.reduce((a,r)=>a+r.filter(t=>t=='L').length,0);
+const N4=u=>[[1,0],[-1,0],[0,1],[0,-1]].map(([dx,dy])=>[u.x+dx,u.y+dy]);
+function breakFor(u){if(u.side!=0||!B.brk?.size)return null;let best=null; /* alvo de cerco ao alcance: portão primeiro, depois o trecho mais fraco */
+  B.brk.forEach(b=>{if(b.hp>0&&inR(u,b)){const sc=(b.t=='D'?0:5)+b.hp/b.max;if(!best||sc<best.sc)best={b,sc}}});return best?.b||null}
+function breakHit(a,g){const m=a.type=='art'?(g.t=='W'?3:2.5):CL(a.type)=='cav'?(g.t=='W'?.2:.6):UT[a.type][2]>1?.3:(g.t=='W'?.4:1); // canhão derruba muralha; mosquete quase nada
+  const d=Math.max(1,Math.round(a.hp*.5*UT[a.type][3]*m*(B.rl[a.side]==B.round?1.4:1)));g.hp=Math.max(0,g.hp-d);a.done=a.moved=true;a.hits++;a.atkT=Date.now();(B.rings=B.rings||[]).push({x:g.x,y:g.y,start:Date.now()});
+  a.lunge={dx:Math.sign(g.x-a.x),dy:Math.sign(g.y-a.y),until:Date.now()+180};B.pops.push({x:g.x,y:g.y,txt:'-'+d,until:Date.now()+800});a.type=='art'?sfx.cannon():sfx.hit();B.shake=Date.now()+(a.type=='art'?260:160);
+  B.fxs.push({a:[a.x,a.y],t:[g.x,g.y],shot:dist(a,g)>1,start:Date.now()});puff(OX+g.x*CS+CS/2,OY+g.y*CS+CS/2,'rgba(160,140,110,A)',14,140);
+  if(!g.hp){B.T[g.y][g.x]='R';B.dfc=null;B.brk.delete(g.x+','+g.y);B.bg=bake(B.T,B.bio);banner(g.t=='D'?'O portão caiu!':'A muralha cedeu: brecha aberta!','#ff8a1e');
+    for(let k=0;k<4;k++)puff(OX+g.x*CS+CS/2,OY+g.y*CS+CS/2,'rgba(214,190,140,A)',16,130)}}
+const ladderSpot=u=>u.side==0&&B.kind=='cerco'&&CL(u.type)=='inf'&&u.type!='ati'?N4(u).find(([a,b])=>B.T[b]?.[a]=='W'):null; // infantaria encostada na muralha
+const ladderNear=u=>u.side==1&&B.kind=='cerco'?N4(u).find(([a,b])=>B.T[b]?.[a]=='L'&&!B.units.some(v=>v.hp>0&&v.x==a&&v.y==b)):null; // defensor ao lado de escada vazia
+function placeLadder(u,[lx,ly]){B.T[ly][lx]='L';B.dfc=null;B.brk.delete(lx+','+ly);u.moved=u.done=true;B.bg=bake(B.T,B.bio);banner('Escada na muralha!','#e2a83c');sfx.hit();
+  puff(OX+lx*CS+CS/2,OY+ly*CS+CS/2,'rgba(214,190,140,A)',10,90)}
+function dropLadder(u,[lx,ly]){const m=8+4*fort[B.to];B.T[ly][lx]='W';B.dfc=null;B.brk.set(lx+','+ly,{x:lx,y:ly,t:'W',hp:Math.ceil(m/2),max:m});u.moved=u.done=true;B.bg=bake(B.T,B.bio);
+  banner('A escada foi derrubada!','#3f8fb0');sfx.hit();puff(OX+lx*CS+CS/2,OY+ly*CS+CS/2,'rgba(214,190,140,A)',10,90)}
+function dfield(gx,gy,u){const k=[gx,gy,u.type=='can'?1:0,u.side,B.round].join();B.dfc=B.dfc||{};if(B.dfc[k])return B.dfc[k]; /* distância de caminho até o alvo, contornando serra, rio e muralha */
+  const D=new Float32Array(GW*GH).fill(1e9),q=[],ok=(a,b)=>a>=0&&b>=0&&a<GW&&b<GH&&pass(a,b,u),push=(a,b,d)=>{const i=b*GW+a;if(d<D[i]){D[i]=d;q.push([a,b,d])}};
+  if(ok(gx,gy))push(gx,gy,0);else N4({x:gx,y:gy}).forEach(([a,b])=>{if(ok(a,b))push(a,b,1)});
+  while(q.length){let bi=0;for(let i=1;i<q.length;i++)if(q[i][2]<q[bi][2])bi=i;const[x_,y_,d]=q.splice(bi,1)[0];if(d>D[y_*GW+x_])continue;
+    for(const[a,b]of N4({x:x_,y:y_}))if(ok(a,b))push(a,b,d+stepCost(B.T[b][a]))}
+  return B.dfc[k]=D}
+function siegeGoal(u){if(u.x>B.wc||B.taken)return B.pr; /* para onde o atacante anda no cerco: brecha ou escada aberta, senão o trecho que ele consegue atacar */
+  const ent=[];B.T.forEach((r,yy)=>r.forEach((t,xx)=>{if(t=='R'||t=='L')ent.push({x:xx,y:yy})}));
+  const c=[...B.brk.values()].filter(b=>b.hp>0&&(u.type=='art'||CL(u.type)=='inf'||b.t=='D')).sort((p,q)=>dist(u,p)-dist(u,q))[0],e=ent.sort((p,q)=>dist(u,p)-dist(u,q))[0];
+  if(e&&u.type!='art'&&(!c||dist(u,e)<=dist(u,c)+2))return e; /* entrada aberta perto: usa; longe: abre a sua (não se amontoam numa brecha só) */
+  return c?{x:c.x,y:c.y,brk:1}:e||B.pr}
 function prCheck(){if(B.pr&&!B.taken&&B.units.some(u=>u.side==0&&u.hp>0&&u.x==B.pr.x&&u.y==B.pr.y)){B.taken=true;banner('A praça foi tomada!','#e2a83c')}} // vale ao fim da vez do defensor
 function roundEnd(){ // vilas: quem está nela toma a vila e cura 2
   B.vil.forEach((o,k)=>{const[gx,gy]=k.split(',').map(Number),u=B.units.find(v=>v.hp>0&&v.x==gx&&v.y==gy);if(!u)return;if(B.vil.get(k)!==u.side){B.pops.push({x:gx,y:gy,txt:'Vila tomada!',until:Date.now()+1100});if(u.side==B.ps)sfx.win()}B.vil.set(k,u.side);
@@ -80,7 +102,7 @@ function reach(u){ // casas alcançáveis: [x,y,chave da casa anterior,passos]; 
   const mv=mvOf(u),best=new Map([[u.x+','+u.y,[u.x,u.y,null,0]]]),q=[[u.x,u.y,0]],occ=new Set(B.units.filter(v=>v.hp>0&&v!=u).map(v=>v.x+','+v.y));
   while(q.length){const[cx,cy,d]=q.shift();if(d>=mv)continue;
     [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy])=>{const nx=cx+dx,ny=cy+dy,k=nx+','+ny;
-      if(nx<0||ny<0||nx>=GW||ny>=GH||occ.has(k)||!pass(nx,ny,u))return;const nd=d+('ha'.includes(B.T[ny][nx])?2:1);
+      if(nx<0||ny<0||nx>=GW||ny>=GH||occ.has(k)||!pass(nx,ny,u)||B.T[cy][cx]=='T'&&nx<cx)return;const nd=d+stepCost(B.T[ny][nx]); /* da torre não se desce para fora da muralha */
       if(nd>mv&&d>0||best.has(k)&&best.get(k)[3]<=nd)return;best.set(k,[nx,ny,cx+','+cy,nd]);q.push([nx,ny,nd])})}
   return[...best.values()]}
 const banner=(t,col='#e2a83c')=>{if(B&&!B.auto)B.banner={t,col,start:Date.now()}}; // balão de aviso no meio do campo
@@ -158,15 +180,17 @@ async function aiSide(sd,ms){
     const gl=sd==0&&B.goals&&!B.taken&&(B.obj=='saida'?u.ld:u.j%2==0||u.j<0)?B.goals.map(([gx,gy])=>({x:gx,y:gy})).sort((p,q)=>dist(u,p)-dist(u,q))[0]:null; // parte do ataque corre para o objetivo
     const br=sd==1&&B.kind=='travessia'&&!inR(u,t)?bridgeNear(u):null;
     if(br&&alive(0).some(e=>e.x<br[0])){burnBridge(u,br);await wait();continue} // defensor corta a passagem
-    if(!inR(u,t)&&gateFor(u)){gateHit(u);await wait();continue} // atacante arromba o portão
+    if(sd==0&&B.kind=='cerco'&&!inR(u,t)){const ls=ladderSpot(u),bk=breakFor(u); /* atacante: escada se ainda não há entrada, senão golpeia portão ou muralha */
+      if(ls&&nLad()<3&&(!breached()||Math.random()<.5)){placeLadder(u,ls);await wait();continue}if(bk){breakHit(u,bk);await wait();continue}}
+    if(sd==1&&!inR(u,t)){const ln=ladderNear(u);if(ln){dropLadder(u,ln);await wait();continue}} // defensor derruba a escada
     if(u.ld&&u.hp<u.max*.6&&alive(1-sd).some(e=>dist(u,e)<=3)&&!(inR(u,t)&&est(u,t)>=t.hp)){ /* comandante ferido recua para longe e para o abrigo */
       const R=reach(u),safe=c=>Math.min(...alive(1-sd).map(e=>Math.abs(e.x-c[0])+Math.abs(e.y-c[1])))+('fvh'.includes(B.T[c[1]][c[0]])?1:0),c=[...R].sort((p,q)=>safe(q)-safe(p))[0];
       const d=walk(u,c[0],c[1],R);await sleep(quick()?40:d+80);if(B!==b0)return;if(inR(u,t))hit(u,t);await wait();continue}
-    const goal=sd==0&&B.gate?.hp>0&&!inR(u,t)?B.gate:gl&&!(inR(u,t)&&!u.ld)?gl:t,rg=rgOf(u),far=c=>{const tl=B.T[c[1]][c[0]];return Math.abs(Math.abs(c[0]-goal.x)+Math.abs(c[1]-goal.y)-(rg>1&&goal==t?2:1))-('fvh'.includes(tl)?.9:0)-(tl=='v'&&B.vil.get(c[0]+','+c[1])!==sd||tl=='Q'&&B.qt.get(c[0]+','+c[1])!==sd?1.2:0)+(rg>1?alive(1-sd).filter(e=>rgOf(e)<2&&Math.abs(e.x-c[0])+Math.abs(e.y-c[1])<=2).length*.7:0)}; // fica à distância de tiro e busca abrigo
+    const goal=sd==0&&B.kind=='cerco'&&!inR(u,t)&&siegeGoal(u)||(gl&&!(inR(u,t)&&!u.ld)?gl:t),rg=rgOf(u),DF=dfield(goal.x,goal.y,u),pd=c=>{const d=DF[c[1]*GW+c[0]];return d<1e8?d:Math.abs(c[0]-goal.x)+Math.abs(c[1]-goal.y)+30},far=c=>{const tl=B.T[c[1]][c[0]];return Math.abs(pd(c)-(rg>1&&(goal==t||goal.brk)?Math.min(rg,3):1))-('fvhTKc'.includes(tl)?.9:0)-(tl=='v'&&B.vil.get(c[0]+','+c[1])!==sd||tl=='Q'&&B.qt.get(c[0]+','+c[1])!==sd?1.2:0)+(rg>1?alive(1-sd).filter(e=>rgOf(e)<2&&Math.abs(e.x-c[0])+Math.abs(e.y-c[1])<=2).length*.7:0)}; // fica à distância de tiro e busca abrigo
     if(!inR(u,t)||goal==gl&&u.ld){if(!u.ld||dist(u,t)<=4||goal==gl){ // comandante só se mexe com o inimigo perto, ou rumo à saída
-     const R=reach(u),pr=sd==0&&(B.pr&&!(B.gate?.hp>0)?R.find(c=>c[0]==B.pr.x&&c[1]==B.pr.y):gl&&R.find(c=>c[0]==gl.x&&c[1]==gl.y)),c=pr||[...R].sort((p,q)=>far(p)-far(q))[0]; // corre para a praça ou o objetivo se puder
+     const R=reach(u),pr=sd==0&&(B.pr&&breached()?R.find(c=>c[0]==B.pr.x&&c[1]==B.pr.y):gl&&R.find(c=>c[0]==gl.x&&c[1]==gl.y)),c=pr||[...R].sort((p,q)=>far(p)-far(q))[0]; // corre para a praça ou o objetivo se puder
       const d=walk(u,c[0],c[1],R);await sleep(quick()?40:d+80);if(B!==b0)return}} // no automático não espera a caminhada
-    if(inR(u,t))hit(u,t);else if(gateFor(u))gateHit(u);
+    if(inR(u,t))hit(u,t);else if(sd==0&&B.kind=='cerco'){const ls=ladderSpot(u),bk=breakFor(u);if(ls&&nLad()<3&&(!breached()||Math.random()<.5))placeLadder(u,ls);else if(bk)breakHit(u,bk)}
     await wait()}
   if(!B.pw[sd]&&sd!=B.ps&&pk=='gold'&&press()&&B===b0&&!bOver()){usePower(sd);await sleep(quick()?60:1750/bFast);if(B===b0)return aiSide(sd,ms)}}
 async function bEnd(auto){
@@ -185,7 +209,7 @@ async function bEnd(auto){
 function bFinish(){tutEv('bdone');closeCmd();const stg=$('stage');stg.classList.remove('fade');void stg.offsetWidth;stg.classList.add('fade');
   const{from,to,n,was,af,ps,kind}=B,a=total(0),d=total(1),won=(B.taken||!ld(1)||rout(1))&&ld(0)&&!rout(0),e=ps?af:was,wonP=ps?!won:won; // won = atacante venceu
   const loss=sd=>Math.max(0,B.units.filter(u=>u.side==sd).reduce((s,u)=>s+u.hp0,0)-total(sd)),lvUp=[],
-    best=B.units.filter(u=>u.side==ps&&u.hits).sort((p,q)=>q.hits-p.hits)[0],vg=2*[...B.vil.values()].filter(v=>v==ps).length,
+    best=B.units.filter(u=>u.side==ps&&u.hits).sort((p,q)=>q.hits-p.hits)[0],vg=vgTot(ps),
     R={perks:[],to,kind,e,win:wonP,l0:loss(ps),l1:loss(1-ps),vg,lv:lvUp,best:best&&`${nmOf(best)}${best.ld?' (comandante)':''}, ${best.hits} golpe${best.hits>1?'s':''}`};
   troops[from]-=n;
   // experiência: regimento que sobreviveu ganha 1, mais 1 se acertou golpes, mais 1 se o lado venceu
@@ -237,10 +261,10 @@ function bClick(e){
   closeCmd();
   if(u&&u.side==B.ps){if(u==s&&!u.done){battleCmd(u);return ui()}B.selU=u.done?null:u;B.peek=null;sfx.sel();camFrame(u)}
   else if(s&&u&&inR(s,u)){hit(s,u);B.selU=B.undo=null}
-  else if(s&&!u&&B.gate&&gx==B.gate.x&&gy==B.gate.y&&gateFor(s)){gateHit(s);B.selU=B.undo=null}
+  else if(s&&!u&&brkAt(gx,gy)?.hp>0&&s.side==0&&!s.done&&inR(s,brkAt(gx,gy))){breakHit(s,brkAt(gx,gy));B.selU=B.undo=null}
   else if(s&&!u&&!s.moved&&(R=reach(s)).some(c=>c[0]==gx&&c[1]==gy)){B.undo={u:s,x:s.x,y:s.y};const wd=walk(s,gx,gy,R);s.moved=true;sfx.move();tutEv('bmove');camFrame(s);
     setTimeout(()=>{if(B===b0&&B.selU===s&&!s.done&&!B.busy)battleCmd(s)},wd+60)} // depois de andar, o menu de comando abre ao lado
-  else if(s&&!u&&!s.done&&gx>=0&&gy>=0&&gx<GW&&gy<GH){const t=B.T[gy][gx],why=s.moved?'Esta unidade já andou: ataque um alvo vermelho ou escolha Esperar no menu.':!pass(gx,gy,s)||(t=='D'&&B.gate?.hp>0)?`${TN[t].split(':')[0]}: não dá para entrar nesta casa.`:`Longe demais: ${nmOf(s)} anda ${mvOf(s)} casas por rodada.`; /* movimento inválido: X vermelho e o motivo */
+  else if(s&&!u&&!s.done&&gx>=0&&gy>=0&&gx<GW&&gy<GH){const t=B.T[gy][gx],why=s.moved?'Esta unidade já andou: ataque um alvo vermelho ou escolha Esperar no menu.':!pass(gx,gy,s)?`${TN[t].split(':')[0]}: não dá para entrar nesta casa.`:`Longe demais: ${nmOf(s)} anda ${mvOf(s)} casas por rodada.`; /* movimento inválido: X vermelho e o motivo */
     B.bad={x:gx,y:gy,until:Date.now()+700,why};help(why);beep(180,.08,'square')}
   else{B.selU=null;B.peek=u&&B.peek!=u?u:null;if(u)sfx.sel()} // inimigo fora de alcance: espia o movimento dele
   if(bOver()){B.busy=true;setTimeout(()=>B===b0&&bFinish(),700+clashLeft())}
@@ -295,11 +319,9 @@ function drawBattle(){
     [[1,0],[9,2],[4,8]].forEach(([a,bb],k)=>tree(q,B.bio.tree,a+(h>>k)%2,bb,h>>k))})}
   B.vil.forEach((o,k)=>{if(o<0)return;const[gx,gy]=k.split(',').map(Number),X=OX+gx*CS+34,Y=OY+gy*CS+2; // bandeirinha de quem tomou a vila
     x.fillStyle='#3a2413';x.fillRect(X,Y,2,16);x.fillStyle=`hsl(${hue(o?B.was:B.af)},75%,50%)`;x.fillRect(X+2,Y+Math.round(Math.sin(now/220+gx)),10,7)});
-  if(B.gate){const g=B.gate,X=OX+g.x*CS,Y=OY+g.y*CS; // portão de madeira com barra de vida; destroços quando cai
-    if(g.hp>0){x.fillStyle='#5a3a1c';x.fillRect(X+8,Y+6,CS-16,CS-6);x.fillStyle='#8a5a2b';for(let k=0;k<4;k++)x.fillRect(X+10+k*7.5,Y+8,5,CS-10);
-      x.fillStyle='#2f2f36';x.fillRect(X+8,Y+16,CS-16,3);x.fillRect(X+8,Y+34,CS-16,3);x.fillStyle='#22140c';x.fillRect(X+4,Y-8,CS-8,7);x.fillStyle='#d0452f';x.fillRect(X+5,Y-7,(CS-10)*g.hp/g.max,5)}
-    else{x.fillStyle='#5a3a1c';x.fillRect(X+6,Y+CS-10,14,4);x.fillRect(X+26,Y+CS-8,12,4);x.fillRect(X+16,Y+CS-16,8,3)}
-    if(s&&gateFor(s)){x.strokeStyle='#ff3b30';x.lineWidth=3;x.strokeRect(X+1.5,Y+1.5,CS-3,CS-3)}}
+  B.brk.forEach(g=>{const X=OX+g.x*CS,Y=OY+g.y*CS; /* portão ou muralha atingidos: barra de vida; ao alcance da unidade escolhida: contorno vermelho */
+    if(g.hp<g.max){x.fillStyle='#22140c';x.fillRect(X+4,Y-8,CS-8,7);x.fillStyle=g.t=='D'?'#d0452f':'#e2a83c';x.fillRect(X+5,Y-7,(CS-10)*g.hp/g.max,5)}
+    if(s&&s.side==0&&!s.done&&inR(s,g)){x.strokeStyle='#ff3b30';x.lineWidth=3;x.strokeRect(X+1.5,Y+1.5,CS-3,CS-3)}});
   if(B.pr){const X=OX+B.pr.x*CS,Y=OY+B.pr.y*CS;x.fillStyle='#3a2413';x.fillRect(X+CS/2-1,Y-16,3,CS-6); // mastro da praça com a bandeira do dono
     x.fillStyle=`hsl(${hue(B.taken?B.af:B.was)},75%,50%)`;x.fillRect(X+CS/2+2,Y-16+Math.round(Math.sin(now/200)),18,12)}
   B.qt.forEach((o,k)=>{if(o<0)return;const[gx,gy]=k.split(',').map(Number),X=gx*CS+CS-8,Y=gy*CS-6; // bandeira de quem tomou o quartel

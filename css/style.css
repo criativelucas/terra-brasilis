@@ -864,3 +864,27 @@ body.full.hq #stage{z-index:12;position:fixed;inset:0}
 .endr em{font:800 12px var(--ui);font-style:normal;max-width:96px;text-align:center}
 .endr:hover{transform:scale(1.04)}
 .endr.danger{background:radial-gradient(circle at 40% 30%,#ffc4a8,#e0643a 55%,#a8331a);color:#fff;text-shadow:0 1px 0 rgba(0,0,0,.4)}
+/* ================= antes da batalha: maquete 3D e informações ================= */
+.brief{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(300px,1fr);gap:var(--s3);align-items:start}
+.b3d{position:relative;border-radius:var(--r2);overflow:hidden;border:2px solid var(--frame);box-shadow:inset 0 0 0 1px var(--gilt2)}
+.b3d canvas{display:block;width:100%;height:auto;cursor:grab;touch-action:none}.b3d canvas:active{cursor:grabbing}
+.b3l{position:absolute;left:8px;right:8px;bottom:6px;display:flex;gap:10px;align-items:center;font:700 12px var(--ui);color:#f3e7cf;pointer-events:none}
+.b3l span::before{content:"";display:inline-block;width:10px;height:10px;margin-right:4px;border-radius:2px;vertical-align:-1px}
+.b3l .me::before{background:#4f8fff}.b3l .them::before{background:#e0483a}.b3l .obj::before{background:#ffd23f;border-radius:50%}.b3l em{margin-left:auto;font-style:normal;color:#cdbb98}
+.binfo{display:flex;flex-direction:column;gap:var(--s2)}.binfo .vsr img{width:64px;height:64px}.binfo .vsr figure>span{font-size:24px}
+.fxl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+.fxl li{display:flex;gap:7px;align-items:flex-start;font:500 13px/1.3 var(--ui);padding:4px 6px;border-radius:6px;background:rgba(255,255,255,.35)}
+.fxl li .ico{width:16px;height:16px;flex:none;margin:1px 0 0}.fxl li.good{background:rgba(216,236,208,.7);border-left:3px solid #5fae5a}.fxl li.bad{background:rgba(243,220,210,.8);border-left:3px solid #d0452f}
+.bact{display:grid;grid-template-columns:1fr 1fr;gap:var(--s2)}.bact .end{grid-column:1/3;min-height:44px;font-size:17px}
+@media (max-width:900px){.brief{grid-template-columns:1fr}}
+/* ================= quartel-general: barra de status e abas das salas ================= */
+#hqBar{align-items:flex-start}
+.hqs{display:flex;flex-wrap:wrap;gap:6px;padding:6px;border-radius:14px;background:linear-gradient(180deg,rgba(40,24,30,.92),rgba(22,12,16,.92));border:2px solid var(--gilt2);box-shadow:0 6px 16px rgba(0,0,0,.45)}
+#hqBar .hqs span{display:grid;grid-template-columns:auto auto;grid-template-rows:auto auto;column-gap:6px;align-items:center;padding:3px 10px 3px 6px;border-radius:9px;border:1px solid rgba(226,168,60,.4);background:rgba(255,255,255,.04);font-weight:700}
+.hqs .ico{grid-row:1/3;width:20px;height:20px;margin:0}.hqs b{font:800 16px/1 var(--display);color:#ffe7a8}.hqs small{font:600 12px/1.1 var(--ui);color:#d9c8a8}
+.rtabs{grid-column:1/-1;display:flex;gap:4px;margin-top:6px;overflow-x:auto;scrollbar-width:none}
+.rtabs button{position:relative;flex:1 0 auto;min-height:30px;padding:0 8px;gap:5px;font:700 12px var(--ui);background:rgba(255,255,255,.06);color:#e8d8b8;border-color:rgba(226,168,60,.35)}
+.rtabs button .ico{width:16px;height:16px}.rtabs button.on{background:linear-gradient(180deg,#f6d77a,#d39a2a);color:#2e1c0c;border-color:#5a3a14}
+.rtabs .badge{position:absolute;top:-6px;right:-4px;margin:0}
+
+.rtabs button{flex:0 0 auto}.rtabs button span{display:none}.rtabs button.on{flex:1 0 auto}.rtabs button.on span{display:inline}

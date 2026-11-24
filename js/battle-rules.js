@@ -11,19 +11,21 @@ const RU={ama:[2,'can'],pampa:[4,'lan'],sul:[4,'lan'],ser:[2,'jag']}; // tropa r
 const ELITE=TH.ELITE||{};
 const elTxt=e=>e[2].rng?'+1 alcance':e[2].mov?'+1 movimento':e[2].dmg?`+${Math.round(e[2].dmg*100-100)}% dano`:`+${Math.round(e[2].def*100-100)}% defesa`;
 const stOf=u=>u.side?B.to:B.from, nmOf=u=>u.el?u.el[0]:UT[u.type][0]; // stOf: estado cujo general comanda a unidade
-const mvOf=u=>Math.max(1,UT[u.type][1]+(u.el?.[2].mov||0)+(gs(stOf(u))[1]>80?1:0)-(B.wx=='dry'&&u.type=='inf'?1:0)+(B.chg==B.round&&u.side==B.ps?2:0)+(pwOn(u.side,'atk')?2:0)+(hasP(u,'mov')?1:0));
-const rgOf=u=>Math.max(1,UT[u.type][2]+(u.el?.[2].rng||0)-(B.wx=='rain'&&UT[u.type][2]>1?1:0)+(B.T[u.y]?.[u.x]=='h'&&UT[u.type][2]>1?1:0)); // morro baixo: atirador e canhão alcançam mais
+const mvOf=u=>Math.max(1,UT[u.type][1]+(u.el?.[2].mov||0)+(gs(stOf(u))[1]>80?1:0)-(B.wx=='dry'&&u.type=='inf'?1:0)+(B.chg==B.round&&u.side==B.ps?2:0)+(pwOn(u.side,'atk')?2:0)+(hasP(u,'mov')?1:0)+(CL(u.type)=='cav'?(fxOn('pampa')||fxOn('cerrado')?1:0)-(fxOn('selva')||fxOn('pantanal')?1:0):0)-(u.type=='inf'&&fxOn('caatinga')?1:0)); /* o terreno do estado mexe no passo */
+const rgOf=u=>Math.max(1,UT[u.type][2]+(u.el?.[2].rng||0)-(B.wx=='rain'&&UT[u.type][2]>1?1:0)+(B.T[u.y]?.[u.x]=='h'&&UT[u.type][2]>1?1:0)+(B.T[u.y]?.[u.x]=='K'?2:0)+(B.T[u.y]?.[u.x]=='T'&&UT[u.type][2]>1?1:0)); // morro, torre e bateria: tiro mais longe
 const inR=(a,t)=>dist(a,t)<=rgOf(a)&&(a.type!='art'||dist(a,t)>1);
 const dist=(a,b)=>Math.abs(a.x-b.x)+Math.abs(a.y-b.y), alive=s=>B.units.filter(u=>u.side==s&&u.hp>0);
 const total=s=>alive(s).reduce((a,u)=>a+u.hp,0), ld=s=>B.units.find(u=>u.side==s&&u.ld).hp>0;
 const rout=s=>{const t0=B.units.filter(u=>u.side==s&&u.j>=0).reduce((a,u)=>a+u.hp0,0);return t0>0&&total(s)<=t0*.3}; // perdeu 70% das tropas: o exército debanda
 const bOver=()=>!ld(0)||!ld(1)||B.round>MAXR||!!B.taken||rout(0)||rout(1); // B.taken: praça tomada no cerco // comandante caiu = exército debanda
-const cover=t=>'fvQ'.includes(B.T[t.y][t.x]);
+const cover=t=>tdef(B.T[t.y]?.[t.x])>1;
 const est=(a,t,back)=>a.hp*.5*UT[a.type][3]*(back?.5:1)*(beats(a,t)?1.5:1)*(a.side?1:1+trait(B.from,'atk'))*(a.side==B.ps?1+.1*(hq.tech[CL(a.type)]||0):1)
-  /(t.side?1+defOf(B.to):1)/(cover(t)?1.3:1)/(t.el?.[2].def||1)*(a.el?.[2].dmg||1)*(1+(gs(stOf(a))[0]-40)/400)*(1+.08*a.lv)
+  /(t.side?1+defOf(B.to):1)/tdef(B.T[t.y]?.[t.x])/(t.el?.[2].def||1)*(a.el?.[2].dmg||1)*(1+(gs(stOf(a))[0]-40)/400)*(1+.08*a.lv)
   *(B.rl[a.side]==B.round?1.4:1)*(B.amb==B.round&&a.side==B.ps&&cover(a)?1.4:1)*(a.side!=B.ps?1+.1*Math.min(3,turn/8|0):1)*(pwOn(a.side,'atk')?1.3:1)/(pwOn(t.side,'def')?1.3:1)/(B.T[t.y]?.[t.x]=='h'?1.2:1)/(hasP(t,'def')?1.2:1)*(back&&hasP(a,'rev')?1.3:1); // elite, general, nível do regimento, brado, treino da IA
 const TN={g:'Campo aberto',r:'Estrada',w:'Água',b:'Ponte: pode ser queimada',f:'Mata: +30% defesa',m:'Serra: bloqueia',v:'Vila: +30% defesa, cura 2 por rodada',
-  h:'Morro baixo: custa 2 passos, +20% defesa, tiro +1',a:'Vau: custa 2 passos',W:'Muralha',D:'Portão',P:'Praça: o atacante vence se ficar nela',
+  h:'Morro baixo: custa 2 passos, +20% defesa, tiro +1',a:'Vau ou alagado: custa 2 passos',W:'Muralha: canhões derrubam; a infantaria sobe com escada',D:'Portão: arrombe para entrar',P:'Praça: o atacante vence se ficar nela',
+  T:'Torre: só o defensor sobe; +40% defesa e tiro +1',L:'Escada: passa por cima da muralha, custa 2 passos',R:'Brecha: escombros, custa 2 passos',
+  c:'Canavial: +20% defesa',K:'Bateria costeira: tiro +2 de alcance, +20% defesa',
   Q:'Quartel: +30% defesa; quem toma recruta 1 regimento a cada 2 rodadas'};
 const OBJ={vilas:['Duas vilas','tome as duas vilas marcadas com estrela e segure por duas rodadas','defenda as duas vilas marcadas com estrela','As vilas foram tomadas!'],
   saida:['Fuga','leve o seu comandante até a saída, à direita','impeça o comandante inimigo de chegar à saída','O comandante chegou à saída!'],
@@ -31,12 +33,13 @@ const OBJ={vilas:['Duas vilas','tome as duas vilas marcadas com estrela e segure
 const PERKS=[['mov','Marcha forçada','+1 de movimento'],['def','Entrincheirar','+20% de defesa'],['rev','Revide feroz','+30% de dano no revide']];
 const hasP=(u,k)=>u.j>=0&&!!perk[stOf(u)+'-'+u.j]?.includes(k); /* melhoria escolhida ao subir de nível */
 const inZone=c=>{const a=A0();return B.ps?(B.kind=='cerco'?c[0]>B.wc:c[0]>=GW-2-a&&c[0]<=GW-a+1):c[0]>=a-2&&c[0]<=a+1}; /* onde o jogador pode posicionar as tropas na preparação */
-const pass=(px_,py,u)=>{const t=B.T[py][px_];if(t=='w'&&u?.type=='can')return true;return!'mwW'.includes(t)&&!(t=='D'&&B.gate?.hp>0)}; // casa transitável
+const pass=(px_,py,u)=>{const t=B.T[py][px_];if(t=='w'&&u?.type=='can')return true;return!'mwWD'.includes(t)&&!(t=='T'&&u?.side!==1)}; // casa transitável; torre só para quem defende
+const stepCost=t=>'haLR'.includes(t)?2:1; // morro, vau, escada e escombros custam 2
 const pwOn=(sd,k)=>!!B.pw?.[sd]&&B.pw[sd].k==k&&B.round<=B.pw[sd].until; // poder do líder ativo
 const POW={atk:['Carga','+2 de movimento e +30% de dano por 2 rodadas'],def:['Resistência','+3 de vida e +30% de defesa por 2 rodadas'],
   gold:['Reorganizar','todas as unidades agem de novo'],rec:['Reforços','2 regimentos novos entram no campo']};
 const KIND={campo:['Batalha campal','Campo aberto: derrube o comandante inimigo.'],
-  cerco:['Cerco','Muralha com portão. A artilharia arromba o portão mais rápido; atiradores e canhões atiram por cima do muro.'],
+  cerco:['Cerco','Cidade murada com torres e dois portões. Canhões derrubam trechos da muralha, a infantaria encosta escadas e qualquer tropa arromba um portão. O defensor sobe nas torres e derruba escadas.'],
   travessia:['Travessia','Um rio corta o campo: pontes e um vau lento. Uma unidade ao lado de uma ponte pode queimá-la.'],
   emboscada:['Emboscada','Mata fechada: você só enxerga inimigos a até 3 casas das suas unidades.']};
 const seen=u=>B.kind!='emboscada'||u.side==B.ps||B.units.some(v=>v.side==B.ps&&v.hp>0&&dist(u,v)<=3); // neblina da emboscada

@@ -1,27 +1,53 @@
 // batalha tática: geração do campo, terrenos e sprites
-function genMap(b,kind){ // g grama, r estrada, w água, b ponte, a vau, f mata, m serra, h morro baixo, v vila, W muralha, D portão, P praça
-  const T=Array.from({length:GH},()=>Array(GW).fill('g')),rnd=n=>Math.random()*n|0,a0=A0(),wc=GW-a0-4,A=GW*GH/160,at=(c,yy)=>T[yy]?.[c];
+function genMap(b,kind,si){ // g grama, r estrada, w água, b ponte, a vau/alagado, f mata, m serra, h morro baixo, v vila, Q quartel, c canavial, K bateria, W muralha, T torre, D portão, P praça
+  const MF=si!=null?mapOf(si):{f:[]},F_=k=>MF.f.includes(k),R=seeded(strSeed((si!=null?S[si][0]:'x')+kind+GW)); /* semente fixa: o mesmo estado dá sempre o mesmo campo */
+  const T=Array.from({length:GH},()=>Array(GW).fill('g')),rnd=n=>R()*n|0,a0=A0(),wc=GW-a0-4,A=GW*GH/160,at=(c,yy)=>T[yy]?.[c];
   let y=GH>>1; // a estrada liga os dois lados e nunca é coberta: garante passagem
-  for(let c=0;c<GW;c++){T[y][c]='r';if(c>1&&c<GW-2&&Math.random()<.3){y=Math.max(2,Math.min(GH-3,y+(rnd(2)?1:-1)));T[y][c]='r'}}
-  if(kind=='travessia'||b.river&&kind!='cerco'){const mid=GW>>1;let c=mid-2+rnd(4);const wet=(yy,cc)=>T[yy][cc]=T[yy][cc]=='r'||T[yy][cc]=='b'?'b':'w'; // rio sinuoso no meio
-    for(let yy=0;yy<GH;yy++){wet(yy,c);if(yy<GH-1&&Math.random()<.4){c=Math.max(mid-4,Math.min(mid+3,c+(rnd(2)?1:-1)));wet(yy,c)}}
-    const ws=[];T.forEach((row,yy)=>row.forEach((t,cc)=>{if(t=='w'&&row[cc-1]=='g'&&row[cc+1]=='g')ws.push([cc,yy])}));
-    const pick=()=>ws.splice(rnd(ws.length),1)[0];for(let k=0;k<(GH>16?2:1)&&ws.length;k++){const[cc,yy]=pick();T[yy][cc]='b'}if(kind=='travessia'&&ws.length){const[cc,yy]=pick();T[yy][cc]='a'}} // várias pontes e um vau
-  if(kind=='cerco'){let gy=-1;for(let yy=0;yy<GH;yy++){if(T[yy][wc]=='r'&&gy<0){gy=yy;T[yy][wc]='D'}else T[yy][wc]='W'} // muralha com um portão na estrada
-    T[gy][wc+2]='P'}
-  const free=(c,yy)=>at(c,yy)=='g'&&!(c>=a0-2&&c<=a0+1)&&!(c>=GW-a0-2&&c<=GW-a0+1)&&!(kind=='cerco'&&c>=wc-1), // as faixas de posicionamento ficam livres
-    cx0=a0+3,cx1=kind=='cerco'?wc-3:GW-a0-4,rx=()=>cx0+rnd(Math.max(1,cx1-cx0+1));
+  for(let c=0;c<GW;c++){T[y][c]='r';if(c>1&&c<GW-2&&R()<.3){y=Math.max(3,Math.min(GH-5,y+(rnd(2)?1:-1)));T[y][c]='r'}}
+  const wet=(yy,cc)=>{if(T[yy]?.[cc]==null)return;T[yy][cc]=T[yy][cc]=='r'||T[yy][cc]=='b'?'b':'w'};
+  const zone=c=>(c>=a0-2&&c<=a0+1)||(c>=GW-a0-2&&c<=GW-a0+1)||(kind=='cerco'&&c>=wc-1); // faixas de posicionamento e a cidade murada
+  const cx0=a0+3,cx1=kind=='cerco'?wc-3:GW-a0-4,rx=()=>cx0+rnd(Math.max(1,cx1-cx0+1)),mid=(cx0+cx1)>>1;
+  const free=(c,yy)=>at(c,yy)=='g'&&!zone(c);
   const blob=(ch,c,yy,n,sp)=>{const q=[[c,yy]];let k=0,g=0;while(q.length&&k<n&&g++<200){const[a,bb]=q.splice(rnd(q.length),1)[0];if(!free(a,bb))continue;T[bb][a]=ch;k++;
-    [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy])=>{if(Math.random()<sp)q.push([a+dx,bb+dy])})}return k};
+    [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy])=>{if(R()<sp)q.push([a+dx,bb+dy])})}return k};
+  const river=(c0,lo,hi)=>{let c=c0;for(let yy=0;yy<GH;yy++){wet(yy,c);if(yy<GH-1&&R()<.4){c=Math.max(lo,Math.min(hi,c+(rnd(2)?1:-1)));wet(yy,c)}}};
+  const crossings=(n,ford)=>{const ws=[];T.forEach((row,yy)=>row.forEach((t,cc)=>{if(t=='w'&&row[cc-1]=='g'&&row[cc+1]=='g'&&yy>1&&yy<GH-2)ws.push([cc,yy])}));
+    const pick=()=>ws.splice(rnd(ws.length),1)[0];for(let k=0;k<n&&ws.length;k++){const[cc,yy]=pick();T[yy][cc]='b'}if(ford&&ws.length){const[cc,yy]=pick();T[yy][cc]='a'}};
+  // ---- água: rio, ilhas e canais, baía, litoral, lagoas, pantanal ----
+  if(kind!='cerco'&&(kind=='travessia'||F_('rio')||b.river&&!F_('baia'))){river(mid-1+rnd(3),mid-4,mid+3);crossings(GH>16?2:1,kind=='travessia')}
+  if(F_('ilhas')&&kind!='cerco'){river(cx0+2+rnd(2),cx0+1,cx0+4);river(cx1-2-rnd(2),cx1-4,cx1-1);crossings(2,true);crossings(1,true)} // dois canais: ilha no meio
+  if(F_('litoral')){for(let c=0;c<GW;c++){wet(GH-1,c);if(c%7!=3)wet(GH-2,c)} // mar no sul do campo, com uma bateria do lado de quem defende
+    const kx=GW-a0-3,ky=GH-3;if(T[ky]?.[kx]=='g')T[ky][kx]='K';else if(T[ky-1]?.[kx]=='g')T[ky-1][kx]='K'}
+  if(F_('baia')){const ecx=mid+2,ecy=GH-1,erx=Math.max(4,(cx1-cx0)*.45),ery=GH*.32; // baía: um bolsão de água no sul, com uma ilhota
+    for(let yy=0;yy<GH;yy++)for(let c=0;c<GW;c++){if(zone(c))continue;const d=((c-ecx)/erx)**2+((yy-ecy)/ery)**2;if(d<1)wet(yy,c)}
+    const ix0=ecx+rnd(3)-1,iy0=GH-3;if(T[iy0]?.[ix0]=='w'){T[iy0][ix0]='h';if(T[iy0][ix0+1]=='w')T[iy0][ix0+1]='f'}}
+  if(F_('lagoas'))for(let k=0;k<4+rnd(3);k++)blob('w',rx(),1+rnd(GH-2),3+rnd(4),.6);
+  if(F_('pantanal'))for(let k=0;k<8+rnd(5);k++)blob('a',rx(),rnd(GH),3+rnd(5),.55); // alagados
+  // ---- relevo: serra com desfiladeiros, chapadas ----
+  if(F_('serra')){const sc=mid+rnd(3)-1,ry=[...T.keys()].find(yy=>T[yy][sc]=='r'),pz=new Set([2+rnd(3),GH-3-rnd(3),(GH>>1)+(rnd(2)?3:-3)]); /* uma serra de ponta a ponta; passa pela estrada e por três desfiladeiros */
+    for(let yy=0;yy<GH;yy++){const c=sc+((yy>>2)%2);if(T[yy][c]!='g')continue;T[yy][c]=pz.has(yy)?'h':'m';if(T[yy][c+1]=='g'&&R()<.35)T[yy][c+1]='m'}
+    if(ry!=null){T[ry][sc]='r';T[ry][sc+1]=T[ry][sc+1]=='m'?'r':T[ry][sc+1]}}
+  if(F_('chapada'))for(let k=0;k<3;k++){const c=rx(),yy=1+rnd(GH-4),w=2+rnd(3),h=2+rnd(2);for(let dy=0;dy<h;dy++)for(let dx=0;dx<w;dx++)if(free(c+dx,yy+dy))T[yy+dy][c+dx]='m';
+    for(let dy=-1;dy<=h;dy++)for(let dx=-1;dx<=w;dx++)if(free(c+dx,yy+dy)&&R()<.5)T[yy+dy][c+dx]='h'}
+  // ---- cerco: muralha com torres, dois portões e casario por dentro ----
+  if(kind=='cerco'){let gy=-1;const pg=y<GH/2?GH-4:3; // portão principal na estrada e um portão menor longe dela
+    for(let yy=0;yy<GH;yy++){if(T[yy][wc]=='r'&&gy<0){gy=yy;T[yy][wc]='D'}else if(yy==pg)T[yy][wc]='D';else T[yy][wc]=(yy%4==1)?'T':'W'}
+    T[gy][wc+2]='P';for(let c=wc+1;c<GW;c++)for(let yy=0;yy<GH;yy++)if(T[yy][c]=='g'&&(c+yy)%3==0&&Math.abs(yy-gy)>1&&R()<.5)T[yy][c]='v'} // casario
+  // ---- campo: vilas, quartéis, montanhas, matas, canaviais, morros ----
   const roadY=c=>{for(let yy=0;yy<GH;yy++)if(T[yy][c]=='r')return yy;return GH>>1};
-  for(let k=0,n=GW>=27?3:2+rnd(2);k<n;k++){const c=Math.round(cx0+(cx1-cx0)*(k+.5)/n)+rnd(3)-1,r0=roadY(c),up=rnd(2)?1:-1,vy=Math.max(1,Math.min(GH-2,r0+up*(2+rnd(3)))); // vilarejos: 2 ou 3 casas juntas, ligadas à estrada
-    for(let yy=r0+up;yy!=vy+up;yy+=up){if(T[yy]?.[c]!='g')break;T[yy][c]='r'}blob('v',c+1,vy,2+rnd(2),.9)||blob('v',c-1,vy,2,.9)}
-  for(let k=0,n=kind=='cerco'?0:GW>=27?2:1;k<n;k++){const c=rx(),yy=k%2?1+rnd(2):GH-2-rnd(2);blob('Q',c,yy,1,1)} // quartel no flanco
-  let M=Math.round(b.m*1.3*Math.sqrt(A)*(kind=='emboscada'?.5:1)),g=0; // cordilheiras: linhas tortas de serra com passagens
+  const nv=(GW>=27?3:2+rnd(2))+(F_('cidade')?2:0)+(F_('minas')?1:0);
+  for(let k=0;k<nv;k++){const c=Math.round(cx0+(cx1-cx0)*(k+.5)/nv)+rnd(3)-1,r0=roadY(c),up=rnd(2)?1:-1,vy=Math.max(1,Math.min(GH-3,r0+up*(2+rnd(3)))); // vilarejos: 2 ou 3 casas juntas, ligadas à estrada
+    for(let yy=r0+up;yy!=vy+up;yy+=up){if(T[yy]?.[c]!='g')break;T[yy][c]='r'}const ok=blob('v',c+1,vy,2+rnd(2)+(F_('cidade')?1:0),.9)||blob('v',c-1,vy,2,.9);
+    if(F_('minas')&&ok)[[0,-1],[2,-1],[0,1],[2,1]].forEach(([dx,dy])=>{if(free(c+dx,vy+dy))T[vy+dy][c+dx]='h'})} // vilas mineiras no alto dos morros
+  if(F_('palafitas'))T.forEach((row,yy)=>row.forEach((t,c)=>{if(t=='w'&&R()<.08&&free(c+1,yy))T[yy][c+1]='v'}));
+  for(let k=0,n=kind=='cerco'?0:GW>=27?2:1;k<n;k++){const c=rx(),yy=k%2?1+rnd(2):GH-3-rnd(2);blob('Q',c,yy,1,1)} // quartel no flanco
+  let M=Math.round(b.m*1.3*Math.sqrt(A)*(kind=='emboscada'?.5:1)*(F_('pampa')||F_('cerrado')?.4:F_('minas')?1.1:F_('serra')?.8:1)*(kind=='cerco'?.6:1)),g=0; // cordilheiras: linhas tortas de serra com passagens
   while(M>0&&g++<40){let c=rx(),yy=rnd(GH);const dx=rnd(2)?1:-1,dy=rnd(2)?1:-1;for(let k=0,n=4+rnd(5);k<n&&M>0;k++){if(free(c,yy)&&k%4!=3){T[yy][c]='m';M--}if(rnd(3))c+=dx;else yy+=dy}}
-  T.forEach((row,yy)=>row.forEach((t,c)=>{if(t=='m')[[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy])=>{if(free(c+dx,yy+dy)&&Math.random()<.12)T[yy+dy][c+dx]='h'})})); // sopé de morros
-  let F=Math.round((b.f*1.3+(kind=='emboscada'?40:0))*A);g=0;while(F>0&&g++<80)F-=blob('f',rnd(GW),rnd(GH),Math.min(F,3+rnd(7)),.55); // faixas de mata
-  for(let k=0,n=Math.round((kind=='emboscada'?2:4)*Math.sqrt(A)),tr=0;k<n&&tr<300;tr++){const c=rx(),yy=rnd(GH);if(free(c,yy)){T[yy][c]='h';k++}}
+  T.forEach((row,yy)=>row.forEach((t,c)=>{if(t=='m')[[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy])=>{if(free(c+dx,yy+dy)&&R()<.12)T[yy+dy][c+dx]='h'})})); // sopé de morros
+  const fm=F_('selva')?1.6:F_('mata')?1.3:F_('araucaria')?1.2:F_('pampa')?.3:F_('cerrado')||F_('caatinga')?.7:F_('pantanal')?.5:1,spread=F_('cerrado')||F_('caatinga')?.25:.55;
+  let Fn=Math.round((b.f*1.3*fm+(kind=='emboscada'?40:0))*A);g=0;while(Fn>0&&g++<120)Fn-=blob('f',rnd(GW),rnd(GH),Math.min(Fn,spread<.4?1+rnd(2):3+rnd(7)),spread); // matas: faixas fechadas ou árvores ralas
+  if(F_('canavial'))for(let k=0;k<4+rnd(3);k++){const c=rx(),yy=rnd(GH-2),w=2+rnd(3),h=2+rnd(2);for(let dy=0;dy<h;dy++)for(let dx=0;dx<w;dx++)if(free(c+dx,yy+dy))T[yy+dy][c+dx]='c'} // canaviais em talhões
+  for(let k=0,n=Math.round((kind=='emboscada'?2:F_('pampa')?9:4)*Math.sqrt(A)),tr=0;k<n&&tr<300;tr++){const c=rx(),yy=rnd(GH);if(free(c,yy)){T[yy][c]='h';k++}} // morros baixos; coxilhas no pampa
   return T}
 function tree(q,st,a,b,h){ // q aceita meia unidade: dá para desenhar detalhes finos
   if(st=='cactus'){const G='#3f8f4f',Gd='#2a6a38',Gl='#7fcf7f'; // mandacaru: braços em candelabro, costelas claras, flor no topo
@@ -64,8 +90,16 @@ function tile(g,T,c,y,b){
     if(dry(at(-1,0))){q(0,0,1,18,sand);q(1,0,.5,18,foam)}if(dry(at(1,0))){q(17,0,1,18,sand);q(16.5,0,.5,18,foam)}}
   if(t=='a'){q(0,0,18,18,'rgba(170,225,255,.35)');[[3,4],[9,8],[13,3],[5,12],[12,13]].forEach(([a,c2])=>{q(a,c2,2.5,2,'#8d877b');q(a,c2,2.5,.5,'#c9c4b8')})} // vau: raso, com pedras
   if(t=='h'){q(2,13,15,2,'rgba(0,0,0,.18)');q(2,8,14,6,b.gd);q(4,5,10,4,b.gd);q(3,8,12,5,b.gl);q(5,5.5,8,3,b.gl);q(6,5.5,4,1,'rgba(255,255,255,.35)');q(11,8,3,5,'rgba(0,0,0,.12)')} // morro baixo
-  if(t=='W'||t=='D'){q(0,0,18,18,'#8a8070');for(let r=0;r<18;r+=4.5)for(let k=(r/4.5%2)*3-3;k<18;k+=6){q(Math.max(0,k),r,5.5,4,'#a89c88');q(Math.max(0,k),r,5.5,.5,'#c9bea8')} // muralha de pedra
-    q(0,0,18,1.5,'#6a6050');q(15,0,3,18,'rgba(0,0,0,.2)');if(t=='D'){q(4,2,10,16,'#3a2413');q(5,3,8,15,'#22140c')}}
+  if(t=='W'||t=='D'||t=='T'||t=='L'){const top=t=='T'?0:3; /* muralha com volume: topo claro com ameias, face de pedra, sombra à direita */
+    q(0,top,18,18-top,'#8a8070');for(let r=top+4;r<18;r+=4)for(let k=(r/4%2)*3-3;k<18;k+=6){q(Math.max(0,k),r,5.5,3.5,'#a89c88');q(Math.max(0,k),r,5.5,.5,'#c9bea8')}
+    q(0,top,18,4,'#b8ad98');q(0,top,18,.75,'#ddd2bb');for(let k=0;k<18;k+=4.5)q(k,top-1.5,2.5,2,'#b8ad98'); // ameias
+    q(15,top,3,18-top,'rgba(0,0,0,.22)');q(0,17,18,1,'rgba(0,0,0,.25)');
+    if(t=='T'){q(2,1,14,3,'#6a6050');q(3,5,4,3,'#22140c');q(11,5,4,3,'#22140c');q(8.5,-1,1,3,'#3a2413');q(9.5,-1,4,2,'#b3312a')} // torre: seteiras e bandeira
+    if(t=='D'){q(4,6,10,12,'#3a2413');q(5,7,8,11,'#5a3a1c');for(let k=5;k<13;k+=2.5)q(k,7,.5,11,'#3a2413');q(4,10,10,1,'#2f2f36');q(4,14,10,1,'#2f2f36')}
+    if(t=='L'){for(let k=1;k<18;k+=3.5)q(5.5,k,7,1,'#c99a5c');q(5,0,1.5,18,'#7a4f26');q(11.5,0,1.5,18,'#7a4f26')}} // escada encostada
+  if(t=='R'){q(1,6,16,11,'#8d877b');[[2,8,5,3],[8,7,6,4],[4,12,7,3],[11,12,5,4],[1,14,4,2]].forEach(([a,c2,w,hh])=>{q(a,c2,w,hh,'#a89c88');q(a,c2,w,.5,'#c9bea8');q(a+w-1,c2,1,hh,'rgba(0,0,0,.2)')})} // brecha: escombros
+  if(t=='c'){for(let k=0;k<18;k+=3){q(k+1,2,1,15,'#6f9a2a');q(k+1.5,1,1,6,'#9fc84a');q(k+.5,7,2,.5,'#c8e070')}q(0,16,18,2,'rgba(60,40,10,.25)')} // canavial em fileiras
+  if(t=='K'){q(1,5,16,12,'#8d877b');q(1,5,16,1,'#c9bea8');q(4,7,10,3,'#2f2f36');q(12,7.5,4,2,'#1a1a20');q(5,10,3,3,'#5a3a1c');q(10,10,3,3,'#5a3a1c');q(1,16,16,1,'rgba(0,0,0,.25)')} // bateria costeira
   if(t=='P'){q(1,1,16,16,'#b8ab90');for(let r=1;r<17;r+=3)for(let k=1+(r%2)*1.5;k<17;k+=3){q(k,r,2.5,2.5,'#cfc3a6');q(k,r,2.5,.5,'#e6dcc2')}q(1,1,16,16,'rgba(255,220,120,.08)')} // praça de pedra
   if(t=='b'){q(0,4,18,10,'rgba(0,0,0,.25)'); // ponte: tábuas com luz, corrimão e postes
     q(0,3,18,11,'#9a6a36');for(let k=0;k<18;k+=3){q(k,3,.5,11,'#6b4524');q(k+.5,3,2,.5,'#c99a5c')}
