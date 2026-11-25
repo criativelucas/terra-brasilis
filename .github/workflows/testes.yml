@@ -1,6 +1,6 @@
 # Roda os testes do jogo a cada envio: regras sem tela (tools/sim.js) e as telas no Chrome (tools/test.mjs), em português e em inglês.
 name: testes
-on: [push, pull_request]
+on: [push, pull_request, workflow_dispatch]
 jobs:
   testes:
     runs-on: ubuntu-latest
