@@ -9,7 +9,7 @@ const srv=createServer((q,r)=>{const f=join(ROOT,decodeURIComponent(new URL(q.ur
   if(!f.startsWith(ROOT)||!existsSync(f)){r.writeHead(404);return r.end()}r.writeHead(200,{'content-type':MIME[extname(f)]||'application/octet-stream'});r.end(readFileSync(f))});
 await new Promise(r=>srv.listen(0,'127.0.0.1',r));const URL_=`http://127.0.0.1:${srv.address().port}/?teste`;
 const CH=process.env.CHROME||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',PORT=9400+Math.random()*400|0;
-const chrome=spawn(CH,['--headless=new',`--remote-debugging-port=${PORT}`,'--window-size=1440,900',`--user-data-dir=${mkdtempSync(join(tmpdir(),'tb-'))}`,'about:blank'],{stdio:'ignore'});
+const chrome=spawn(CH,['--headless=new',`--remote-debugging-port=${PORT}`,'--window-size=1440,900',...(process.env.CI?['--no-sandbox']:[]),`--user-data-dir=${mkdtempSync(join(tmpdir(),'tb-'))}`,'about:blank'],{stdio:'ignore'});
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));let ws;
 for(let i=0;i<60&&!ws;i++){try{const p=(await (await fetch(`http://127.0.0.1:${PORT}/json`)).json()).find(t=>t.type=='page');if(p){ws=new WebSocket(p.webSocketDebuggerUrl);break}}catch{}await sleep(250)}
 if(!ws){console.log('Chrome não abriu. Defina CHROME=/caminho/do/chrome');process.exit(2)}
@@ -33,10 +33,20 @@ const T=[ // [nome, código que monta a situação]
   ['quartel e salas','openHQ();await W_(800);for(const r of ["bar","tes","war","gen","dip"]){showRoom(r);await W_(150)}closeHQ();await W_(300)'],
   ['desafio do dia','startDaily();await W_(300);turn=16;onTurn();await W_(300);scr()'],
   ['jogo a dois','duoPick=1;reset();showSetup();pickI=ix.BA;document.querySelector("#card [data-s=go]").click();await W_(200);pickI=ix.PE;showSetup();document.querySelector("#card [data-s=go]").click();await W_(300);CFG.confirm=0;document.querySelector("[data-a=end]").click();await W_(400);if(me!=duo.p[1])throw new Error("não passou a vez");document.querySelector("#card [data-s=duogo]").click();await W_(200)'],
+  ['oficiais e lealdade','reset();startAs(ix.BA);scr();owner[ix.SE]=me;loy[ix.SE]=15;gold[me]=60;const a=aidePool()[0];if(!hireAide(a[0]))throw new Error("não contratou");openHQ();await W_(700);showRoom("gen");await W_(300);document.querySelector("[data-s^=hq-hon-]")?.click();await W_(200);if(loyOf(ix.SE)<30)throw new Error("honrar não subiu a lealdade");closeHQ();await W_(300)'],
+  ['cartas com nível e combo','gold[me]=50;cardUse={};for(let k=0;k<5;k++){cmd=9;hand=["requis"];playCard("requis",-1)}if(cardLv("requis")!=3)throw new Error("carta não subiu de nível");const c0=cmd;cmb={turn:0,th:{}};cmd=9;hand=["levas","alforria"];playCard("levas",me);playCard("alforria",-1);if(cmb.th.povo!=2)throw new Error("combo não contou");ui();await W_(300)'],
+  ['calendário','if(!/de 18\\d\\d/.test(calTxt(1))||calTxt(3)!="dezembro de 1822")throw new Error("data errada: "+calTxt(3))'],
   ['batalhas automáticas','for(const [st,ps] of [["RJ",0],["RS",1],["MG",0]]){reset();startAs(ix[st]);scr();const n=adj[me][0];troops[me]=26;troops[n]=20;ps?startBattle(n,me,19,1):startBattle(me,n,25,0);const b=B;await bEnd(true);for(let i=0;i<600&&B===b;i++)await W_(100);if(B===b)throw new Error("batalha não terminou")}await W_(1500);scr()'],
 ];
 let fail=0;
 for(const [n,code] of T){let p;try{await ev(code);p=await ev(bad)}catch(e){p=[e.message.split('\n')[0]]}
   await ev('errs.length=0');console.log(p.length?'FALHOU':'ok    ',n,p.length?'· '+p.slice(0,3).join(' | '):'');if(p.length)fail++}
-console.log(fail?`\n${fail} de ${T.length} testes falharam`:`\nTodos os ${T.length} testes passaram`);
+for(const th of ['balaiada','sabinada','males']){ // campanhas históricas: abrem, jogam dois turnos e uma batalha automática
+  await cmd('Page.navigate',{url:URL_+'#'+th});await sleep(2500);let p;
+  try{await ev(`for(let i=0;i<40&&typeof ui!='function';i++)await new Promise(r=>setTimeout(r,250));window.errs=[];addEventListener('error',e=>errs.push(e.message+' '+(e.filename||'').split('/').pop()+':'+e.lineno));tut=-1;CFG.speed=2;CFG.clash=0;CFG.calm=1;
+    const pl=Object.keys(SCN[0].play).map(Number);reset();startAs(pl[0]);scr();ui();for(let k=0;k<2;k++){endTurn();if(raids.length){raids=[];closeTurn()}}scr();ui();
+    const n=adj[me].find(j=>owner[j]!=me)??adj[me][0];troops[me]=24;troops[n]=14;startBattle(me,n,23,0);const b=B;await bEnd(true);for(let i=0;i<600&&B===b;i++)await new Promise(r=>setTimeout(r,100));if(B===b)throw new Error('batalha não terminou');
+    await new Promise(r=>setTimeout(r,1500));scr();showEnc(me);await new Promise(r=>setTimeout(r,200))`);p=await ev(bad)}catch(e){p=[e.message.split('\n')[0]]}
+  console.log(p.length?'FALHOU':'ok    ','campanha '+th,p.length?'· '+p.slice(0,3).join(' | '):'');if(p.length)fail++}
+console.log(fail?`\n${fail} testes falharam`:`\nTodos os ${T.length+3} testes passaram`);
 chrome.kill();srv.close();process.exit(fail?1:0);

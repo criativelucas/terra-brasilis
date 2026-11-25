@@ -1,6 +1,9 @@
 // mapa de batalha próprio de cada estado: relevo, água, cidade e as regras que vêm com eles
 // cada código tem um nome de campo e traços; o mesmo estado gera sempre o mesmo mapa (semente fixa por estado e tipo de batalha)
-const MAPF={
+const MAPF={SLZ:['Ilha de São Luís',['ilhas','cidade']],CAX:['Caxias e o Itapecuru',['rio','cidade']],QUI:['Lagoa Amarela',['lagoas','mata']],PRN:['Delta do Parnaíba',['ilhas','litoral']],
+  SSA:['Salvador, Cidade Alta e Baixa',['cidade','litoral']],ITP:['Ilha de Itaparica',['ilhas','litoral']],CAC:['Cachoeira e o Paraguaçu',['rio','cidade']],SFC:['Engenhos do Recôncavo',['canavial','baia']],
+  LAD:['Ladeira da Praça',['cidade']],PAL:['Largo do Palácio',['cidade']],VIT:['Corredor da Vitória',['cidade','litoral']],CPG:['Campo Grande',['cidade']],AGM:['Água de Meninos',['cidade','litoral']],BBL:['Forte do Barbalho',['cidade']],CLC:['Calçada',['cidade']],ITG:['Península de Itapagipe',['cidade','litoral']],RVE:['Rio Vermelho',['litoral']],CBR:['Matas do Cabula',['mata']],
+  
   AC:['Seringais do Acre',['selva','rio']],AM:['Encontro das Águas',['selva','rio','palafitas']],RR:['Lavrado e serras',['cerrado','serra']],
   RO:['Vale do Madeira',['selva','rio']],PA:['Delta e Marajó',['ilhas','selva']],AP:['Costa do Amapá',['litoral','selva']],
   TO:['Cerrado do Tocantins',['cerrado','rio']],MA:['Baía de São Marcos',['baia','litoral']],PI:['Chapadas do Piauí',['caatinga','chapada']],
@@ -15,7 +18,8 @@ const MAPF={
   POA:['Porto Alegre e o Guaíba',['baia','cidade','pampa']],LAG:['Laguna',['litoral','lagoas']],RGR:['Barra do Rio Grande',['litoral','pampa']],
   BEL:['Belém e a baía do Guajará',['ilhas','cidade']],MAN:['Barra do Rio Negro',['selva','rio','palafitas']],MAR:['Ilha do Marajó',['ilhas','pampa']]};
 const MBIO={ama:['selva','rio'],ser:['caatinga'],cer:['cerrado'],sud:['serra'],sul:['araucaria'],mata:['canavial'],pampa:['pampa']};
-function mapOf(i){const m=MAPF[S[i][0]];if(m)return{nome:m[0],f:m[1]};const f=[...(MBIO[BOF[i]]||[])];if(COAST.includes(i))f.push('litoral');return{nome:BIO[BOF[i]].nome,f}}
+function mapOf(i){const m=MAPF[S[i][0]];if(m)return{nome:m[0],f:m[1]};const f=[...(MBIO[BOF[i]]||[])];
+  if(COAST.includes(i))f.push('litoral');return{nome:BIO[BOF[i]].nome,f}}
 // regra de cada traço: nome, efeito na batalha e quem ganha com ele ('atk', 'def' ou '' para os dois)
 const FXR={selva:['Selva fechada','mata dá +40% de defesa; cavalaria anda 1 a menos','def'],rio:['Rio largo','pontes e vaus decidem a travessia','def'],
   palafitas:['Palafitas','vilas na beira d’água','def'],ilhas:['Ilhas e canais','canais cortam o campo; canoeiros andam pela água',''],
@@ -30,7 +34,8 @@ const fxOn=k=>!!B?.fx?.includes(k);
 const tdef=t=>({f:fxOn('selva')||fxOn('mata')?1.4:1.3,v:fxOn('cidade')?1.4:1.3,Q:1.3,c:1.2,T:1.4,K:1.2,L:.9})[t]||1; // defesa do terreno onde o alvo está
 const vgold=()=>fxOn('minas')?3:2; // ouro por vila tomada
 const vgTot=sd=>Math.min(fxOn('minas')?12:8,vgold()*[...(B?.vil?.values()||[])].filter(v=>v==sd).length); // ouro de batalha, com teto (cidades têm muitas casas)
-const seeded=s=>{let a=s>>>0;return()=>{a=a+0x6D2B79F5>>>0;let t=a;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}};
+const seeded=s=>{let a=s>>>0;return()=>{a=a+0x6D2B79F5>>>0;let t=a;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);
+  return((t^t>>>14)>>>0)/4294967296}};
 const strSeed=t=>[...t].reduce((h,c)=>Math.imul(h^c.charCodeAt(0),16777619)>>>0,2166136261);
 
 // ---------- antes da batalha: maquete 3D do campo, forças, objetivo e o que o terreno favorece ----------
@@ -62,8 +67,11 @@ function brief3D(c,yaw,now){const g=c.getContext('2d'),W0=c.width,H0=c.height,cs
   const s=Math.min((W0-30)/(mxx-mnx),(H0-70)/(mxy-mny))*(W0==H0?.97:1),ox=W0/2-(mnx+mxx)/2*s,oy=H0/2+20-(mny+mxy)/2*s;
   const P=(x_,y_,z)=>{const[rx,ry]=rot(x_,y_);return[ox+(rx-ry)*s,oy+(rx+ry)*.5*s-z*s*.85]};
   const shade=(hex,k)=>{const n=parseInt(hex.slice(1),16);return`rgb(${(n>>16&255)*k|0},${(n>>8&255)*k|0},${(n&255)*k|0})`};
-  const quad=(pts,col)=>{g.fillStyle=col;g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.closePath();g.fill()};
-  g.clearRect(0,0,W0,H0);const bg=g.createRadialGradient(W0/2,H0/2,40,W0/2,H0/2,W0*.7);bg.addColorStop(0,'#cfe6f2');bg.addColorStop(.62,'#7fb0c8');bg.addColorStop(1,'#2f5468'); /* céu claro atrás da maquete, como numa lente */g.fillStyle=bg;g.fillRect(0,0,W0,H0);
+  const quad=(pts,col)=>{g.fillStyle=col;g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));
+    g.closePath();g.fill()};
+  g.clearRect(0,0,W0,H0);const bg=g.createRadialGradient(W0/2,H0/2,40,W0/2,H0/2,W0*.7);bg.addColorStop(0,'#cfe6f2');
+    bg.addColorStop(.62,'#7fb0c8');bg.addColorStop(1,'#2f5468'); /* céu claro atrás da maquete, como numa lente */g.fillStyle=bg;
+    g.fillRect(0,0,W0,H0);
   quad([P(-.4,-.4,-.35),P(GW+.4,-.4,-.35),P(GW+.4,GH+.4,-.35),P(-.4,GH+.4,-.35)],'#22160f'); // base de madeira da maquete
   const cells=[];for(let y_=0;y_<GH;y_++)for(let x_=0;x_<GW;x_++){const[rx,ry]=rot(x_+.5,y_+.5);cells.push([rx+ry,x_,y_])}cells.sort((a,b)=>a[0]-b[0]);
   const faces=[[0,1,0,0,1,0],[0,-1,0,1,1,1],[1,0,1,0,1,1],[-1,0,0,0,0,1]]; // normal e aresta: [nx,ny, x1,y1, x2,y2] relativos à casa
@@ -71,13 +79,21 @@ function brief3D(c,yaw,now){const g=c.getContext('2d'),W0=c.width,H0=c.height,cs
     if(z>0)faces.forEach(([nx,ny,a1,b1,a2,b2])=>{const[rx,ry]=rot(nx+cx0,ny+cy0);if(rx+ry<=0)return; /* só as faces voltadas para quem olha */
       const k=(nx*cs-ny*sn)>0?.62:.8;quad([P(x_+a1,y_+b1,z),P(x_+a2,y_+b2,z),P(x_+a2,y_+b2,0),P(x_+a1,y_+b1,0)],shade(col,k*v))});
     quad([P(x_,y_,z),P(x_+1,y_,z),P(x_+1,y_+1,z),P(x_,y_+1,z)],shade(col,v));
-    if(t=='f'){const[px_,py_]=P(x_+.5,y_+.5,z);g.fillStyle=shade(B.bio.gd,.8);g.beginPath();g.arc(px_,py_-s*.35,s*.38,0,7);g.fill();g.fillStyle=shade(B.bio.gl||'#74d05c',.9);g.beginPath();g.arc(px_-s*.1,py_-s*.45,s*.18,0,7);g.fill()}
-    if(t=='v'||t=='Q'){const[a,b]=P(x_+.5,y_+.2,z),[c2,d2]=P(x_+.15,y_+.6,z),[e,f]=P(x_+.85,y_+.6,z);g.fillStyle=t=='Q'?'#8a2a1c':'#c8452f';g.beginPath();g.moveTo(a,b-s*.3);g.lineTo(c2,d2);g.lineTo(e,f);g.fill()}}
-  const pin=(u,col,big)=>{const z=Math.max(0,HT[B.T[u.y][u.x]]||0),[px_,py_]=P(u.x+.5,u.y+.5,z),h=s*(big?1.9:1.4),w=s*(big?1:.8); /* bandeira de cada regimento; o comandante com estrela */
-    g.fillStyle='rgba(0,0,0,.35)';g.beginPath();g.ellipse(px_,py_,s*.35,s*.15,0,0,7);g.fill();g.strokeStyle='#2a1a10';g.lineWidth=2;g.beginPath();g.moveTo(px_,py_);g.lineTo(px_,py_-h);g.stroke();
-    g.fillStyle=col;g.lineWidth=1.2;g.beginPath();g.moveTo(px_+1,py_-h);g.lineTo(px_+w,py_-h+w*.35);g.lineTo(px_+1,py_-h+w*.7);g.closePath();g.fill();g.stroke();
+    if(t=='f'){const[px_,py_]=P(x_+.5,y_+.5,z);g.fillStyle=shade(B.bio.gd,.8);g.beginPath();g.arc(px_,py_-s*.35,s*.38,0,7);
+      g.fill();g.fillStyle=shade(B.bio.gl||'#74d05c',.9);g.beginPath();g.arc(px_-s*.1,py_-s*.45,s*.18,0,7);
+      g.fill()}
+    if(t=='v'||t=='Q'){const[a,b]=P(x_+.5,y_+.2,z),[c2,d2]=P(x_+.15,y_+.6,z),[e,f]=P(x_+.85,y_+.6,z);
+      g.fillStyle=t=='Q'?'#8a2a1c':'#c8452f';g.beginPath();g.moveTo(a,b-s*.3);g.lineTo(c2,d2);g.lineTo(e,f);
+      g.fill()}}
+  const pin=(u,col,big)=>{const z=Math.max(0,HT[B.T[u.y][u.x]]||0),[px_,py_]=P(u.x+.5,u.y+.5,z),h=s*(big?1.9:1.4),w=s*(big?1:.8);
+    /* bandeira de cada regimento; o comandante com estrela */
+    g.fillStyle='rgba(0,0,0,.35)';g.beginPath();g.ellipse(px_,py_,s*.35,s*.15,0,0,7);g.fill();g.strokeStyle='#2a1a10';
+      g.lineWidth=2;g.beginPath();g.moveTo(px_,py_);g.lineTo(px_,py_-h);g.stroke();
+    g.fillStyle=col;g.lineWidth=1.2;g.beginPath();g.moveTo(px_+1,py_-h);g.lineTo(px_+w,py_-h+w*.35);g.lineTo(px_+1,py_-h+w*.7);
+      g.closePath();g.fill();g.stroke();
     g.fillStyle='rgba(255,255,255,.45)';g.fillRect(px_+2,py_-h+2,w*.35,2);
-    if(big){g.fillStyle='#ffd23f';g.strokeStyle='#3a2413';g.beginPath();g.arc(px_,py_-h-s*.2,s*.24,0,7);g.fill();g.stroke()}};
+    if(big){g.fillStyle='#ffd23f';g.strokeStyle='#3a2413';g.beginPath();g.arc(px_,py_-h-s*.2,s*.24,0,7);
+      g.fill();g.stroke()}};
   [...B.units].filter(u=>u.hp>0&&(u.side==B.ps||B.kind!='emboscada')).sort((a,b)=>rot(a.x,a.y).reduce((p,q)=>p+q)-rot(b.x,b.y).reduce((p,q)=>p+q))
     .forEach(u=>pin(u,u.side==B.ps?'#4f8fff':'#e0483a',u.ld));
   [...(B.goals||[]),...(B.pr?[[B.pr.x,B.pr.y]]:[])].forEach(([gx,gy])=>{const[px_,py_]=P(gx+.5,gy+.5,.1),r=s*.45*(1+.12*Math.sin(now/300));g.fillStyle='#ffd23f';g.strokeStyle='#3a2413';g.lineWidth=2;g.beginPath();

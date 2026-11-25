@@ -48,8 +48,8 @@ const SIGC={SP:'bandeira',RJ:'grito',RS:'lanceiros',BA:'alforria',PE:'imprensa',
 const sigCard=f=>SIGC[S[f][0]]||REGC[REG.findIndex(([,st])=>st.includes(f))]||'missa';
 const POSTS={com:['Comércio','política'],mil:['Guerra','liderança'],est:['Estratégia','astúcia'],dip:['Diplomacia','política']}; // cargos dos generais
 let hand=[],cmd=0,posts={},boost=[]; // mão de cartas, pontos de Comando, cargos (cargo -> território do general), renda extra por território
-const postOk=k=>posts[k]>=0&&owner[posts[k]]==me;
-const cmdMax=()=>3+(postOk('est')?1:0);
+const postOk=k=>posts[k]>=0&&owner[posts[k]]==me&&loyOf(posts[k])>=30; // general descontente não cumpre o cargo
+const cmdMax=()=>3+(postOk('est')?1:0)+(aideOn('cmd')?1:0);
 const postGold=()=>postOk('com')?Math.floor(gs(posts.com)[2]/25):0, postTroops=()=>postOk('mil')?Math.floor(gs(posts.mil)[0]/30):0;
 // temperamento: cada líder negocia e guerreia de um jeito, conforme a vocação
 const TEMP={atk:['Belicoso','ataca mais cedo e com menos vantagem; só firma pacto com quem é forte'],def:['Cauteloso','ataca pouco; só aceita aliança depois de um pacto'],
@@ -57,40 +57,87 @@ const TEMP={atk:['Belicoso','ataca mais cedo e com menos vantagem; só firma pac
 const tempOf=f=>TEMP[S[f][5]]||TEMP.def,tk=f=>S[f][5]||'def';
 const strength=f=>owner.reduce((a,o,i)=>a+(o==f?troops[i]:0),0);
 const dipCost=(k,f)=>Math.ceil(DIP[k][1]*(postOk('dip')?.5:1)*(f!=null&&tk(f)=='gold'?.7:1));
-function drawCards(n){for(let k=0;k<n&&hand.length<6;k++){const p=cardsOf(Math.random()<.12?'r':'c');hand.push(p[Math.random()*p.length|0])}} // o sorteio do turno traz quase só comuns
+function drawCards(n){for(let k=0;k<n&&hand.length<6;k++){const p=cardsOf(Math.random()<.12?'r':'c');
+  hand.push(p[Math.random()*p.length|0])}} // o sorteio do turno traz quase só comuns
 function cardOk(id,t){const c=CARDS[id];if(!c||cmd<c[2]||c[1]!='mapa')return false;
   if(c[3]=='own')return t>=0&&owner[t]==me&&(id!='marcha'||moved.has(t))&&(id!='palic'||fort[t]<2);
   if(c[3]=='enemy')return t>=0&&owner[t]!=me&&(id!='embax'||!(pact[owner[t]]>turn));
-  if(c[3]=='enemyAdj')return t>=0&&owner[t]!=me&&troops[t]<=4&&!(pact[owner[t]]>turn)&&adj[t].some(j=>owner[j]==me);
-  if(c[3]=='enemyAdj6')return t>=0&&owner[t]!=me&&troops[t]<=6&&!(pact[owner[t]]>turn)&&adj[t].some(j=>owner[j]==me);
+  if(c[3]=='enemyAdj')return t>=0&&owner[t]!=me&&troops[t]<=4+cardLv(id)-1&&!(pact[owner[t]]>turn)&&adj[t].some(j=>owner[j]==me);
+  if(c[3]=='enemyAdj6')return t>=0&&owner[t]!=me&&troops[t]<=6+2*(cardLv(id)-1)&&!(pact[owner[t]]>turn)&&adj[t].some(j=>owner[j]==me);
   if(c[3]=='coast')return t>=0&&owner[t]!=me&&COAST.includes(t)&&!(pact[owner[t]]>turn);
   if(c[3]=='ownCoast')return t>=0&&owner[t]==me&&COAST.includes(t)&&!port[t];
   return true}
-function playCard(id,t){const c=CARDS[id];cmd-=c[2];hand.splice(hand.indexOf(id),1);
+function playCard(id,t){const c=CARDS[id],k_=cardLv(id)-1;cmd-=c[2];hand.splice(hand.indexOf(id),1);
   if(id=='marcha'){moved.delete(t);note(`Marcha forçada em ${S[t][1]}`)}
-  if(id=='requis'){const g=4+nOwn(me);gold[me]+=g;note(`Requisição: +${g} ouro`)}
-  if(id=='levas'){troops[t]+=5;note(`Voluntários: +5 tropas em ${S[t][1]}`)}
+  if(id=='requis'){const g=4+nOwn(me)+2*k_;gold[me]+=g;note(`Requisição: +${g} ouro`)}
+  if(id=='levas'){troops[t]+=5+2*k_;note(`Voluntários: +${5+2*k_} tropas em ${S[t][1]}`)}
   if(id=='palic'){fort[t]++;note(`Paliçada: forte nível ${fort[t]} em ${S[t][1]}`)}
-  if(id=='sabot'){const k=Math.ceil(troops[t]/3);troops[t]=Math.max(1,troops[t]-k);burn[t]=turn;note(`Sabotagem em ${S[t][1]}: −${k} tropas`)}
+  if(id=='sabot'){const k=Math.ceil(troops[t]*(1/3+.1*k_));troops[t]=Math.max(1,troops[t]-k);burn[t]=turn;
+    note(`Sabotagem em ${S[t][1]}: −${k} tropas`)}
   if(id=='panfl'){const was=owner[t];owner[t]=me;fort[t]=0;moved.add(t);note(`${S[t][1]} abandona ${S[was][4]} e se junta a você!`)}
   if(id=='embax'){pact[owner[t]]=Math.max(pact[owner[t]]||0,turn+4);note(`Embaixada: pacto com ${S[owner[t]][4]} até o turno ${turn+4}`)}
-  if(id=='correio'){drawCards(2);note('Correio a cavalo: 2 cartas novas')}
-  if(id=='grito'){owner.forEach((o,i)=>{if(o==me)troops[i]++});cmd++;note('Grito do Ipiranga: +1 tropa em cada território e +1 de Comando')}
-  if(id=='tropeiros'){boost[t]=(boost[t]||0)+1;note(`Rota de tropeiros: ${S[t][1]} rende +1 ouro por turno`)}
-  if(id=='quilombo'){troops[t]+=4;fort[t]=Math.min(2,fort[t]+1);note(`Quilombo em ${S[t][1]}: +4 tropas e forte nível ${fort[t]}`)}
-  if(id=='bloqueio'){const k=Math.ceil(troops[t]*.4);troops[t]=Math.max(1,troops[t]-k);burn[t]=turn;note(`Bloqueio naval em ${S[t][1]}: −${k} tropas`)}
-  if(id=='alforria'){const b=owner.map((o,i)=>o==me&&adj[i].some(j=>owner[j]!=me)?i:-1).filter(i=>i>=0).sort((p,q)=>troops[p]-troops[q]).slice(0,3);b.forEach(i=>troops[i]+=2);note(`Cartas de alforria: +2 tropas em ${b.map(i=>S[i][0]).join(', ')||'nenhum território'}`)}
+  if(id=='correio'){drawCards(2+(k_>1));note('Correio a cavalo: 2 cartas novas')}
+  if(id=='grito'){owner.forEach((o,i)=>{if(o==me)troops[i]+=1+(k_>1)});cmd++;note('Grito do Ipiranga: +1 tropa em cada território e +1 de Comando')}
+  if(id=='tropeiros'){boost[t]=(boost[t]||0)+1+(k_>1);note(`Rota de tropeiros: ${S[t][1]} rende +1 ouro por turno`)}
+  if(id=='quilombo'){troops[t]+=4+2*k_;fort[t]=Math.min(2,fort[t]+1);note(`Quilombo em ${S[t][1]}: +4 tropas e forte nível ${fort[t]}`)}
+  if(id=='bloqueio'){const k=Math.ceil(troops[t]*(.4+.1*k_));troops[t]=Math.max(1,troops[t]-k);burn[t]=turn;
+    note(`Bloqueio naval em ${S[t][1]}: −${k} tropas`)}
+  if(id=='alforria'){const b=owner.map((o,i)=>o==me&&adj[i].some(j=>owner[j]!=me)?i:-1).filter(i=>i>=0).sort((p,q)=>troops[p]-troops[q]).slice(0,3);
+    b.forEach(i=>troops[i]+=2+k_);note(`Cartas de alforria: +${2+k_} tropas em ${b.map(i=>S[i][0]).join(', ')||'nenhum território'}`)}
   if(id=='bandeira'){const was=owner[t];owner[t]=me;fort[t]=0;moved.add(t);note(`Bandeirantes tomam ${S[t][1]} de ${S[was][4]}!`)}
-  if(id=='engenho'){const k=owner.filter((o,i)=>o==me&&['acu','caf'].includes(resOf(i))).length,g=Math.max(3,2*k);gold[me]+=g;note(`Safra do engenho: +${g} ouro`)}
-  if(id=='imprensa'){cmd++;drawCards(2);note('Imprensa livre: +1 de Comando e 2 cartas')}
-  if(id=='jangada'){buildPort(t);note(`Jangadeiros: porto em ${S[t][1]}`)}
-  stats.cards=(stats.cards||0)+1;
+  if(id=='engenho'){const k=owner.filter((o,i)=>o==me&&['acu','caf'].includes(resOf(i))).length,g=Math.max(3,(2+k_)*k);
+    gold[me]+=g;note(`Safra do engenho: +${g} ouro`)}
+  if(id=='imprensa'){cmd++;drawCards(2+(k_>0));note('Imprensa livre: +1 de Comando e 2 cartas')}
+  if(id=='jangada'){buildPort(t);troops[t]+=2*k_;note(`Jangadeiros: porto em ${S[t][1]}`)}
+  stats.cards=(stats.cards||0)+1;cardUsed(id);
   check()}
+// ---------- calendário: cada turno tem data; os acontecimentos históricos caem no mês certo ----------
+const CAL={brasil:[[1,1822,9],[3,1822,12],[5,1823,7],[8,1824,7],[11,1835,1],[13,1835,9],[16,1838,12]],equador:[[1,1824,5],[3,1824,7],[5,1824,8],[7,1824,9],[10,1824,12]],
+  farrapos:[[1,1835,9],[3,1836,9],[6,1839,7],[9,1839,11],[12,1844,11],[14,1845,3]],cabanagem:[[1,1834,12],[2,1835,1],[5,1835,8],[8,1836,3],[11,1837,6]],
+  balaiada:[[1,1838,12],[3,1839,8],[6,1840,2],[9,1840,8],[11,1841,1]],sabinada:[[1,1837,11],[3,1837,12],[5,1838,2],[7,1838,3]],males:[[1,1835,1],[12,1835,1]]};
+const MES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+function calOf(t){const A=CAL[TKEY]||[[1,TH.ano,1]],mo=([,y,m])=>y*12+m-1;let a=A[0];for(const b of A){if(b[0]<=t)a=b;
+  else{const v=Math.round(mo(a)+(mo(b)-mo(a))*(t-a[0])/(b[0]-a[0]));return[v/12|0,v%12+1]}}
+  const v=mo(a)+(TKEY=='males'?0:2*(t-a[0]));return[v/12|0,v%12+1]} // depois da última data: dois meses por turno
+const calMid=t=>{const[y,m]=calOf(t);return`${MES[m-1].slice(0,3)}. ${y}`};
+const calTxt=t=>{const[y,m]=calOf(t);return`${MES[m-1]} de ${y}`},calShort=t=>{const[y,m]=calOf(t);return`${MES[m-1].slice(0,3)}/${y}`};
+// ---------- lealdade dos generais e oficiais contratados ----------
+let loy={},aides=[],cardUse={},cmb={turn:0,th:{}}; // loy: território -> lealdade do general dele; aides: oficiais contratados; cardUse: usos de cada carta
+const loyOf=i=>i==me?100:loy[i]??45;
+const AIDES=[['Duque de Caxias','farrapos','def'],['Lorde Cochrane','equador','port'],['Giuseppe Garibaldi','farrapos','mov'],['Bárbara de Alencar','equador','gold'],['Teixeira Nunes','farrapos','cav'],['Batista Campos','cabanagem','cmd'],
+  ['Maria Quitéria','brasil','rec'],['José Bonifácio','brasil','card'],['Dragão do Mar','brasil','port'],['Tiradentes','brasil','gold'],['Zumbi dos Palmares','brasil','def'],['Anita Garibaldi','brasil','cav']];
+const AIDP={def:'+10% de defesa em todos os seus territórios',gold:'+3 ouro por turno',cmd:'+1 de Comando por turno',mov:'Na batalha, suas unidades andam +1',cav:'Na batalha, sua cavalaria causa +15% de dano',
+  port:'+1 ouro por turno para cada porto seu',rec:'+2 tropas por turno no território mais ameaçado',card:'+1 carta por turno'};
+const aideOn=p=>aides.some(n=>AIDES.find(a=>a[0]==n)?.[2]==p),aidePool=()=>{const L_=AIDES.filter(a=>!S.some(s=>s[4]==a[0])&&!aides.includes(a[0]));
+  return[0,1,2].map(k=>L_[(hash(turn/3|0,k)+k*5)%L_.length]).filter((a,k,A)=>A.indexOf(a)==k)};
+function hireAide(n){if(aides.length>=2||gold[me]<8||aides.includes(n))return false;gold[me]-=8;aides.push(n);
+  note(`${n} entra para o seu estado-maior`);return true}
+function convince(e,from){const ch=.3+gs(me)[2]/300-(strength(e)>strength(me)?.15:0),cand=owner.map((o,i)=>o==e&&adj[i].some(j=>owner[j]==me)?i:-1).filter(i=>i>=0).sort((a,b)=>troops[a]-troops[b]);
+  if(!cand.length||Math.random()>ch){angry[e]=turn+4;note(`${S[e][4]} recusa mudar de lado e volta hostil`);
+    return false}
+  const i=cand[0];owner[i]=me;loy[i]=55;moved.add(i);note(`${S[e][4]} muda de lado: ${S[i][1]} passa para você!`);
+    check();return true} // general capturado convencido: leva um território junto
+// ---------- cartas que evoluem e combos ----------
+const cardLv=id=>1+((cardUse[id]||0)>=2)+((cardUse[id]||0)>=5),RN=['','','II','III'],cname=id=>CARDS[id][0]+(cardLv(id)>1?' '+RN[cardLv(id)]:'');
+const THEME={mar:['bloqueio','jangada','embax','correio'],povo:['alforria','quilombo','levas','panfl','imprensa','grito'],ouro:['requis','engenho','tropeiros','sabot','palic'],guerra:['embosc','fogo','reforco','carga','missa','polvora','lanceiros','barricada']},
+  THN={mar:'Senhores do mar',povo:'Povo em armas',ouro:'Cofres cheios',guerra:'Ofensiva geral'},themeOf=id=>Object.keys(THEME).find(k=>THEME[k].includes(id));
+function cardUsed(id){const a=cardLv(id);cardUse[id]=(cardUse[id]||0)+1;if(cardLv(id)>a)note(`${CARDS[id][0]} sobe para o nível ${RN[cardLv(id)]}`); // usar a carta a deixa mais forte
+  const th=themeOf(id);if(cmb.turn!=turn)cmb={turn,th:{}};cmb.th[th]=(cmb.th[th]||0)+1;if(cmb.th[th]!=2)return null;
+    /* duas cartas do mesmo tema no turno: combo */
+  cmd++;if(th=='mar'){gold[me]+=3;drawCards(1)}if(th=='ouro')gold[me]+=5;
+  if(th=='povo')owner.map((o,i)=>o==me&&adj[i].some(j=>owner[j]!=me)?i:-1).filter(i=>i>=0).slice(0,4).forEach(i=>troops[i]++);
+  note(`Combo ${THN[th]}: +1 de Comando${{mar:', +3 ouro e uma carta',ouro:', +5 ouro',povo:', +1 tropa em até 4 fronteiras',guerra:', +1 tropa em cada unidade'}[th]}`);
+    return th}
 let hist=[],evts=[],burn=[],lastLoss=-9,onNote=()=>{},scn=0,goal=null,victory=false,fort,stats,endShown,hq,xp,port,pact,ally,trib,angry,betray,perk={},tld=[],price={},priceOld={},onTurn=()=>{}; // xp: experiência dos 6 regimentos de cada estado; pact/ally/trib/angry: facção -> turno em que acaba // hq: treino por tipo de unidade, doutrinas, turno do último imposto // fort: nível do forte por estado (0-2), +20% defesa cada
 let onDip=()=>{},onIncome=()=>{},onDuoUpkeep=null; // ganchos da interface: tratado firmado, renda do turno, troca de jogador
-function reset(sc=0){scn=sc;duo=null;hist=[];hand=[];cmd=0;posts={com:-1,mil:-1,est:-1,dip:-1};boost=S.map(()=>0);evts=[];burn=S.map(()=>-9);lastLoss=-9;goal=null;victory=false;owner=S.map((_,i)=>i);troops=S.map(()=>4+Math.floor(Math.random()*5));gold=S.map(()=>6);
+function reset(sc=0){scn=sc;duo=null;loy={};aides=[];cardUse={};cmb={turn:0,th:{}};hist=[];hand=[];cmd=0;
+  posts={com:-1,mil:-1,est:-1,dip:-1};boost=S.map(()=>0);evts=[];burn=S.map(()=>-9);lastLoss=-9;goal=null;
+  victory=false;owner=S.map((_,i)=>i);troops=S.map(()=>4+Math.floor(Math.random()*5));gold=S.map(()=>6);
   const own=SCN[sc].own||{},bon=SCN[sc].bonus||{};for(const f in own)own[f].forEach(i=>{owner[i]=+f;troops[i]+=3+(bon[f]||0)});
-  me=-1;sel=-1;moved=new Set;turn=1;over='';marching=false;logs=[];raids=[];fort=S.map(()=>0);stats={won:0,lost:0,taken:0};endShown=false;hq={tech:{inf:0,cav:0,ati:0,art:0},doc:{},tax:0};xp=S.map(()=>Array(12).fill(0));port=S.map(()=>0);pact={};ally={};trib={};angry={};betray=0;perk={};tld=[];price=Object.fromEntries(Object.keys(RESN).map(r=>[r,1]));priceOld={...price};linkPorts()}
+  me=-1;sel=-1;moved=new Set;turn=1;over='';marching=false;logs=[];raids=[];fort=S.map(()=>0);stats={won:0,lost:0,taken:0};
+    endShown=false;hq={tech:{inf:0,cav:0,ati:0,art:0},doc:{},tax:0};xp=S.map(()=>Array(12).fill(0));port=S.map(()=>0);
+    pact={};ally={};trib={};angry={};betray=0;perk={};tld=[];price=Object.fromEntries(Object.keys(RESN).map(r=>[r,1]));
+    priceOld={...price};linkPorts()}
 const lvl=v=>Math.min(3,v/2|0); // nível do regimento: a cada 2 de experiência, até 3
 function linkPorts(){portLinks=[];adj.forEach((a,i)=>{a.length=0;a.push(...ADJ0[i])});
   COAST.forEach((i,p)=>COAST.forEach((j,q)=>{if(q>p&&q-p<=4&&(port[i]||port[j])&&!adj[i].includes(j)){adj[i].push(j);adj[j].push(i);portLinks.push([i,j])}}))}
@@ -105,31 +152,39 @@ function dipState(k,f){ // devolve motivo de bloqueio, ou '' se pode
     tk(f)=='atk'&&strength(me)<strength(f)*.8?'Belicoso: só trata com quem é forte':k=='ally'&&tk(f)=='def'&&!(pact[f]>turn)?'Cauteloso: quer um pacto antes':gold[me]<dipCost(k,f)?'Ouro insuficiente':''}
 function dipAct(k,f){
   if(k=='trib'){trib[f]=turn+3;const mine=border(f).reduce((a,i)=>a+troops[i],0),theirs=owner.reduce((a,o,i)=>a+(o==f?troops[i]:0),0);
-    if(mine>theirs*(tk(f)=='gold'?1.4:1.8)){const g=Math.ceil(income(f)*1.5);gold[f]-=g;gold[me]+=g;note(`${S[f][4]} paga tributo de ${g} ouro`);return true}
+    if(mine>theirs*(tk(f)=='gold'?1.4:1.8)){const g=Math.ceil(income(f)*1.5);gold[f]-=g;gold[me]+=g;note(`${S[f][4]} paga tributo de ${g} ouro`);
+      return true}
     angry[f]=turn+4;note(`${S[f][4]} recusa o tributo e jura vingança`);return false}
-  const[n,,d]=DIP[k];gold[me]-=dipCost(k,f);pact[f]=Math.max(pact[f]||0,turn+d);if(k=='ally')ally[f]=turn+d;note(`${n} ${k=='ally'?'firmada':'firmado'} com ${S[f][4]}`);stats.dip=(stats.dip||0)+1;onDip(k,f);return true}
-const income=f=>(f==me?postGold():0)+(SCN[scn].sub?.[f]&&owner.includes(f)?SCN[scn].sub[f]:0)+owner.reduce((a,o,i)=>a+(o==f?inc(i):0),0)+ // sub: reforços da Corte por turno
+  const[n,,d]=DIP[k];gold[me]-=dipCost(k,f);pact[f]=Math.max(pact[f]||0,turn+d);if(k=='ally')ally[f]=turn+d;
+    note(`${n} ${k=='ally'?'firmada':'firmado'} com ${S[f][4]}`);stats.dip=(stats.dip||0)+1;onDip(k,f);return true}
+const income=f=>(f==me?postGold()+(aideOn('gold')?3:0)+(aideOn('port')?port.filter((p,i)=>p&&owner[i]==me).length:0)-aides.length:0)+ // oficiais: bônus e soldo de 1 ouro cada
+  (SCN[scn].sub?.[f]&&owner.includes(f)?SCN[scn].sub[f]:0)+owner.reduce((a,o,i)=>a+(o==f?inc(i):0),0)+ // sub: reforços da Corte por turno
   REG.reduce((a,[,st,b])=>a+(st.every(i=>owner[i]==f)?b:0),0);
-const defOf=i=>trait(i,'def')+.2*fort[i]+(docOn(owner[i],'gue')?.15:0);
+const defOf=i=>trait(i,'def')+.2*fort[i]+(docOn(owner[i],'gue')?.15:0)+(owner[i]==me&&aideOn('def')?.1:0);
 function fight(a,b,n){ // n tropas de a atacam b; devolve true se conquistou
   if(me>=0&&(owner[a]==me||owner[b]==me)){const t=n+troops[b];if(!stats.bigB||t>stats.bigB.n)stats.bigB={n:t,st:b,turn}} // maior batalha da partida
   const pa=n*(1+trait(a,'atk'))*roll(), pd=troops[b]*(1+defOf(b))*roll()+1;
   troops[a]-=n;
-  if(pa>pd){burn[b]=turn;if(owner[b]==me)lastLoss=turn;xp[a]=xp[a].map(v=>v+1);xp[b]=[...xp[a]];fort[b]=0;owner[b]=owner[a];troops[b]=Math.max(1,Math.round(n*(1-.7*pd/pa)));return true}
-  xp[b]=xp[b].map(v=>v+1);troops[b]=Math.max(1,Math.round(troops[b]*(1-.7*pa/pd)));troops[a]+=Math.round(n*.3);return false}
+  if(pa>pd){burn[b]=turn;if(owner[b]==me)lastLoss=turn;xp[a]=xp[a].map(v=>v+1);xp[b]=[...xp[a]];fort[b]=0;
+    owner[b]=owner[a];troops[b]=Math.max(1,Math.round(n*(1-.7*pd/pa)));return true}
+  xp[b]=xp[b].map(v=>v+1);troops[b]=Math.max(1,Math.round(troops[b]*(1-.7*pa/pd)));troops[a]+=Math.round(n*.3);
+    return false}
 function ai(f){
   gold[f]+=income(f);
-  const mine=owner.map((o,i)=>o==f?i:-1).filter(i=>i>=0),[need0,chance0]=AGG[CFG.diff],T_=tk(f),need=need0*(T_=='atk'?.88:T_=='def'?1.15:1),chance=chance0*(T_=='atk'?1.3:T_=='def'?.7:T_=='gold'?.85:1); /* temperamento mexe na agressão */
+  const mine=owner.map((o,i)=>o==f?i:-1).filter(i=>i>=0),[need0,chance0]=AGG[CFG.diff],T_=tk(f),need=need0*(T_=='atk'?.88:T_=='def'?1.15:1),chance=chance0*(T_=='atk'?1.3:T_=='def'?.7:T_=='gold'?.85:1);
+    /* temperamento mexe na agressão */
   const foes=i=>adj[i].filter(j=>owner[j]!=f);
   const threat=i=>foes(i).reduce((a,j)=>a+troops[j],0);
   const border=mine.filter(i=>foes(i).length).sort((a,b)=>threat(b)-threat(a));
   if(border.length){const t=border[0];if(gold[f]>=8&&fort[t]<2&&Math.random()<.3){fort[t]++;gold[f]-=3} // a IA também ergue fortes na fronteira
     const n=Math.max(0,Math.floor(gold[f]/cost(t)));troops[t]+=n+(T_=='rec'&&turn%2?1:0);gold[f]-=n*cost(t)} /* populista ganha voluntários */
-  if(gold[f]>=5&&Math.random()<.08){const c=mine.find(i=>COAST.includes(i)&&!port[i]);if(c!=null){buildPort(c);gold[f]-=5}} // a IA também constrói portos
+  if(gold[f]>=5&&Math.random()<.08){const c=mine.find(i=>COAST.includes(i)&&!port[i]);if(c!=null){buildPort(c);
+    gold[f]-=5}} // a IA também constrói portos
   for(const i of mine){
     if(owner[i]!=f||troops[i]<2)continue;
     const fs=foes(i).sort((a,b)=>troops[a]-troops[b]);
-    if(!fs.length){const to=adj[i].find(j=>foes(j).length)??adj[i][0];troops[to]+=troops[i]-1;troops[i]=1;continue}
+    if(!fs.length){const to=adj[i].find(j=>foes(j).length)??adj[i][0];troops[to]+=troops[i]-1;troops[i]=1;
+      continue}
     const j=fs[0],H=hctx(owner[j]); // H: o dono é um jogador humano (pactos e trégua valem para os dois no jogo a dois)
     if(troops[i]-1>troops[j]*(1+defOf(j))*need+1&&Math.random()<chance*Math.min(1,.3+turn/10)*(H&&(H.betray>turn||H.angry[f]>turn)?1.5:1) // agressão cresce com os turnos
       &&!(H&&(turn<(TKEY=='brasil'?TRUCE[CFG.diff]:2)||H.pact[f]>turn))){ // trégua inicial e pactos poupam o jogador
@@ -138,17 +193,19 @@ function ai(f){
       if(won)(was==me?note:say)(`${S[f][4]} tomou ${was==me?S[j][1]+' de você!':S[j][0]}`);
       else if(was==me)say(`Você repeliu ${S[f][4]} em ${S[j][0]}`);
       if(was==me)onFight(f,was,j,won)}}}
-function say(t){logs.unshift(t);logs.length=Math.min(logs.length,80)}
+function say(t){logs.unshift(me>=0?calShort(turn)+' · '+t:t);logs.length=Math.min(logs.length,80)}
 function note(t){say(t);onNote(t)} // vai para a crônica e aparece como aviso na tela
 const setGoal=()=>{goal=SCN[scn].play?.[me]||null};
-function freshHuman(){hand=[];cmd=0;posts={com:-1,mil:-1,est:-1,dip:-1};stats={won:0,lost:0,taken:0};hq={tech:{inf:0,cav:0,ati:0,art:0},doc:{},tax:0};pact={};ally={};trib={};angry={};betray=0;moved=new Set} // segundo jogador começa do zero
+function freshHuman(){loy={};aides=[];cardUse={};hand=[];cmd=0;posts={com:-1,mil:-1,est:-1,dip:-1};stats={won:0,lost:0,taken:0};
+  hq={tech:{inf:0,cav:0,ati:0,art:0},doc:{},tax:0};pact={};ally={};trib={};angry={};betray=0;moved=new Set} // segundo jogador começa do zero
 function startAs(f){me=f;setGoal();gold[me]+=6;troops[me]+=3;hand=[sigCard(f)];drawCards(2);cmd=cmdMax()} // começa com a carta do seu líder // pequena vantagem na capital de quem joga
 function odds(a,b,n){ // chance de vencer e tropas que sobram, pelos mesmos dados do combate automático
   let w=0,left=0;const A=n*(1+trait(a,'atk')),Dd=troops[b]*(1+defOf(b));
   for(let k=0;k<300;k++){const pa=A*roll(),pd=Dd*roll()+1;if(pa>pd){w++;left+=Math.max(1,Math.round(n*(1-.7*pd/pa)))}}return[w/300,w?Math.round(left/w):0]}
 const danger=i=>owner[i]==me&&adj[i].some(j=>owner[j]!=me&&!(pact[owner[j]]>turn)&&troops[j]-1>troops[i]*(1+defOf(i))*1.2+1); // vizinho capaz de tomar o território
 function check(){const n=owner.filter(o=>o==me).length;
-  if(n==N){over='O Brasil é seu!';victory=true}else if(goal&&goal.every(i=>owner[i]==me)){over='Objetivo cumprido!';victory=true}else if(!n)over='Seu domínio caiu.'}
+  if(n==N){over='O Brasil é seu!';victory=true}else if(goal&&goal.every(i=>owner[i]==me)){over='Objetivo cumprido!';
+    victory=true}else if(!n)over='Seu domínio caiu.'}
 function endTurn(){evts=[];
   for(let f=0;f<N;f++)if(!isHum(f)&&owner.includes(f))ai(f);
   if(!raids.length)closeTurn()} // com raids, a UI joga as defesas e depois fecha o turno
@@ -156,7 +213,7 @@ function endTurn(){evts=[];
 const RESN={caf:['Café',1.5,'do café'],acu:['Açúcar',1.5,'do açúcar'],bor:['Borracha',1.5,'da borracha'],our:['Ouro',2,'do ouro'],gad:['Gado e charque',1,'do charque'],alg:['Algodão',1,'do algodão'],erv:['Erva-mate',1,'da erva-mate'],cac:['Cacau',1.2,'do cacau']};
 const RES_BY={AC:'bor',AM:'bor',RR:'gad',RO:'bor',PA:'cac',AP:'our',TO:'gad',MA:'alg',PI:'gad',CE:'alg',RN:'alg',PB:'alg',PE:'acu',AL:'acu',SE:'acu',BA:'cac',MT:'gad',GO:'our',DF:'',MS:'gad',MG:'our',ES:'caf',RJ:'caf',SP:'caf',PR:'erv',SC:'erv',RS:'gad'},
   BIO_RES={ama:'bor',ser:'gad',cer:'gad',sud:'caf',sul:'erv',mata:'acu',pampa:'gad'};
-const resOf=i=>{const c=S[i][0];return c in RES_BY?RES_BY[c]:BIO_RES[BOF[i]]||''};
+const resOf=i=>{if(TKEY=='males')return''; /* noite em Salvador: sem safra nem mercado */const c=S[i][0];return c in RES_BY?RES_BY[c]:BIO_RES[BOF[i]]||''};
 const mono=(f,r)=>owner.filter((o,j)=>o==f&&resOf(j)==r).length>=3;
 const resInc=i=>{const r=resOf(i);if(!r||!price[r])return 0;return Math.round(RESN[r][1]*price[r]*(port[i]?1.25:1))+(mono(owner[i],r)?1:0)};
 function updPrices(){priceOld={...price};for(const r in RESN){let p=price[r]||1;p+=(1-p)*.12+(Math.random()-.5)*.22;
@@ -165,15 +222,26 @@ function updPrices(){priceOld={...price};for(const r in RESN){let p=price[r]||1;
 function closeTurn(){updPrices();hist.push(owner.slice());if(hist.length>200)hist.shift(); /* histórico para o balanço */
   if(duo&&onDuoUpkeep)onDuoUpkeep();else upkeep();turn++;marching=false;check();if(!over)onTurn()}
 function upkeep(){ /* começo do turno de quem joga: cargos, reforços, cartas, aliados e renda */
-  for(const k in posts)if(posts[k]>=0&&owner[posts[k]]!=me){note(`${S[posts[k]][4]} deixou o cargo de ${POSTS[k][0]}: ${TW1} perdido`);posts[k]=-1} // cargo vago quando o território cai
-  {const t=postTroops();if(t){const own=owner.map((o,i)=>o==me?i:-1).filter(i=>i>=0),b=own.find(danger)??own.find(i=>adj[i].some(j=>owner[j]!=me))??own[0];if(b!=null){troops[b]+=t;onNote(`Guerra: +${t} tropas em ${S[b][1]}`)}}}
+  for(const k in posts)if(posts[k]>=0&&owner[posts[k]]!=me){note(`${S[posts[k]][4]} deixou o cargo de ${POSTS[k][0]}: ${TW1} perdido`);
+    posts[k]=-1} // cargo vago quando o território cai
+  {const t=postTroops();if(t){const own=owner.map((o,i)=>o==me?i:-1).filter(i=>i>=0),b=own.find(danger)??own.find(i=>adj[i].some(j=>owner[j]!=me))??own[0];
+    if(b!=null){troops[b]+=t;onNote(`Guerra: +${t} tropas em ${S[b][1]}`)}}}
   cmd=cmdMax();drawCards(1+(postOk('est')&&gs(posts.est)[1]>=60?1:0));
   const help=new Set;for(const f in ally)if(ally[f]>turn&&owner.includes(+f))border(+f).forEach(i=>help.add(i)); // aliados reforçam a fronteira comum
   [...help].slice(0,3).forEach(i=>troops[i]++);if(help.size)note(`Reforço aliado: +1 tropa em ${Math.min(3,help.size)} estado(s)`);
+  {const own=owner.map((o,i)=>o==me&&i!=me?i:-1).filter(i=>i>=0);for(const k in loy)if(owner[k]!=me)delete loy[k];
+    /* lealdade: cargo e paz sobem; perigo e derrotas descem */
+    for(const i of own){loy[i]=Math.max(0,Math.min(100,loyOf(i)+1+(Object.values(posts).includes(i)?2:0)-(danger(i)?4:0)-(lastLoss>=turn-1?5:0)));
+      if(loy[i]<20&&Math.random()<.35){owner[i]=i;troops[i]=Math.max(3,Math.ceil(troops[i]*.6));fort[i]=0;
+        delete loy[i];note(`${S[i][4]} se rebela: ${S[i][1]} declara independência!`);onStory('revolt',i)}}
+    if(aideOn('rec')){const b=own.concat(me).filter(i=>owner[i]==me).sort((p,q)=>danger(q)-danger(p))[0];
+      if(b!=null)troops[b]+=2}if(aideOn('card'))drawCards(1);
+    if(gold[me]+income(me)<0&&aides.length){note(`${aides.pop()} deixa o estado-maior: falta ouro para o soldo`)}}
   {const g=income(me);gold[me]+=g;onNote(`${duo?S[me][4]+': ':''}Turno ${turn+1}: +${g} ouro`);onIncome(g)}moved.clear()}
 function act(to){ // marcha de sel para to
   const n=+(document.getElementById('n')?.value||troops[sel]-1),from=sel;
-  if(owner[to]!=me&&pact[owner[to]]>turn){const vf=owner[to];pact={};ally={};betray=turn+5;note('Traição! Pactos rompidos, vizinhos enfurecidos');onStory('betray',vf)}
+  if(owner[to]!=me&&pact[owner[to]]>turn){const vf=owner[to];pact={};ally={};betray=turn+5;note('Traição! Pactos rompidos, vizinhos enfurecidos');
+    onStory('betray',vf)}
   if(owner[to]==me){troops[from]-=n;troops[to]+=n;onMarch(from,to)}
   else if(tactical&&CFG.tac<2){marching=false;return tactical(from,to,n)}
   else{const was=owner[to],won=fight(from,to,n);

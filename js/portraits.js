@@ -4,16 +4,20 @@ const SK={L:['#e9b58c','#c98f66'],T:['#c98d5e','#a56d42'],B:['#9a6238','#7a4a28'
 const HC={k:'#1c1410',b:'#4a2c17',g:'#9a9a9a',w:'#e8e4d8'};
 const fcv=[],fhd=[]; // fhd: mesmo rosto sem fundo, vira a cabeça do comandante no campo
 const mkFace=(bare,mood='n')=>([sk,hs,hc,bd,hat,cl,ex],i)=>{ // mood: n neutro, blink piscando, smile vitória, angry derrota
-  const[c,g]=mk(48,48);if(mood=='n')(bare?fhd:fcv).push(c);const r=(a,b,w,h,col)=>{g.fillStyle=col;g.fillRect(a*2,b*2,w*2,h*2)},p=(a,b,w,h,col)=>{g.fillStyle=col;g.fillRect(Math.round(a*2),Math.round(b*2),w,h)}; // 48x48: base em blocos de 2 px, detalhes de 1 px
+  const[c,g]=mk(48,48);if(mood=='n')(bare?fhd:fcv).push(c);const r=(a,b,w,h,col)=>{g.fillStyle=col;g.fillRect(a*2,b*2,w*2,h*2)},p=(a,b,w,h,col)=>{g.fillStyle=col;
+    g.fillRect(Math.round(a*2),Math.round(b*2),w,h)}; // 48x48: base em blocos de 2 px, detalhes de 1 px
   const[s,sh]=SK[sk],h=HC[hc],gold='#e0b030',red='#b3312a',dk='#1c1410',side=(y,n)=>{r(7,y,1,n,h);r(16,y,1,n,h)};
-  if(!bare){[20,26,32,38,44].forEach((l,k)=>r(0,20-k*5,24,5,`hsl(${hue(i)},50%,${l}%)`));r(0,0,24,1,'rgba(255,255,255,.25)');r(0,0,3,24,'rgba(0,0,0,.18)');r(21,0,3,24,'rgba(0,0,0,.18)')}
-  r(3,20,18,4,cl);r(5,19,14,1,cl);r(15,20,6,4,'rgba(0,0,0,.22)');r(3,20,3,4,'rgba(255,255,255,.14)');r(12,21,1,1,gold);r(12,23,1,1,gold);
+  if(!bare){[20,26,32,38,44].forEach((l,k)=>r(0,20-k*5,24,5,`hsl(${hue(i)},50%,${l}%)`));r(0,0,24,1,'rgba(255,255,255,.25)');
+    r(0,0,3,24,'rgba(0,0,0,.18)');r(21,0,3,24,'rgba(0,0,0,.18)')}
+  r(3,20,18,4,cl);r(5,19,14,1,cl);r(15,20,6,4,'rgba(0,0,0,.22)');r(3,20,3,4,'rgba(255,255,255,.14)');
+    r(12,21,1,1,gold);r(12,23,1,1,gold);
   if(ex.includes('t')){r(9,19,6,5,'#eee');r(11,19,2,5,red)}
   if(ex.includes('c'))r(9,19,6,1,'#eee');
   if(ex.includes('r'))r(8,19,8,2,red);
   if(ex.includes('e')){r(3,19,4,2,gold);r(17,19,4,2,gold)}
   r(10,16,4,3,sh);r(7,6,10,10,s);r(8,5,8,1,s);r(8,16,8,1,s);r(16,7,1,8,sh);r(6,10,1,2,s);r(17,10,1,2,sh);
-  r(8,7,3,5,'rgba(255,255,255,.16)');r(8,12,2,1,'rgba(220,70,50,.28)');r(14,12,2,1,'rgba(220,70,50,.28)');r(8,15,8,1,'rgba(0,0,0,.12)');r(11,12,2,1,'rgba(255,255,255,.2)');r(10,17,4,1,'rgba(0,0,0,.2)');
+  r(8,7,3,5,'rgba(255,255,255,.16)');r(8,12,2,1,'rgba(220,70,50,.28)');r(14,12,2,1,'rgba(220,70,50,.28)');
+    r(8,15,8,1,'rgba(0,0,0,.12)');r(11,12,2,1,'rgba(255,255,255,.2)');r(10,17,4,1,'rgba(0,0,0,.2)');
   if(hs!='bald'&&hs!='tonsure'){r(7,4,10,2,h);r(8,3,8,1,h);side(6,2)}
   if(hs=='long'){r(6,5,1,13,h);r(17,5,1,13,h);r(5,9,1,10,h);r(18,9,1,10,h)}
   if(hs=='bun')r(10,1,4,2,h);
@@ -30,20 +34,26 @@ const mkFace=(bare,mood='n')=>([sk,hs,hc,bd,hat,cl,ex],i)=>{ // mood: n neutro, 
   if(bd=='B'){r(8,17,8,3,h);r(9,20,6,1,h)}
   if(bd.includes('m'))r(9,13,6,1,h);
   const hatc={kepi:cl,shako:cl,tricorn:dk,wide:'#5a3a1c',straw:'#d9b95a',plume:'#3d3226'}[hat];
-  if(hat=='kepi'||hat=='shako'){const t=hat=='shako'?0:2;r(7,t,10,5-t,hatc);r(6,5,12,1,dk);r(11,3,2,1,gold);if(t==0)r(15,0,2,3,red)}
+  if(hat=='kepi'||hat=='shako'){const t=hat=='shako'?0:2;r(7,t,10,5-t,hatc);r(6,5,12,1,dk);r(11,3,2,1,gold);
+    if(t==0)r(15,0,2,3,red)}
   if(hat=='tricorn'){r(8,2,8,2,hatc);r(4,4,16,2,hatc);r(4,5,16,1,gold)}
-  if(hat=='wide'||hat=='straw'||hat=='plume'){r(7,2,10,3,hatc);r(3,5,18,1,hatc);r(7,4,10,1,hat=='straw'?'#a8862f':dk);if(hat=='plume')r(16,0,2,4,red)}
-  if(hat=='cocar'){for(let k=0;k<10;k++)r(7+k,1+(Math.abs(k-4.5)/2|0),1,4,[red,gold,'#2f8a4a','#2a5fb0'][k%4]);r(7,5,10,1,red)}
+  if(hat=='wide'||hat=='straw'||hat=='plume'){r(7,2,10,3,hatc);r(3,5,18,1,hatc);r(7,4,10,1,hat=='straw'?'#a8862f':dk);
+    if(hat=='plume')r(16,0,2,4,red)}
+  if(hat=='cocar'){for(let k=0;k<10;k++)r(7+k,1+(Math.abs(k-4.5)/2|0),1,4,[red,gold,'#2f8a4a','#2a5fb0'][k%4]);
+    r(7,5,10,1,red)}
   if(hat=='wrap'){r(7,3,10,3,'#eee');r(6,5,12,1,'#ddd');r(16,1,2,2,'#eee')}
   if(hat=='band')r(7,6,10,1,red);
-  p(8,6,10,2,'rgba(255,255,255,.18)');p(15.5,7,1,16,'rgba(0,0,0,.12)');p(11.5,12.5,1,1,'rgba(0,0,0,.4)');p(12.5,12.5,1,1,'rgba(0,0,0,.4)'); // testa, sombra lateral, narinas
+  p(8,6,10,2,'rgba(255,255,255,.18)');p(15.5,7,1,16,'rgba(0,0,0,.12)');p(11.5,12.5,1,1,'rgba(0,0,0,.4)');
+    p(12.5,12.5,1,1,'rgba(0,0,0,.4)'); // testa, sombra lateral, narinas
   if(hs!='bald'&&hs!='tonsure')for(let k=0;k<5;k++)p(7.5+k*2,4,1,3,'rgba(255,255,255,.16)'); // mechas
   if(!bare)p(3,20,36,1,'rgba(255,255,255,.2)'); // luz no ombro
   if(mood=='n'||mood=='angry'){p(10,10,1,1,'#fff');p(14,10,1,1,'#fff')} // brilho nos olhos
   const mo='#7a2e24';
   if(mood=='blink'){r(9,10,2,1,sh);r(13,10,2,1,sh)}
-  if(mood=='smile'){r(10,14,4,1,mo);r(9,13,1,1,mo);r(14,13,1,1,mo);r(9,10,2,1,sh);r(13,10,2,1,sh);r(9,11,2,1,dk);r(13,11,2,1,dk)}
-  if(mood=='angry'){r(9,9,2,1,s);r(13,9,2,1,s);r(9,8,1,1,brow);r(10,9,1,1,brow);r(14,8,1,1,brow);r(13,9,1,1,brow);r(10,14,4,1,mo);r(9,15,1,1,mo);r(14,15,1,1,mo)}
+  if(mood=='smile'){r(10,14,4,1,mo);r(9,13,1,1,mo);r(14,13,1,1,mo);r(9,10,2,1,sh);r(13,10,2,1,sh);r(9,11,2,1,dk);
+    r(13,11,2,1,dk)}
+  if(mood=='angry'){r(9,9,2,1,s);r(13,9,2,1,s);r(9,8,1,1,brow);r(10,9,1,1,brow);r(14,8,1,1,brow);r(13,9,1,1,brow);
+    r(10,14,4,1,mo);r(9,15,1,1,mo);r(14,15,1,1,mo)}
   if(ex.includes('g')){r(8,10,1,1,dk);r(11,10,2,1,dk);r(15,10,1,1,dk);r(8,11,3,1,dk);r(13,11,3,1,dk)}
   return c.toDataURL()};
 const face=L.map(mkFace(false));L.forEach(mkFace(true));
@@ -68,7 +78,8 @@ const ICONS={cross:['............','.....kk.....','....kyyk....','..kkkyykkk..',
   plus:['............','....gggg....','....gwwg....','....gwwg....','.ggggwwgggg.','.gwwwwwwwwg.','.gwwwwwwwwg.','.ggggwwgggg.','....gwwg....','....gwwg....','....gggg....','............'],
   horn:['............','..........y.','.........yy.','........yyy.','..k....yyyy.','.kyyyyyyyyy.','.kyyyyyyyyy.','..k....yyyy.','........yyy.','.........yy.','..........y.','............']};
 const CART={};const cardArt=id=>{if(CART[id])return CART[id];const m=ICONS[CARDS[id][5]],[c,g]=mk(12,12);
-  m.forEach((row,y)=>[...row].forEach((ch,x_)=>{if(ch!='.'){g.fillStyle=ICK[ch];g.fillRect(x_,y,1,1)}}));return CART[id]=c.toDataURL()};
+  m.forEach((row,y)=>[...row].forEach((ch,x_)=>{if(ch!='.'){g.fillStyle=ICK[ch];g.fillRect(x_,y,1,1)}}));
+    return CART[id]=c.toDataURL()};
 const img=(f,alt='')=>`<img class="pt" data-f="${f}" src="${faceOf(f)}" alt="${alt}">`;
 setInterval(()=>{const ims=[...document.querySelectorAll('img.pt')].filter(e=>e.offsetParent);if(!ims.length)return; // alguém pisca de vez em quando
   const el=ims[Math.random()*ims.length|0],f=+el.dataset.f;el.src=FACE.blink[f];setTimeout(()=>el.src=faceOf(f),150)},1300);

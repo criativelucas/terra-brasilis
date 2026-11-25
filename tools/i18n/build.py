@@ -1,7 +1,7 @@
 import json,sys,re
 SITE=sys.argv[1];D={}
 import os;os.chdir(os.path.dirname(os.path.abspath(__file__)))
-for f in ['en1.txt','en2.txt','en3.txt']+(['en4.txt'] if __import__('os').path.exists('en4.txt') else []):
+for f in sorted(__import__('glob').glob('en*.txt')):
     for ln in open(f,encoding='utf8'):
         ln=ln.rstrip('\n')
         if ' => ' not in ln:continue

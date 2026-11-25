@@ -1,7 +1,7 @@
 // teatros de guerra: o Brasil inteiro (modo Dominação) e um mapa próprio para cada campanha histórica.
 // Cada teatro: territórios S [sigla, nome, lon, lat, líder, traço, valor, característica], retratos L, biomas BOF,
 // contorno P (lon,lat), lagoas, rios, regiões, rotas marítimas, costa, tropas de elite e cenário.
-// O teatro vem do endereço: #equador, #farrapos, #cabanagem; sem nada, é a Dominação do Brasil.
+// O teatro vem do endereço: #equador, #farrapos, #cabanagem, #balaiada, #sabinada, #males; sem nada, é a Dominação do Brasil.
 const THEATERS={
   brasil:{nome:'Dominação do Brasil',ano:1822,word:'estados',
     title:'1822. Vinte e sete províncias, vinte e sete líderes, um só Brasil a unificar.',
@@ -173,7 +173,81 @@ const THEATERS={
       CAM:['Fuzileiros Imperiais','inf',{def:1.25}],MAN:['Guarda da Barra','inf',{def:1.2}]},
     SCN:[{n:'Cabanagem',y:1835,d:'Os cabanos tomam Belém e o Guajará. O Império resiste em Cametá, Macapá e na Barra do Rio Negro e espera reforços.',
       own:{BEL:'BEL VIG ACA BRA XIN',CAM:'CAM MAC MAN'},bonus:{CAM:10},sub:{CAM:6},
-      play:{BEL:'CAM MAC SAN MAN',CAM:'BEL VIG ACA BRA'}}]}
+      play:{BEL:'CAM MAC SAN MAN',CAM:'BEL VIG ACA BRA'}}]},
+  balaiada:{nome:'Balaiada',ano:1838,word:'territórios',
+    title:'1838. Vaqueiros, artesãos e escravizados fugidos se levantam no Maranhão contra os mandões e o recrutamento forçado.',
+    S:[['SLZ','São Luís',-44.3,-2.6,'Luís Alves de Lima','def',.35,'Capital da província'],
+      ['ITA','Itapecuru',-44.36,-3.39,'Manuel Balaio','rec',0,'Vingança do Balaio'],
+      ['CAX','Caxias',-43.36,-4.86,'Raimundo Gomes','atk',.3,'Vaqueiros em armas'],
+      ['QUI','Lagoa Amarela',-42.9,-3.5,'Negro Cosme','def',.3,'Quilombo da Lagoa Amarela'],
+      ['VIA','Viana',-45.0,-3.25,'Juiz de Viana','gold',2,'Baixada maranhense'],
+      ['PIR','Piracuruca',-41.71,-3.95,'Lívio Castelo Branco','atk',.2,'Balaios do Piauí'],
+      ['OEI','Oeiras',-42.13,-6.9,'Barão da Parnaíba','def',.35,'Governo do Piauí'],
+      ['PRN','Parnaíba',-41.85,-3.15,'Comandante de Parnaíba','gold',2,'Porto do Delta'],
+      ['PSB','Pastos Bons',-44.08,-6.6,'Vaqueiro de Pastos Bons','rec',0,'Sertão de Pastos Bons']],
+    L:[['L','short','k','m','kepi','#22386e','e'],['T','short','k','b','straw','#e8e0cc',''],['T','curly','k','m','wide','#8a6a3a','r'],['D','short','k','b','','#e8e0cc','r'],
+      ['L','short','g','s','','#17131c','c'],['L','short','b','m','wide','#5a3a1c',''],['L','bald','g','s','','#22386e','e'],['L','short','k','m','shako','#22386e','e'],['T','short','k','','wide','#8a5a2a','']],
+    BOF:'mata cer cer mata mata ser ser mata cer',
+    P:[[-46.0,-1.1],[-45.2,-1.5],[-44.5,-2.2],[-43.5,-2.5],[-42.2,-2.7],[-41.3,-2.9],[-40.9,-4.5],[-41.3,-6.0],[-41.6,-7.5],[-43.5,-7.6],[-45.5,-7.0],[-46.6,-5.5],[-46.4,-3.0]],
+    RIOS:[[[-44.6,-7.4],[-44.4,-5.6],[-44.3,-4.2],[-44.35,-3.2],[-44.4,-2.6]],[[-43.0,-7.5],[-42.6,-5.8],[-42.4,-4.5],[-42.1,-3.6],[-41.9,-3.0]]],
+    REG:[['Baixada e capital','SLZ VIA ITA',3],['Leste maranhense','CAX QUI PSB',3],['Piauí','PIR OEI PRN',3]],
+    SEA:[['SLZ','PRN']],COAST:'VIA SLZ QUI PRN',
+    NB:[[-48.5,-1.0],[-46.0,-1.1],[-45.2,-1.5],[-44.5,-2.2],[-43.5,-2.5],[-42.2,-2.7],[-41.3,-2.9],[-39.5,-2.8],[-38.5,-3.6],[-38.5,-9.5],[-48.5,-9.5]],
+    NBL:[['CEARÁ',-40.0,-5.2],['GOIÁS',-46.9,-7.9],['GRÃO-PARÁ',-47.4,-3.2],['OCEANO ATLÂNTICO',-43.4,-1.6]],
+    ELITE:{CAX:['Balaios','inf',{dmg:1.2}],QUI:['Quilombolas de Cosme','inf',{def:1.25}],SLZ:['Guarda Nacional','inf',{def:1.2}],PSB:['Vaqueiros','cav',{mov:1}]},
+    SCN:[{n:'Balaiada',y:1838,d:'Os balaios tomam o Itapecuru e marcham sobre Caxias. São Luís resiste e espera Lima e Silva; o Piauí do Barão da Parnaíba fica com o Império.',
+      own:{CAX:'CAX ITA PSB',SLZ:'SLZ VIA',OEI:'OEI PIR PRN'},bonus:{SLZ:14,CAX:4},sub:{SLZ:7},
+      play:{CAX:'SLZ VIA CAX ITA OEI',SLZ:'CAX ITA QUI PSB'}}]},
+  sabinada:{nome:'Sabinada',ano:1837,word:'territórios',
+    title:'1837. O médico Francisco Sabino proclama a República Bahiense em Salvador. O Recôncavo dos senhores de engenho fica com o Império.',
+    S:[['SSA','Salvador',-38.5,-12.97,'Francisco Sabino','atk',.3,'República Bahiense'],
+      ['ITP','Itaparica',-38.68,-12.9,'Daniel Gomes de Freitas','def',.3,'Fortes da ilha'],
+      ['CMC','Abrantes',-38.3,-12.72,'João Carneiro','gold',2,'Vice-presidente rebelde'],
+      ['MSJ','Mata de São João',-38.3,-12.5,'Lavrador da Mata','rec',0,'Lavradores do norte'],
+      ['CAC','Cachoeira',-38.96,-12.6,'Brigadeiro Callado','def',.35,'Exército do Recôncavo'],
+      ['SFC','São Francisco do Conde',-38.62,-12.62,'Visconde de Pirajá','gold',3,'Engenhos do Recôncavo'],
+      ['SAM','Santo Amaro',-38.72,-12.5,'Senhor de Santo Amaro','gold',2,'Açúcar de Santo Amaro'],
+      ['FEI','Feira de Santana',-38.97,-12.27,'Vaqueiro da Feira','rec',0,'Feira do gado'],
+      ['NAZ','Nazaré',-39.0,-13.05,'Capitão de Nazaré','def',.25,'Farinha de Nazaré']],
+    L:[['L','short','k','m','','#17131c','c'],['T','short','k','m','kepi','#5a3a1c','e'],['L','short','b','s','','#17131c','c'],['T','short','k','','straw','#e8e0cc',''],
+      ['L','short','g','m','shako','#22386e','e'],['L','wig','w','','tricorn','#22386e','e'],['L','short','k','m','wide','#3d3226','c'],['T','short','k','b','wide','#8a5a2a',''],['T','short','k','m','kepi','#22386e','e']],
+    BOF:'mata mata mata mata mata mata mata ser mata',
+    P:[[-39.3,-12.1],[-38.6,-12.1],[-38.1,-12.4],[-38.2,-12.75],[-38.45,-13.02],[-38.75,-13.05],[-38.9,-13.25],[-39.3,-13.2],[-39.4,-12.6]],
+    LAKES:[[[-38.53,-12.93],[-38.55,-12.79],[-38.65,-12.69],[-38.79,-12.69],[-38.84,-12.78],[-38.75,-12.85],[-38.62,-12.86],[-38.59,-12.95]]], // baía de Todos os Santos
+    RIOS:[[[-39.3,-12.45],[-39.05,-12.55],[-38.92,-12.62],[-38.84,-12.7]]],
+    REG:[['Salvador e a ilha','SSA ITP CMC',3],['Recôncavo','CAC SFC SAM',4],['Sertão e sul','FEI NAZ MSJ',2]],
+    SEA:[['SSA','ITP'],['ITP','NAZ'],['SSA','SFC']],COAST:'MSJ CMC SSA ITP NAZ',
+    NB:[[-39.8,-11.7],[-37.6,-11.7],[-37.6,-12.2],[-38.1,-12.4],[-38.2,-12.75],[-38.45,-13.02],[-38.75,-13.05],[-38.9,-13.25],[-39.0,-13.6],[-39.8,-13.6]],
+    NBL:[['SERTÃO',-39.55,-11.95],['OCEANO ATLÂNTICO',-38.0,-13.0]],
+    ELITE:{SSA:['Voluntários da República','inf',{dmg:1.2}],ITP:['Artilheiros da ilha','art',{rng:1}],CAC:['Batalhão do Recôncavo','inf',{def:1.25}],FEI:['Vaqueiros','cav',{mov:1}]},
+    SCN:[{n:'Sabinada',y:1837,d:'Os rebeldes dominam Salvador, a ilha e o litoral norte. O Império reúne o Recôncavo em Cachoeira e fecha o cerco por terra e mar.',
+      own:{SSA:'SSA ITP CMC',CAC:'CAC SFC SAM FEI'},bonus:{CAC:8,SSA:5},sub:{CAC:5},
+      play:{SSA:'SSA CAC SFC SAM',CAC:'SSA ITP CMC'}}]},
+  males:{nome:'Revolta dos Malês',ano:1835,word:'territórios',
+    title:'Noite de 24 para 25 de janeiro de 1835. Africanos muçulmanos, os malês, se levantam em Salvador. A cidade inteira vira campo de batalha.',
+    S:[['LAD','Ladeira da Praça',-38.503,-12.968,'Manoel Calafate','atk',.3,'Casa de Calafate'],
+      ['PAL','Palácio',-38.511,-12.974,'Gonçalves Martins','def',.35,'Chefia de polícia'],
+      ['VIT','Vitória',-38.522,-12.999,'Ahuna','atk',.25,'Mestre dos malês'],
+      ['CPG','Campo Grande',-38.517,-12.986,'Luís Sanim','gold',2,'Rede dos ganhadores'],
+      ['AGM','Água de Meninos',-38.503,-12.951,'Comandante da Cavalaria','def',.4,'Quartel da cavalaria'],
+      ['BBL','Barbalho',-38.494,-12.962,'Guarnição do Barbalho','def',.3,'Forte do Barbalho'],
+      ['CLC','Calçada',-38.499,-12.938,'Elesbão do Carmo','atk',.2,'Dandará'],
+      ['ITG','Itapagipe',-38.505,-12.92,'Pacífico Licutan','rec',0,'Mestre preso'],
+      ['RVE','Rio Vermelho',-38.488,-13.006,'Pescador do Rio Vermelho','rec',0,'Pescadores'],
+      ['CBR','Cabula',-38.47,-12.935,'Quilombola do Cabula','def',.25,'Quilombos da mata']],
+    L:[['D','short','k','b','wrap','#e8e0cc','r'],['L','short','k','m','','#17131c','c'],['D','bald','k','b','wrap','#e8e0cc',''],['D','short','k','m','band','#e8e0cc','r'],['L','short','k','m','shako','#22386e','e'],
+      ['T','short','k','m','kepi','#22386e','e'],['D','short','k','','wrap','#e8e0cc','r'],['D','bald','g','b','wrap','#e8e0cc',''],['B','short','k','','straw','#8a5a2a',''],['D','curly','k','','','#5a3a1c','']],
+    BOF:'mata mata mata mata mata mata mata mata mata mata',
+    P:[[-38.535,-13.012],[-38.528,-12.99],[-38.515,-12.975],[-38.509,-12.955],[-38.512,-12.935],[-38.516,-12.915],[-38.497,-12.903],[-38.47,-12.905],[-38.45,-12.93],[-38.458,-12.97],[-38.47,-13.01],[-38.5,-13.022]],
+    RIOS:[],
+    REG:[['Cidade Alta','PAL LAD CPG',3],['Cidade Baixa','AGM CLC ITG',3],['Arredores','VIT RVE CBR BBL',3]],
+    SEA:[['VIT','AGM']],COAST:'VIT PAL AGM CLC ITG RVE',
+    NB:[[-38.6,-12.85],[-38.3,-12.85],[-38.3,-13.05],[-38.47,-13.01],[-38.458,-12.97],[-38.45,-12.93],[-38.47,-12.905],[-38.497,-12.903],[-38.516,-12.915],[-38.56,-12.88]],
+    NBL:[['BAÍA DE TODOS OS SANTOS',-38.56,-12.96],['OCEANO ATLÂNTICO',-38.43,-13.03]],
+    ELITE:{LAD:['Malês','inf',{dmg:1.25}],AGM:['Cavalaria da polícia','cav',{dmg:1.2}],PAL:['Permanentes','inf',{def:1.25}]},
+    SCN:[{n:'Revolta dos Malês',y:1835,d:'A revolta estoura antes da hora, na Ladeira da Praça. Os malês precisam tomar a cidade antes do amanhecer; a polícia e a cavalaria guardam o Palácio e Água de Meninos.',
+      own:{LAD:'LAD VIT CLC ITG',PAL:'PAL AGM BBL'},bonus:{PAL:12,LAD:3},sub:{PAL:6},
+      play:{LAD:'PAL AGM BBL LAD',PAL:'LAD VIT CLC ITG'}}]}
 };
 const TKEY=(typeof location!='undefined'&&THEATERS[location.hash.slice(1)])?location.hash.slice(1):(globalThis.TB_THEATER||'brasil');
 const TH=THEATERS[TKEY],TW=TH.word,TW1=TW=='estados'?'estado':'território'; // palavra usada nos textos
@@ -195,7 +269,8 @@ const W=162,H=158,C=5,[X0,Y0,D]=TH.grid||(()=>{const xs=P.map(p=>p[0]),ys=P.map(
 const inPoly=(x,y,Q=P)=>{let c=false;for(let i=0,j=Q.length-1;i<Q.length;j=i++){const[xi,yi]=Q[i],[xj,yj]=Q[j];
   if((yi>y)!=(yj>y)&&x<(xj-xi)*(y-yi)/(yj-yi)+xi)c=!c}return c};
 const cell=new Int8Array(W*H).fill(-1); // -1 mar ou lagoa, -2 terra vizinha (fora do jogo), >=0 território
-if(TH.CELLS){let k=0;for(const m of TH.CELLS.matchAll(/([.a-zA])(\d*)/g)){const n=+m[2]||1;cell.fill(m[1]=='.'?-1:m[1]=='A'?26:m[1].charCodeAt(0)-97,k,k+n);k+=n} /* estados com o formato real */
+if(TH.CELLS){let k=0;for(const m of TH.CELLS.matchAll(/([.a-zA])(\d*)/g)){const n=+m[2]||1;cell.fill(m[1]=='.'?-1:m[1]=='A'?26:m[1].charCodeAt(0)-97,k,k+n);
+  k+=n} /* estados com o formato real */
   if(LAKES.length)for(let q=0;q<W*H;q++){const lon=X0+(q%W+.5)*D,lat=Y0-((q/W|0)+.5)*D;if(LAKES.some(L=>inPoly(lon,lat,L)))cell[q]=-1}
   S.forEach((s,i)=>{let sx=0,sy=0,n=0;for(let q=0;q<W*H;q++)if(cell[q]==i){sx+=q%W;sy+=q/W|0;n++} /* bandeira no miolo do estado: casa interna mais perto do centro */
     const mx=sx/n,my=sy/n,own=q=>cell[q]==i,inn=q=>own(q-1)&&own(q+1)&&own(q-W)&&own(q+W);let best=-1,bd=1e9;
@@ -203,7 +278,8 @@ if(TH.CELLS){let k=0;for(const m of TH.CELLS.matchAll(/([.a-zA])(\d*)/g)){const 
     s[2]=X0+(best%W+.5)*D;s[3]=Y0-((best/W|0)+.5)*D})}
 else for(let cy=0;cy<H;cy++)for(let cx=0;cx<W;cx++){
   const lon=X0+(cx+.5)*D,lat=Y0-(cy+.5)*D;
-  if(!inPoly(lon,lat)||LAKES.some(q=>inPoly(lon,lat,q))){if(TH.NB&&!inPoly(lon,lat)&&inPoly(lon,lat,TH.NB))cell[cy*W+cx]=-2;continue}
+  if(!inPoly(lon,lat)||LAKES.some(q=>inPoly(lon,lat,q))){if(TH.NB&&!inPoly(lon,lat)&&inPoly(lon,lat,TH.NB))cell[cy*W+cx]=-2;
+    continue}
   let best=-1,bd=1e9;
   S.forEach((s,i)=>{const d=Math.hypot(lon-s[2],lat-s[3]);
     if(s[0]=='DF'&&d>.75)return; // DF é um enclave pequeno, não uma região de Voronoi
