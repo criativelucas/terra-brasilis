@@ -1,0 +1,17 @@
+# Roda os testes do jogo a cada envio: regras sem tela (tools/sim.js) e as telas no Chrome (tools/test.mjs), em português e em inglês.
+name: testes
+on: [push, pull_request]
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Regras (simulador)
+        run: node tools/sim.js 4
+      - name: Telas em português
+        run: CHROME=$(which google-chrome) node tools/test.mjs
+      - name: Telas em inglês
+        run: EN=1 CHROME=$(which google-chrome) node tools/test.mjs
