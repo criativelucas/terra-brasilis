@@ -11,7 +11,7 @@ const RU={ama:[2,'can'],pampa:[4,'lan'],sul:[4,'lan'],ser:[2,'jag']}; // tropa r
 const ELITE=TH.ELITE||{};
 const elTxt=e=>e[2].rng?'+1 alcance':e[2].mov?'+1 movimento':e[2].dmg?`+${Math.round(e[2].dmg*100-100)}% dano`:`+${Math.round(e[2].def*100-100)}% defesa`;
 const stOf=u=>u.side?B.to:B.from, nmOf=u=>u.el?u.el[0]:UT[u.type][0]; // stOf: estado cujo general comanda a unidade
-const mvOf=u=>Math.max(1,UT[u.type][1]+(u.el?.[2].mov||0)+(gs(stOf(u))[1]>80?1:0)-(B.wx=='dry'&&u.type=='inf'?1:0)+(B.chg==B.round&&u.side==B.ps?2:0)+(pwOn(u.side,'atk')?2:0)+(hasP(u,'mov')?1:0)+(CL(u.type)=='cav'?(fxOn('pampa')||fxOn('cerrado')?1:0)-(fxOn('selva')||fxOn('pantanal')?1:0):0)-(u.type=='inf'&&fxOn('caatinga')?1:0)); /* o terreno do estado mexe no passo */
+const mvOf=u=>Math.max(1,UT[u.type][1]+(u.el?.[2].mov||0)+(gs(stOf(u))[1]>80?1:0)-(B.wx=='dry'&&u.type=='inf'?1:0)+(B.chg==B.round&&u.side==B.ps?2:0)+(B.lan==B.round&&u.side==B.ps&&CL(u.type)=='cav'?2:0)+(pwOn(u.side,'atk')?2:0)+(hasP(u,'mov')?1:0)+(CL(u.type)=='cav'?(fxOn('pampa')||fxOn('cerrado')?1:0)-(fxOn('selva')||fxOn('pantanal')?1:0):0)-(u.type=='inf'&&fxOn('caatinga')?1:0)); /* o terreno do estado mexe no passo */
 const rgOf=u=>Math.max(1,UT[u.type][2]+(u.el?.[2].rng||0)-(B.wx=='rain'&&UT[u.type][2]>1?1:0)+(B.T[u.y]?.[u.x]=='h'&&UT[u.type][2]>1?1:0)+(B.T[u.y]?.[u.x]=='K'?2:0)+(B.T[u.y]?.[u.x]=='T'&&UT[u.type][2]>1?1:0)); // morro, torre e bateria: tiro mais longe
 const inR=(a,t)=>dist(a,t)<=rgOf(a)&&(a.type!='art'||dist(a,t)>1);
 const dist=(a,b)=>Math.abs(a.x-b.x)+Math.abs(a.y-b.y), alive=s=>B.units.filter(u=>u.side==s&&u.hp>0);
@@ -21,7 +21,7 @@ const bOver=()=>!ld(0)||!ld(1)||B.round>MAXR||!!B.taken||rout(0)||rout(1); // B.
 const cover=t=>tdef(B.T[t.y]?.[t.x])>1;
 const est=(a,t,back)=>a.hp*.5*UT[a.type][3]*(back?.5:1)*(beats(a,t)?1.5:1)*(a.side?1:1+trait(B.from,'atk'))*(a.side==B.ps?1+.1*(hq.tech[CL(a.type)]||0):1)
   /(t.side?1+defOf(B.to):1)/tdef(B.T[t.y]?.[t.x])/(t.el?.[2].def||1)*(a.el?.[2].dmg||1)*(1+(gs(stOf(a))[0]-40)/400)*(1+.08*a.lv)
-  *(B.rl[a.side]==B.round?1.4:1)*(B.amb==B.round&&a.side==B.ps&&cover(a)?1.4:1)*(a.side!=B.ps?1+.1*Math.min(3,turn/8|0):1)*(pwOn(a.side,'atk')?1.3:1)/(pwOn(t.side,'def')?1.3:1)/(B.T[t.y]?.[t.x]=='h'?1.2:1)/(hasP(t,'def')?1.2:1)*(back&&hasP(a,'rev')?1.3:1)*(back?1:ANG[angleOf(a,t)])*morMul(a)*(t.flee?1.3:1); // ângulo do golpe, moral, inimigo em fuga; elite, general, nível do regimento, brado, treino da IA
+  *(B.rl[a.side]==B.round?1.4:1)*(B.amb==B.round&&a.side==B.ps&&cover(a)?1.4:1)*(B.pol==B.round&&a.side==B.ps&&['ati','art','jag'].includes(a.type)?1.4:1)*(B.lan==B.round&&a.side==B.ps&&CL(a.type)=='cav'?1.3:1)/(B.bar==B.round&&t.side==B.ps?1.33:1)*(a.side!=B.ps?1+.1*Math.min(3,turn/8|0):1)*(pwOn(a.side,'atk')?1.3:1)/(pwOn(t.side,'def')?1.3:1)/(B.T[t.y]?.[t.x]=='h'?1.2:1)/(hasP(t,'def')?1.2:1)*(back&&hasP(a,'rev')?1.3:1)*(back?1:ANG[angleOf(a,t)])*morMul(a)*(t.flee?1.3:1); // ângulo do golpe, moral, inimigo em fuga; elite, general, nível do regimento, brado, treino da IA
 const TN={g:'Campo aberto',r:'Estrada',w:'Água',b:'Ponte: pode ser queimada',f:'Mata: +30% defesa',m:'Serra: bloqueia',v:'Vila: +30% defesa, cura 2 por rodada',
   h:'Morro baixo: custa 2 passos, +20% defesa, tiro +1',a:'Vau ou alagado: custa 2 passos',W:'Muralha: canhões derrubam; a infantaria sobe com escada',D:'Portão: arrombe para entrar',P:'Praça: o atacante vence se ficar nela',
   T:'Torre: só o defensor sobe; +40% defesa e tiro +1',L:'Escada: passa por cima da muralha, custa 2 passos',R:'Brecha: escombros, custa 2 passos',

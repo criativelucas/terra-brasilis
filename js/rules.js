@@ -27,6 +27,25 @@ const CARDS={marcha:['Marcha forçada','mapa',1,'own','Um território seu que j�
   fogo:['Ataque de fogo','batalha',2,'foe','Incendeia uma unidade inimiga: ela perde 40% das tropas.','fire'],
   reforco:['Reforços','batalha',2,'none','+2 tropas em cada unidade sua no campo.','plus'],
   carga:['Toque de carga','batalha',1,'none','Nesta rodada, suas unidades andam +2 casas.','horn']};
+Object.assign(CARDS,{ // cartas da história do Brasil: vêm de acontecimentos, batalhas, conselho, regiões, rivais e do líder (como em Samurai Warriors Empires)
+  grito:['Grito do Ipiranga','mapa',2,'none','+1 tropa em cada território seu e +1 de Comando.','crown'],
+  tropeiros:['Rota de tropeiros','mapa',1,'own','O território passa a render +1 ouro por turno, para sempre.','horse'],
+  quilombo:['Quilombo','mapa',2,'own','+4 tropas e um nível de forte num território seu.','tree'],
+  bloqueio:['Bloqueio naval','mapa',2,'coast','Território inimigo no litoral perde 40% das tropas.','boat'],
+  alforria:['Cartas de alforria','mapa',1,'none','+2 tropas nos 3 territórios seus de fronteira mais fracos.','letter'],
+  bandeira:['Bandeirantes','mapa',3,'enemyAdj6','Território inimigo vizinho com até 6 tropas passa para você, sem luta.','flag'],
+  engenho:['Safra do engenho','mapa',1,'none','+2 ouro por território seu com açúcar ou café (mínimo 3).','coin'],
+  imprensa:['Imprensa livre','mapa',2,'none','+1 de Comando agora e compre 2 cartas.','scroll'],
+  jangada:['Jangadeiros','mapa',1,'ownCoast','Porto de graça num território seu no litoral.','boat'],
+  missa:['Missa campal','batalha',1,'none','+25 de moral em todas as suas unidades; quem fugia volta à luta.','cross'],
+  polvora:['Pólvora de Ipanema','batalha',2,'none','Nesta rodada, atiradores, jagunços e artilharia causam +40% de dano.','bomb'],
+  lanceiros:['Lanceiros Negros','batalha',2,'none','Nesta rodada, sua cavalaria anda +2 e causa +30% de dano.','spear'],
+  barricada:['Barricadas','batalha',1,'none','Nesta rodada, suas unidades recebem 25% menos dano.','wall']});
+const CRAR={sabot:'r',embax:'r',fogo:'r',reforco:'r',panfl:'r',tropeiros:'r',quilombo:'r',bloqueio:'r',imprensa:'r',jangada:'r',polvora:'r',grito:'l',bandeira:'l',lanceiros:'l'},
+  rarOf=id=>CRAR[id]||'c',RARN={c:'Comum',r:'Rara',l:'Lendária'},cardsOf=r=>Object.keys(CARDS).filter(k=>rarOf(k)==r); // raridade: lendárias só por fontes especiais
+const SIGC={SP:'bandeira',RJ:'grito',RS:'lanceiros',BA:'alforria',PE:'imprensa',MG:'tropeiros',GO:'tropeiros',SC:'barricada',AL:'quilombo',MA:'quilombo',CE:'jangada'},
+  REGC=['quilombo','jangada','tropeiros','grito','lanceiros']; // carta do líder e carta de cada região (na ordem de REG)
+const sigCard=f=>SIGC[S[f][0]]||REGC[REG.findIndex(([,st])=>st.includes(f))]||'missa';
 const POSTS={com:['Comércio','política'],mil:['Guerra','liderança'],est:['Estratégia','astúcia'],dip:['Diplomacia','política']}; // cargos dos generais
 let hand=[],cmd=0,posts={},boost=[]; // mão de cartas, pontos de Comando, cargos (cargo -> território do general), renda extra por território
 const postOk=k=>posts[k]>=0&&owner[posts[k]]==me;
@@ -38,11 +57,14 @@ const TEMP={atk:['Belicoso','ataca mais cedo e com menos vantagem; só firma pac
 const tempOf=f=>TEMP[S[f][5]]||TEMP.def,tk=f=>S[f][5]||'def';
 const strength=f=>owner.reduce((a,o,i)=>a+(o==f?troops[i]:0),0);
 const dipCost=(k,f)=>Math.ceil(DIP[k][1]*(postOk('dip')?.5:1)*(f!=null&&tk(f)=='gold'?.7:1));
-function drawCards(n){const ks=Object.keys(CARDS);for(let k=0;k<n&&hand.length<6;k++)hand.push(ks[Math.random()*ks.length|0])}
+function drawCards(n){for(let k=0;k<n&&hand.length<6;k++){const p=cardsOf(Math.random()<.12?'r':'c');hand.push(p[Math.random()*p.length|0])}} // o sorteio do turno traz quase só comuns
 function cardOk(id,t){const c=CARDS[id];if(!c||cmd<c[2]||c[1]!='mapa')return false;
   if(c[3]=='own')return t>=0&&owner[t]==me&&(id!='marcha'||moved.has(t))&&(id!='palic'||fort[t]<2);
   if(c[3]=='enemy')return t>=0&&owner[t]!=me&&(id!='embax'||!(pact[owner[t]]>turn));
   if(c[3]=='enemyAdj')return t>=0&&owner[t]!=me&&troops[t]<=4&&!(pact[owner[t]]>turn)&&adj[t].some(j=>owner[j]==me);
+  if(c[3]=='enemyAdj6')return t>=0&&owner[t]!=me&&troops[t]<=6&&!(pact[owner[t]]>turn)&&adj[t].some(j=>owner[j]==me);
+  if(c[3]=='coast')return t>=0&&owner[t]!=me&&COAST.includes(t)&&!(pact[owner[t]]>turn);
+  if(c[3]=='ownCoast')return t>=0&&owner[t]==me&&COAST.includes(t)&&!port[t];
   return true}
 function playCard(id,t){const c=CARDS[id];cmd-=c[2];hand.splice(hand.indexOf(id),1);
   if(id=='marcha'){moved.delete(t);note(`Marcha forçada em ${S[t][1]}`)}
@@ -53,6 +75,16 @@ function playCard(id,t){const c=CARDS[id];cmd-=c[2];hand.splice(hand.indexOf(id)
   if(id=='panfl'){const was=owner[t];owner[t]=me;fort[t]=0;moved.add(t);note(`${S[t][1]} abandona ${S[was][4]} e se junta a você!`)}
   if(id=='embax'){pact[owner[t]]=Math.max(pact[owner[t]]||0,turn+4);note(`Embaixada: pacto com ${S[owner[t]][4]} até o turno ${turn+4}`)}
   if(id=='correio'){drawCards(2);note('Correio a cavalo: 2 cartas novas')}
+  if(id=='grito'){owner.forEach((o,i)=>{if(o==me)troops[i]++});cmd++;note('Grito do Ipiranga: +1 tropa em cada território e +1 de Comando')}
+  if(id=='tropeiros'){boost[t]=(boost[t]||0)+1;note(`Rota de tropeiros: ${S[t][1]} rende +1 ouro por turno`)}
+  if(id=='quilombo'){troops[t]+=4;fort[t]=Math.min(2,fort[t]+1);note(`Quilombo em ${S[t][1]}: +4 tropas e forte nível ${fort[t]}`)}
+  if(id=='bloqueio'){const k=Math.ceil(troops[t]*.4);troops[t]=Math.max(1,troops[t]-k);burn[t]=turn;note(`Bloqueio naval em ${S[t][1]}: −${k} tropas`)}
+  if(id=='alforria'){const b=owner.map((o,i)=>o==me&&adj[i].some(j=>owner[j]!=me)?i:-1).filter(i=>i>=0).sort((p,q)=>troops[p]-troops[q]).slice(0,3);b.forEach(i=>troops[i]+=2);note(`Cartas de alforria: +2 tropas em ${b.map(i=>S[i][0]).join(', ')||'nenhum território'}`)}
+  if(id=='bandeira'){const was=owner[t];owner[t]=me;fort[t]=0;moved.add(t);note(`Bandeirantes tomam ${S[t][1]} de ${S[was][4]}!`)}
+  if(id=='engenho'){const k=owner.filter((o,i)=>o==me&&['acu','caf'].includes(resOf(i))).length,g=Math.max(3,2*k);gold[me]+=g;note(`Safra do engenho: +${g} ouro`)}
+  if(id=='imprensa'){cmd++;drawCards(2);note('Imprensa livre: +1 de Comando e 2 cartas')}
+  if(id=='jangada'){buildPort(t);note(`Jangadeiros: porto em ${S[t][1]}`)}
+  stats.cards=(stats.cards||0)+1;
   check()}
 let hist=[],evts=[],burn=[],lastLoss=-9,onNote=()=>{},scn=0,goal=null,victory=false,fort,stats,endShown,hq,xp,port,pact,ally,trib,angry,betray,perk={},tld=[],price={},priceOld={},onTurn=()=>{}; // xp: experiência dos 6 regimentos de cada estado; pact/ally/trib/angry: facção -> turno em que acaba // hq: treino por tipo de unidade, doutrinas, turno do último imposto // fort: nível do forte por estado (0-2), +20% defesa cada
 let onDip=()=>{},onIncome=()=>{},onDuoUpkeep=null; // ganchos da interface: tratado firmado, renda do turno, troca de jogador
@@ -80,6 +112,7 @@ const income=f=>(f==me?postGold():0)+(SCN[scn].sub?.[f]&&owner.includes(f)?SCN[s
   REG.reduce((a,[,st,b])=>a+(st.every(i=>owner[i]==f)?b:0),0);
 const defOf=i=>trait(i,'def')+.2*fort[i]+(docOn(owner[i],'gue')?.15:0);
 function fight(a,b,n){ // n tropas de a atacam b; devolve true se conquistou
+  if(me>=0&&(owner[a]==me||owner[b]==me)){const t=n+troops[b];if(!stats.bigB||t>stats.bigB.n)stats.bigB={n:t,st:b,turn}} // maior batalha da partida
   const pa=n*(1+trait(a,'atk'))*roll(), pd=troops[b]*(1+defOf(b))*roll()+1;
   troops[a]-=n;
   if(pa>pd){burn[b]=turn;if(owner[b]==me)lastLoss=turn;xp[a]=xp[a].map(v=>v+1);xp[b]=[...xp[a]];fort[b]=0;owner[b]=owner[a];troops[b]=Math.max(1,Math.round(n*(1-.7*pd/pa)));return true}
@@ -100,7 +133,7 @@ function ai(f){
     const j=fs[0],H=hctx(owner[j]); // H: o dono é um jogador humano (pactos e trégua valem para os dois no jogo a dois)
     if(troops[i]-1>troops[j]*(1+defOf(j))*need+1&&Math.random()<chance*Math.min(1,.3+turn/10)*(H&&(H.betray>turn||H.angry[f]>turn)?1.5:1) // agressão cresce com os turnos
       &&!(H&&(turn<(TKEY=='brasil'?TRUCE[CFG.diff]:2)||H.pact[f]>turn))){ // trégua inicial e pactos poupam o jogador
-      if(owner[j]==me&&tactical&&!CFG.tac){raids.push({from:i,to:j,f});continue}
+      if(isHum(owner[j])&&tactical&&!CFG.tac){raids.push({from:i,to:j,f,hum:owner[j]});continue} // no jogo a dois, quem espera a vez também defende na batalha tática
       const was=owner[j],won=fight(i,j,troops[i]-1);evts.push({f,a:i,b:j,won,was});
       if(won)(was==me?note:say)(`${S[f][4]} tomou ${was==me?S[j][1]+' de você!':S[j][0]}`);
       else if(was==me)say(`Você repeliu ${S[f][4]} em ${S[j][0]}`);
@@ -109,7 +142,7 @@ function say(t){logs.unshift(t);logs.length=Math.min(logs.length,80)}
 function note(t){say(t);onNote(t)} // vai para a crônica e aparece como aviso na tela
 const setGoal=()=>{goal=SCN[scn].play?.[me]||null};
 function freshHuman(){hand=[];cmd=0;posts={com:-1,mil:-1,est:-1,dip:-1};stats={won:0,lost:0,taken:0};hq={tech:{inf:0,cav:0,ati:0,art:0},doc:{},tax:0};pact={};ally={};trib={};angry={};betray=0;moved=new Set} // segundo jogador começa do zero
-function startAs(f){me=f;setGoal();gold[me]+=6;troops[me]+=3;hand=[];drawCards(3);cmd=cmdMax()} // pequena vantagem na capital de quem joga
+function startAs(f){me=f;setGoal();gold[me]+=6;troops[me]+=3;hand=[sigCard(f)];drawCards(2);cmd=cmdMax()} // começa com a carta do seu líder // pequena vantagem na capital de quem joga
 function odds(a,b,n){ // chance de vencer e tropas que sobram, pelos mesmos dados do combate automático
   let w=0,left=0;const A=n*(1+trait(a,'atk')),Dd=troops[b]*(1+defOf(b));
   for(let k=0;k<300;k++){const pa=A*roll(),pd=Dd*roll()+1;if(pa>pd){w++;left+=Math.max(1,Math.round(n*(1-.7*pd/pa)))}}return[w/300,w?Math.round(left/w):0]}

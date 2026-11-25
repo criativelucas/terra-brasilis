@@ -2,6 +2,7 @@
 
 function nextRaid(){
   const r=raids.shift();if(!r){closeTurn();ui();return turnStart()}
+  if(duo&&r.hum!=null&&r.hum!=me&&duo.p.includes(r.hum)&&owner[r.to]==r.hum){ctxSave();ctxLoad(r.hum);note(`Defesa de ${S[me][4]}: o Jogador ${duo.p.indexOf(me)+1} assume o comando`)} // jogo a dois: troca para quem é atacado
   if(over||owner[r.to]!=me||owner[r.from]!=r.f||troops[r.from]<2)return nextRaid(); // situação mudou desde a ordem
   tactical(r.from,r.to,troops[r.from]-1,1);ui()}
 tactical=(from,to,n,ps=0)=>zoomTo(from,to,()=>capTalk(from,to,()=>{startBattle(from,to,n,ps);ui()})); // ataque a capital abre com diálogo // câmera fecha no alvo, depois abre o campo
@@ -233,7 +234,10 @@ function bFinish(){tutEv('bdone');closeCmd();const stg=$('stage');stg.classList.
   const loss=sd=>Math.max(0,B.units.filter(u=>u.side==sd).reduce((s,u)=>s+u.hp0,0)-total(sd)),lvUp=[],
     best=B.units.filter(u=>u.side==ps&&u.hits).sort((p,q)=>q.hits-p.hits)[0],vg=vgTot(ps),
     R={perks:[],to,kind,e,win:wonP,l0:loss(ps),l1:loss(1-ps),vg,lv:lvUp,best:best&&`${nmOf(best)}${best.ld?' (comandante)':''}, ${best.hits} golpe${best.hits>1?'s':''}`};
-  {const h0=B.units.filter(u=>u.side==ps).reduce((s,u)=>s+u.hp0,0);R.stars=wonP?1+(R.l0<=h0*.35)+(B.round<=Math.ceil(MAXR*.6)):0;stats.stars=(stats.stars||0)+R.stars;if(R.stars==3)stats.perf=(stats.perf||0)+1} // estrelas: vencer, perder pouco, vencer rápido
+  {const h0=B.units.filter(u=>u.side==ps).reduce((s,u)=>s+u.hp0,0);R.stars=wonP?1+(R.l0<=h0*.3)+(B.round<=Math.ceil(MAXR*.5)):0; /* calibrado com batalhas automáticas: 3 estrelas em ~1 de cada 5 vitórias */stats.stars=(stats.stars||0)+R.stars;if(R.stars==3)stats.perf=(stats.perf||0)+1} // estrelas: vencer, perder pouco, vencer rápido
+  {const tot=B.units.reduce((s,u)=>s+u.hp0,0);if(!stats.bigB||tot>stats.bigB.n)stats.bigB={n:tot,st:to,turn};if(best){const hn=nmOf(best);(stats.heroes=stats.heroes||{})[hn]=(stats.heroes[hn]||0)+best.hits}} // números da campanha
+  if(wonP){const r=R.stars>=3?(Math.random()<.35?'l':'r'):R.stars>=2?'r':Math.random()<.4?'c':'';if(r){R.card=pickR(r);giveCard(R.card,'Espólio da batalha',true)} // espólio: carta melhor quanto mais estrelas
+    if(B.kind=='cerco'&&!ps)stats.sieges=(stats.sieges||0)+1;if(ps)stats.defs=(stats.defs||0)+1}
   troops[from]-=n;
   // experiência: regimento que sobreviveu ganha 1, mais 1 se acertou golpes, mais 1 se o lado venceu
   for(const sd of[0,1]){const st=sd?to:from,win=sd?!won:won;B.units.filter(u=>u.side==sd&&u.j>=0).forEach(u=>{if(u.hp>0){xp[st][u.j]=(xp[st][u.j]||0)+1+(u.hits>0)+win;if(sd==ps&&lvl(xp[st][u.j])>u.lv){lvUp.push(`${nmOf(u)} nível ${lvl(xp[st][u.j])}`);R.perks.push({st:sd==0&&won?to:st,j:u.j,n:nmOf(u),type:u.type})}}})}
@@ -244,16 +248,17 @@ function bFinish(){tutEv('bdone');closeCmd();const stg=$('stage');stg.classList.
   if(won){burn[to]=turn;if(ps)lastLoss=turn;fort[to]=0;owner[to]=af;troops[to]=Math.max(1,a)}else{troops[to]=Math.max(1,d);troops[from]+=a}
   if(ps)say(won?`${S[af][4]} tomou ${S[to][0]} de você!`:`Você repeliu ${S[af][4]} em ${S[to][0]}`);
   else{say(won?`Você conquistou ${S[to][1]} de ${S[was][4]}`:a?`Recuo em ${S[to][1]}`:`Derrota em ${S[to][1]}`);moved.add(from).add(to)}
-  sel=to;B=null;check();onFight(af,was,to,won);
-  setTimeout(()=>{if(!over&&!B&&$('screen').hidden)showBRes(R)},1300); // depois do painel de confronto
+  sel=to;B=null;check();tacOn=1;onFight(af,was,to,won);tacOn=0;
+  setTimeout(()=>{if(!over&&!B){if($('screen').hidden)showBRes(R);else resQ=R}},1300); // se outra janela abriu (acontecimento, mensageiro), o resultado espera ela fechar // depois do painel de confronto
   ps?nextRaid():ui()}
-let lastRes=null;
+let lastRes=null,resQ=null;
 function showBRes(R){lastRes=R; /* resultado: estrelas e placar à esquerda; melhorias dos regimentos à direita, como ficha de evolução */
   const st=R.stars||0,PIC={mov:'boot',def:'shield',rev:'swords'},why=R.win?['','vitória','boa vitória: poucas perdas ou rapidez','vitória perfeita: poucas perdas e rapidez'][st]:'derrota não dá estrelas';
   const L_=`<div class="brl">${starsH(st,!R.seen)}<p class="c">${KIND[R.kind][0]} de ${S[R.to][1]} · ${why}</p>
     <div class="vsr"><figure class="me"><img src="${face[me]}" alt=""><b>Você</b><span>−${R.l0}</span><small>suas perdas</small></figure><em>×</em>
       <figure class="them"><img src="${face[R.e]}" alt=""><b>${S[R.e][4]}</b><span>−${R.l1}</span><small>perdas dele</small></figure></div>
     <div class="chips c">${R.vg?`<span>${I('coin')}Vilas tomadas +${R.vg} ouro</span>`:''}${R.best?`<span>${I('star')}Destaque: ${R.best}</span>`:''}${R.lv.map(l=>`<span>${I('up')}${l}</span>`).join('')}</div>
+    ${R.card?`<div class="spoil"><span>Espólio da batalha</span>${cardHTML(R.card,'mini2')}</div>`:''}
     ${R.cap?`<div class="box safe"><b>${I('check')}${S[R.e][4]} foi capturado</b><p>Resgate de 10 ouro recebido.</p><button data-s="bfree">Libertar sem resgate: devolve os 10 ouro e firma pacto de 4 turnos</button></div>`:''}
     ${R.paid!=null?`<div class="box threat"><b>${I('warn')}Seu comandante foi capturado</b><p>Resgate pago: ${R.paid} ouro.</p></div>`:''}
     <button data-s="close" class="end">Continuar</button></div>`,
@@ -265,6 +270,11 @@ function showBRes(R){lastRes=R; /* resultado: estrelas e placar à esquerda; mel
 function playBattleCard(id,t){noSnap();const c=CARDS[id];cmd-=c[2];hand.splice(hand.indexOf(id),1);banner(`Carta: ${c[0]}.`,'#3f8fb0');sfx.win(); // cartas de batalha
   if(id=='embosc')B.amb=B.round;
   if(id=='carga')B.chg=B.round;
+  if(id=='missa')alive(B.ps).forEach(u=>{u.mor=Math.min(100,(u.mor??100)+25);if(u.flee){u.flee=0;u.done=u.moved=false}B.pops.push({x:u.x,y:u.y-.6,txt:'+moral',until:Date.now()+900})});
+  if(id=='polvora')B.pol=B.round;
+  if(id=='lanceiros')B.lan=B.round;
+  if(id=='barricada')B.bar=B.round;
+  stats.cards=(stats.cards||0)+1;
   if(id=='reforco')alive(B.ps).forEach(u=>{u.hp+=2;u.max=Math.max(u.max,u.hp);B.pops.push({x:u.x,y:u.y,txt:'+2',until:Date.now()+900})});
   if(id=='fogo'){const d=Math.max(1,Math.round(t.hp*.4));t.hp-=d;t.flash=Date.now()+300;B.pops.push({x:t.x,y:t.y,txt:'-'+d,until:Date.now()+900});
     for(let k=0;k<3;k++)puff(OX+t.x*CS+CS/2,OY+t.y*CS+CS/2,'rgba(255,'+(90+k*60)+',30,A)',8,90);sfx.hit();if(t.hp<=0)t.dead=Date.now()+200;
@@ -388,13 +398,14 @@ function drawBattle(){
     x.strokeStyle='#fff';x.lineWidth=3;x.strokeRect(OX+pk.x*CS+1.5,OY+pk.y*CS+1.5,CS-3,CS-3)}
   if(s&&!B.prep){alive(1-ps).filter(f=>inR(s,f)&&seen(f)).forEach(f=>{cellBox(f.x,f.y,'rgba(255,60,40,.25)');cellBox(f.x,f.y,HATCH[1]);
       x.strokeStyle='#ff3b30';x.lineWidth=3;x.strokeRect(OX+f.x*CS+1.5,OY+f.y*CS+1.5,CS-3,CS-3)});
-    x.strokeStyle=`rgba(255,214,90,${.65+.35*Math.sin(now/200)})`;x.lineWidth=3;x.strokeRect(OX+s.x*CS+1.5,OY+s.y*CS+1.5,CS-3,CS-3)}
+    {const q=(Math.sin(now/180)+1)*1.5,X0=OX+s.x*CS,Y0=OY+s.y*CS,L=13,cb=(X,Y,dx,dy)=>{x.beginPath();x.moveTo(X+dx*L,Y);x.lineTo(X,Y);x.lineTo(X,Y+dy*L);x.stroke()}; /* cursor de cantos que pulsa em volta da unidade escolhida */
+      x.lineCap='square';for(const[col,w]of[['#2a160d',7],['#ffd23f',3.5]]){x.strokeStyle=col;x.lineWidth=w;cb(X0-q,Y0-q,1,1);cb(X0+CS+q,Y0-q,-1,1);cb(X0-q,Y0+CS+q,1,-1);cb(X0+CS+q,Y0+CS+q,-1,-1)}x.lineCap='butt'}}
   let aimT=null;const hv=B.hov&&!B.busy&&B.hov[0]>=0&&B.hov[1]>=0&&B.hov[0]<GW&&B.hov[1]<GH?B.hov:null;
   if(hv&&R.length){ // seta do caminho até a casa sob o cursor
     const m=new Map(R.map(c=>[c[0]+','+c[1],c]));let c=m.get(hv.join());
     if(c&&c[2]){const pts=[];while(c){pts.unshift([OX+c[0]*CS+CS/2,OY+c[1]*CS+CS/2]);c=m.get(c[2])}
       const[ex,ey]=pts.at(-1),[qx,qy]=pts.at(-2),dx=Math.sign(ex-qx),dy=Math.sign(ey-qy);pts[pts.length-1]=[ex-dx*12,ey-dy*12];
-      [['#3a2413',18,24],['#f6ecc4',12,18]].forEach(([col,w,hd])=>{x.strokeStyle=x.fillStyle=col;x.lineWidth=w;x.lineJoin='miter';x.lineCap='butt';
+      [['#2a160d',20,26],['#3a86cc',14,20],['#bfe2ff',4,8]].forEach(([col,w,hd])=>{x.strokeStyle=x.fillStyle=col;x.lineWidth=w;x.lineJoin='miter';x.lineCap='butt';
         x.beginPath();pts.forEach((p,i)=>i?x.lineTo(...p):x.moveTo(...p));x.stroke();
         x.beginPath();x.moveTo(ex+dx*(hd-6),ey+dy*(hd-6));x.lineTo(ex-dx*12-dy*hd*.8,ey-dy*12+dx*hd*.8);x.lineTo(ex-dx*12+dy*hd*.8,ey-dy*12-dx*hd*.8);x.fill()})}}
   B.units.filter(u=>(u.hp>0||u.dead>now-450-animLen(u,'queda'))&&seen(u)).sort((a,b)=>a.y-b.y).forEach(u=>drawUnit(u,now));

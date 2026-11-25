@@ -94,12 +94,13 @@ function ui(){
   if(marching&&sel>=0){const n=+($('n')?.value||troops[sel]-1);oddsC={};adj[sel].forEach(j=>{if(owner[j]!=me)oddsC[j]=odds(sel,j,n)})}else oddsC={};
   $('roster').hidden=true;handUI();draw();save();help();$('sndBtn').classList.toggle('muted',!CFG.vol);$('musBtn').classList.toggle('muted',!CFG.mus);achCheck();
   if(over&&!endShown){endShown=true;showEnd()}}
-function handUI(){ // mão de cartas: abaixo do mapa; cartas de mapa no mapa; na batalha, só as de batalha, em leque sobre o campo
+function handUI(){if(me>=0)hand.forEach(colAdd); // tudo que passa pela mão entra na coleção
+ // mão de cartas: abaixo do mapa; cartas de mapa no mapa; na batalha, só as de batalha, em leque sobre o campo
   const el=$('hand'),st=$('stage');el.hidden=me<0||!!HQ||!!over||(turn<2&&tut>=0); /* no primeiro turno do tutorial, sem cartas */
   if(B&&el.parentNode!==st)st.appendChild(el);else if(!B&&el.parentNode===st)$('help').after(el);el.classList.toggle('fan',!!B);
   if(B){const bc=hand.map((id,k)=>[id,k]).filter(([id])=>CARDS[id][1]=='batalha');el.hidden=el.hidden||!bc.length||B.prep;if(el.hidden)return;
     el.innerHTML='<div class="cards">'+bc.map(([id,k],i)=>{const c=CARDS[id],ok=!B.busy&&cmd>=c[2],r=(i-(bc.length-1)/2),why=ok?'':B.busy?'Aguarde':`Falta ${c[2]-cmd} de comando`;
-      return`<button class="card bat${B.aim==id?' on':''}" data-card="${k}" ${ok?'':'disabled'} style="--r:${r*7}deg;--y:${Math.abs(r)*8}px" data-help="${esc(c[0]+': '+c[4]+(c[3]=='foe'?' Arraste até a unidade inimiga.':' Arraste até o campo ou clique.'))}">
+      return`<button class="card bat r-${rarOf(id)}${B.aim==id?' on':''}" data-card="${k}" ${ok?'':'disabled'} style="--r:${r*7}deg;--y:${Math.abs(r)*8}px" data-help="${esc(c[0]+': '+c[4]+(c[3]=='foe'?' Arraste até a unidade inimiga.':' Arraste até o campo ou clique.'))}">
         <span class="cc">${c[2]}</span><img src="${cardArt(id)}" alt=""><b>${c[0]}</b><small>${esc(c[4])}</small>${why?`<em class="why">${why}</em>`:''}</button>`}).join('')+'</div>';return}
   if(!el.hidden&&floatUI()&&!handOpen)el.hidden=true; // tela cheia: a bandeja abre pelo botão Cartas
   if(el.hidden)return;
@@ -107,9 +108,9 @@ function handUI(){ // mão de cartas: abaixo do mapa; cartas de mapa no mapa; na
   el.classList.toggle('open',handOpen);el.innerHTML=`<div class="hhead" role="button" tabindex="0" aria-expanded="${handOpen}" data-help="Abre ou fecha a gaveta de cartas"><b>Cartas de estratégia</b><span>${I('star')}Comando ${cmdTxt()}</span><span>${hand.length}/6 na mão · +1 por turno${hand.some(id=>CARDS[id][1]=='batalha')?` · ${hand.filter(id=>CARDS[id][1]=='batalha').length} de batalha, usadas na batalha`:''}</span><em>${handOpen?'▼ fechar':'▲ abrir'}</em></div><div class="cards">`+
     (hand.some(id=>CARDS[id][1]!='batalha')?hand.map((id,k)=>{const c=CARDS[id],bat=c[1]=='batalha';if(bat)return'';const ok=!aiShow&&cmd>=c[2]&&(c[3]!='none'||cardOk(id,-1)),
         why=ok?'':bat?'Só na batalha':aiShow?'Aguarde o inimigo':cmd<c[2]?`Falta ${c[2]-cmd} de comando`:'Sem efeito agora'; /* carta cinza diz por quê */
-      return`<button class="card ${bat?'bat':'map'}${aim==id?' on':''}" data-card="${k}" ${ok?'':'disabled'} data-help="${esc(c[0]+': '+c[4]+(why?' · '+why:''))}">
-        <span class="cc">${c[2]}</span><img src="${cardArt(id)}" alt=""><b>${c[0]}</b><small>${bat?'Batalha':'Mapa'} · ${esc(c[4])}</small>${why?`<em class="why">${why}</em>`:''}</button>`}).join(''):`<p><i>${hand.length?'Só cartas de batalha na mão: elas aparecem em leque quando a batalha começa.':'Sem cartas. Você recebe uma por turno; o conselho e o Correio a cavalo dão mais.'}</i></p>`)+'</div>'}
-$('hand').addEventListener('click',e=>{if(e.target.closest('.hhead')){handOpen=!handOpen;sfx.sel();return handUI()}const b=e.target.closest('[data-card]');if(b&&!handOpen&&!B){handOpen=true;sfx.sel();return handUI()}if(!b||b.disabled||cam||aiShow)return;const id=hand[+b.dataset.card],c=CARDS[id];sfx.sel();
+      return`<button class="card ${bat?'bat':'map'} r-${rarOf(id)}${aim==id?' on':''}" data-card="${k}" ${ok?'':'disabled'} data-help="${esc(c[0]+': '+c[4]+(why?' · '+why:''))}">
+        <span class="cc">${c[2]}</span><img src="${cardArt(id)}" alt=""><b>${c[0]}</b><small>${bat?'Batalha':'Mapa'} · ${esc(c[4])}</small>${why?`<em class="why">${why}</em>`:''}</button>`}).join(''):`<p><i>${hand.length?'Só cartas de batalha na mão: elas aparecem em leque quando a batalha começa.':'Sem cartas. Você recebe uma por turno; o conselho e o Correio a cavalo dão mais.'}</i></p>`)+'</div><button class="mini colb" data-colec>'+I('star')+'Coleção de cartas</button>'}
+$('hand').addEventListener('click',e=>{if(e.target.closest('[data-colec]'))return showCards();if(e.target.closest('.hhead')){handOpen=!handOpen;sfx.sel();return handUI()}const b=e.target.closest('[data-card]');if(b&&!handOpen&&!B){handOpen=true;sfx.sel();return handUI()}if(!b||b.disabled||cam||aiShow)return;const id=hand[+b.dataset.card],c=CARDS[id];sfx.sel();
   if(B&&cardEat>Date.now())return;handOpen=false;if(B){if(c[3]=='foe'){B.aim=id;note('Escolha a unidade inimiga para incendiar');return ui()}playBattleCard(id);return ui()}
   if(c[3]=='none'){playCard(id);regionCheck();return ui()}
   aim=aim==id?null:id;marching=false;rKey='';ui()});
@@ -176,7 +177,7 @@ const onPanel=e=>{const b=e.target.closest('button');if(!b||cam||aiShow)return;c
     endArm=0;tutEv('end');undoS=[];marching=false;aim=null;if(duo&&me==duo.p[0]&&owner.includes(duo.p[1]))return duoPass(); /* jogo a dois: passa a vez antes da IA */const own0=duo?.own0||owner.map(o=>o==me);endTurn();ui();plaque('ai');
     return playAI(()=>{const done=()=>{summ={turn,inc:income(me),lost:owner.map((o,j)=>own0[j]&&o!=me?j:-1).filter(j=>j>=0),atk:evts.filter(e=>e.was==me).length,danger:owner.reduce((s,o,j)=>s+danger(j),0),ev:evts.slice(0,8).map(e=>[e.f,e.a,e.b,e.won,e.was==me])}; // resumo do turno, com os ataques dos rivais
       if(CFG.deleg){const c=councilNow(),k=c.list.findIndex(o=>gold[me]>=o.custo);if(k>=0)followCouncil(k)} // conselho delegado
-      ui();plaque('me');turnStart();if(evtDue){evtDue=false;showEvent()}};if(raids.length){nextRaid();summ=null}else done()})}
+      ui();plaque('me');turnStart();if(evtDue){const q=evtDue;evtDue=false;q=='rival'?rivalOffer():showEvent()}};if(raids.length){nextRaid();summ=null}else done()})}
   if(a=='new'){reset();return showSetup()}
   ui()};
 $('panel').addEventListener('click',onPanel);$('hqBar').addEventListener('click',onPanel);$('act').addEventListener('click',onPanel);$('hud').addEventListener('click',onPanel);$('log').addEventListener('click',onPanel);

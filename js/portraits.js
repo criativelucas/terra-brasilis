@@ -51,7 +51,11 @@ const FACE={blink:L.map(mkFace(false,'blink')),smile:L.map(mkFace(false,'smile')
 const faceOf=f=>{const m=mood[f];return m&&m.until>Date.now()?FACE[m.m][f]:face[f]};
 // ícones das cartas: 12x12, um caractere por cor (ver legenda em ICK)
 const ICK={k:'#22140c',w:'#f6ecc4',y:'#ffd23f',o:'#e0862a',r:'#b3312a',g:'#3fae48',d:'#1f6a2c',b:'#8a5a2b',s:'#9a9488',c:'#52c8d6',m:'#dfe5ea'};
-const ICONS={horse:['............','.......kk...','......kbbk..','.....kbbbbk.','..kkkbbbkkk.','.kbbbbbbk...','.kbbbbbbk...','.kbkkkkbk...','.kk....kk...','.kk....kk...','............','............'],
+const ICONS={cross:['............','.....kk.....','....kyyk....','..kkkyykkk..','.kyyyyyyyyk.','.kyyyyyyyyk.','..kkkyykkk..','....kyyk....','....kyyk....','....kyyk....','....kyyk....','.....kk.....'],
+  boat:['.....k......','.....kw.....','.....kww....','.....kwww...','.....kwwww..','.....kwwwww.','.....k......','kbbbbbbbbbbk','.kbbbbbbbbk.','..kkkkkkkk..','.ww..ww..ww.','............'],
+  spear:['..........kk','.........kwk','........kwk.','.......kbk..','..rrr.kbk...','..rrrkbk....','..rrkbk.....','....bk......','...bk.......','..bk........','.bk.........','kk..........'],
+  crown:['............','.k...kk...k.','.yk.kyyk.ky.','.yykyyyykyy.','.yyyyyyyyyy.','.yyryyyyryy.','.yyyyyyyyyy.','.kkkkkkkkkk.','............','............','............','............'],
+  horse:['............','.......kk...','......kbbk..','.....kbbbbk.','..kkkbbbkkk.','.kbbbbbbk...','.kbbbbbbk...','.kbkkkkbk...','.kk....kk...','.kk....kk...','............','............'],
   coin:['............','...kkkkkk...','..kyyyyyyk..','.kyykkkyyyk.','.kyykyyyyyk.','.kyykkkyyyk.','.kyyyyykyyk.','.kyykkkyyyk.','..kyyyyyyk..','...kkkkkk...','............','............'],
   flag:['.k..........','.krrrrrrk...','.krrrrrrrk..','.krryyrrrk..','.krrrrrrrk..','.krrrrrrk...','.k..........','.k..........','.k..........','.k..........','kkk.........','............'],
   wall:['............','.kk.kk.kk...','.ss.ss.ss...','.ssssssss...','.skssksssk..','.ssssssss...','.sssksssks..','.ssssssss...','.skssskss...','.ssssssss...','kkkkkkkkkk..','............'],

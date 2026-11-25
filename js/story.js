@@ -82,9 +82,13 @@ const TIMELINE={
 function storyTurn(){const L=(TIMELINE[TKEY]||[]).find(e=>e[0]==turn&&!tld.includes(e[2]));if(!L||me<0||over)return false;
   const[,code,title,txt,n]=L,i=ix[code];if(i==null)return false;tld.push(title);
   const mine=owner[i]==me,nb=!mine&&adj[i].some(j=>owner[j]==me),ch=(mine||nb)?histOpts(i,title,n,mine):null; /* acontecimento perto de você: você decide */
+  const tc=TCARD[title];if(ch&&tc){const o=ch[0];ch[0]=[o[0],o[1]+', carta '+CARDS[tc][0],o[2],()=>{o[3]();giveCard(tc,title)}]} // a escolha que se envolve traz a carta do acontecimento
   if(!ch){troops[i]+=n;note(`${title}: +${n} tropas em ${S[i][1]}`)}
   const lines=[[-1,`${title}. ${txt}`]];if(owner[i]==i)lines.push([i,LN(i).a||`${S[i][1]} se levanta!`]);
   setTimeout(()=>talk(lines,()=>{ui();if(ch)showHist(title,txt,i,ch)}),600);return true}
+const TCARD={'Coroação de Dom Pedro I':'grito','Independência da Bahia':'alforria','Confederação do Equador':'imprensa','Cabanagem':'jangada','Revolução Farroupilha':'lanceiros','Balaiada':'quilombo', // carta de cada acontecimento histórico
+  'Proclamação da Confederação':'imprensa','Bloqueio de Cochrane':'bloqueio','Avanço imperial':'polvora','Resistência no Ceará':'barricada','Batalha do Seival':'lanceiros','Tomada de Laguna':'jangada','Retomada de Laguna':'bloqueio','Surpresa de Porongos':'embosc','Paz de Ponche Verde':'embax',
+  'Os cabanos tomam Belém':'quilombo','Belém de novo cabana':'barricada','Chegada de Andréa':'polvora','Resistência no interior':'embosc'};
 const REVOLTA=/Confedera|Cabanagem|cabano|Farroupilha|Balaiada|Seival|Laguna|Resist|Porongos/; // levantes contra quem governa
 function histOpts(i,title,n,mine){const f=owner[i],X=S[i][1],rev=REVOLTA.test(title);
   if(mine&&rev)return[['Negociar com os revoltosos',`−5 ouro, +${n} tropas em ${X}`,5,()=>troops[i]+=n],

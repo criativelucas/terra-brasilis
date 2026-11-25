@@ -43,7 +43,7 @@ function showBrief(){if(!B||B.auto)return;const ps=B.ps,me_=ps?B.was:B.af,en=ps?
     return`<li class="${cl}">${I(cl=='good'?'up':cl=='bad'?'down':'scroll')}<span><b>${r[0]}</b> · ${r[1]}</span></li>`}).join('');
   const wx=B.wx=='rain'?'<li>'+I('warn')+'<span><b>Chuva</b> · tiro com 1 casa a menos de alcance</span></li>':B.wx=='dry'?'<li>'+I('warn')+'<span><b>Seca</b> · infantaria anda 1 casa a menos</span></li>':'';
   const side=(f,us,cls,who)=>`<figure class="${cls}"><img src="${face[f]}" alt=""><b>${S[f][4]}</b><span>${hid&&cls=='them'?'?':us.reduce((a,u)=>a+u.hp,0)}</span><small>${who} · ${hid&&cls=='them'?'?':us.length} unidades</small></figure>`;
-  scr(`<h2>${KIND[B.kind][0]} · ${S[B.to][1]}</h2><div class="brief"><div class="b3d"><canvas id="b3d" width="720" height="460" aria-label="Maquete do campo de batalha"></canvas>
+  scr(`<h2>${KIND[B.kind][0]} · ${S[B.to][1]}</h2><div class="brief"><div class="b3d"><canvas id="b3d" width="560" height="560" aria-label="Maquete do campo de batalha"></canvas>
       <div class="b3l"><span class="me">Você</span><span class="them">Inimigo</span>${B.goals||B.pr?'<span class="obj">Objetivo</span>':''}<em>Arraste para girar</em></div></div>
     <div class="binfo"><div class="vsr">${side(me_,mine,'me',ps?'defende':'ataca')}<em>×</em>${side(en,foe,'them',ps?'ataca':'defende')}</div>
       <div class="box"><b>${I('flag')}Objetivo</b><p>${briefObj()}</p></div>
@@ -59,11 +59,11 @@ function brief3D(c,yaw,now){const g=c.getContext('2d'),W0=c.width,H0=c.height,cs
     COL={g:B.bio.g[0],r:'#c79a5e',w:'#3a86cc',a:'#7ab0d8',b:'#9a6a36',f:B.bio.gd,m:'#9a9284',h:'#b8a868',v:'#efe2c0',Q:'#c0504a',W:'#a89c88',D:'#6b4524',T:'#b8ad98',P:'#e2a83c',L:'#c99a5c',R:'#8d877b',c:'#9fc84a',K:'#6b6258'};
   const rot=(x_,y_)=>{const dx=x_-cx0,dy=y_-cy0;return[dx*cs-dy*sn,dx*sn+dy*cs]};
   let mnx=1e9,mxx=-1e9,mny=1e9,mxy=-1e9;[[0,0],[GW,0],[0,GH],[GW,GH]].forEach(([a,b])=>{const[rx,ry]=rot(a,b);mnx=Math.min(mnx,rx-ry);mxx=Math.max(mxx,rx-ry);mny=Math.min(mny,(rx+ry)*.5);mxy=Math.max(mxy,(rx+ry)*.5)});
-  const s=Math.min((W0-30)/(mxx-mnx),(H0-70)/(mxy-mny)),ox=W0/2-(mnx+mxx)/2*s,oy=H0/2+20-(mny+mxy)/2*s;
+  const s=Math.min((W0-30)/(mxx-mnx),(H0-70)/(mxy-mny))*(W0==H0?.97:1),ox=W0/2-(mnx+mxx)/2*s,oy=H0/2+20-(mny+mxy)/2*s;
   const P=(x_,y_,z)=>{const[rx,ry]=rot(x_,y_);return[ox+(rx-ry)*s,oy+(rx+ry)*.5*s-z*s*.85]};
   const shade=(hex,k)=>{const n=parseInt(hex.slice(1),16);return`rgb(${(n>>16&255)*k|0},${(n>>8&255)*k|0},${(n&255)*k|0})`};
   const quad=(pts,col)=>{g.fillStyle=col;g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.closePath();g.fill()};
-  g.clearRect(0,0,W0,H0);const bg=g.createRadialGradient(W0/2,H0/2,40,W0/2,H0/2,W0*.7);bg.addColorStop(0,'#3a2c30');bg.addColorStop(1,'#140c0e');g.fillStyle=bg;g.fillRect(0,0,W0,H0);
+  g.clearRect(0,0,W0,H0);const bg=g.createRadialGradient(W0/2,H0/2,40,W0/2,H0/2,W0*.7);bg.addColorStop(0,'#cfe6f2');bg.addColorStop(.62,'#7fb0c8');bg.addColorStop(1,'#2f5468'); /* céu claro atrás da maquete, como numa lente */g.fillStyle=bg;g.fillRect(0,0,W0,H0);
   quad([P(-.4,-.4,-.35),P(GW+.4,-.4,-.35),P(GW+.4,GH+.4,-.35),P(-.4,GH+.4,-.35)],'#22160f'); // base de madeira da maquete
   const cells=[];for(let y_=0;y_<GH;y_++)for(let x_=0;x_<GW;x_++){const[rx,ry]=rot(x_+.5,y_+.5);cells.push([rx+ry,x_,y_])}cells.sort((a,b)=>a[0]-b[0]);
   const faces=[[0,1,0,0,1,0],[0,-1,0,1,1,1],[1,0,1,0,1,1],[-1,0,0,0,0,1]]; // normal e aresta: [nx,ny, x1,y1, x2,y2] relativos à casa

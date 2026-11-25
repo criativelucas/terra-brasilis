@@ -1287,3 +1287,63 @@ header>button.muted .ico{opacity:.55}
 body.talking aside{visibility:hidden}
 #card .xclose~h2{max-width:calc(100% - 96px)}
 #card:not(.wide) h2.big{font-size:36px;line-height:40px;white-space:nowrap}
+/* ================= cartas: moldura de madeira, gema de Comando (azul no mapa, vermelha na batalha), aro pela raridade ================= */
+.card,.card.bat{background:linear-gradient(180deg,#81492a,#5e331d);border:3px solid var(--cont);border-radius:12px;color:#ffeec2;
+  box-shadow:inset 0 0 0 3px var(--rar,#b07a48),inset 0 0 0 5px rgba(0,0,0,.25),0 4px 0 var(--cont),0 8px 14px rgba(0,0,0,.35)}
+.card.r-r{--rar:#c4ccd2}.card.r-l{--rar:#f2cd63;background:linear-gradient(180deg,#8a5a2a,#5a3519)}
+.card:hover:not(:disabled):not(.off){background:linear-gradient(180deg,#8f5532,#6a3b21)}
+.card.on{background:linear-gradient(180deg,#a86a2a,#6e3d1d);outline:3px solid #ffd23f;outline-offset:1px}
+.card img{width:56px;height:56px;padding:6px;border-radius:10px;background:radial-gradient(circle at 50% 40%,#fff3cf,#e8c57a 70%);border:3px solid var(--cont);box-shadow:none;image-rendering:pixelated}
+.card b{font:400 15px/1.1 var(--jogo);color:#ffeec2;text-shadow:var(--ol1)}
+.card small{color:#3b2416;background:var(--perg);border-radius:7px;padding:4px 6px;font:600 12px/1.25 var(--ui)}
+.card .cc{width:30px;height:30px;top:-8px;left:-8px;font:400 17px var(--jogo);color:#fff;text-shadow:var(--ol1);background:radial-gradient(circle at 36% 30%,#bfe2ff,#3a86cc 55%,#1d4f86);border:3px solid var(--cont);box-shadow:0 2px 0 var(--cont)}
+.card.bat .cc{background:radial-gradient(circle at 36% 30%,#ffc2b0,#d9362a 55%,#8e1c12)}
+.card .rar{font:400 11px var(--jogo);font-style:normal;color:var(--rar,#d9a86c);letter-spacing:.3px}
+.card.r-l::after{content:"";position:absolute;inset:0;border-radius:9px;pointer-events:none;background:linear-gradient(115deg,transparent 30%,rgba(255,240,180,.35) 45%,transparent 60%) 0 0/250% 100%;animation:shine 3s linear infinite}
+@keyframes shine{from{background-position:120% 0}to{background-position:-130% 0}}
+.card:disabled{filter:grayscale(.65) brightness(.85)}
+.card .why{color:#ffd0c0}
+#hand:not(.open):not(.fan) .card img{width:34px;height:34px;padding:3px}
+.colb{display:flex;margin:2px auto 8px}
+/* coleção de cartas, no livro */
+.cgridc{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:6px;margin-bottom:4px}
+.cmini{height:58px;padding:4px;display:grid;place-items:center;background:linear-gradient(180deg,#81492a,#5e331d);border:3px solid var(--cont);border-radius:9px;box-shadow:inset 0 0 0 2px var(--rar,#b07a48),0 3px 0 var(--cont)}
+.cmini.r-r{--rar:#c4ccd2}.cmini.r-l{--rar:#f2cd63}.cmini:hover:not(:disabled){background:linear-gradient(180deg,#8f5532,#6a3b21)}
+.cmini img{width:36px;height:36px;image-rendering:pixelated}.cmini span{font:400 22px var(--jogo);color:#f3dcae}
+.cmini.lock{filter:grayscale(1) brightness(.65)}.cmini.on{outline:3px solid #ffd23f;outline-offset:2px;background:linear-gradient(180deg,#a86a2a,#6e3d1d)}
+.cview{display:grid;place-items:center;padding:4px 0}
+.card.big{width:220px;min-height:280px;padding:18px 12px 14px;gap:8px}.card.big img{width:92px;height:92px}.card.big b{font-size:21px}.card.big small{font-size:14px}
+.card.lockc{justify-content:center;filter:grayscale(.8) brightness(.8)}.card.lockc b{font-size:64px}
+.srcl{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:3px;font:600 14px/1.3 var(--ui);color:var(--tinta)}
+/* carta nova: vira na frente do jogador */
+.seal.crev{background:radial-gradient(circle,rgba(20,10,5,.6),rgba(20,10,5,0) 62%)}
+.crw{display:flex;flex-direction:column;align-items:center;gap:8px;animation:cardIn .55s cubic-bezier(.2,1.4,.4,1) both}
+.crw em{font:400 30px var(--jogo);font-style:normal;color:#ffe9a8;text-shadow:var(--ol)}.crw small{font:400 17px var(--jogo);color:#fff3cf;text-shadow:var(--ol1)}
+.seal.out .crw{animation:cardOut .35s ease-in forwards}
+@keyframes cardIn{0%{transform:perspective(700px) rotateY(90deg) scale(.6);opacity:0}100%{transform:perspective(700px) rotateY(0) scale(1);opacity:1}}
+@keyframes cardOut{to{transform:translateY(-40px) scale(.9);opacity:0}}
+.spoil{display:flex;align-items:center;justify-content:center;gap:10px}.spoil>span{font:400 16px var(--jogo);color:var(--sepia)}
+.card.mini2{flex-direction:row;min-height:0;padding:6px 12px 6px 24px;gap:8px}.card.mini2 img{width:34px;height:34px;padding:3px}.card.mini2 small,.card.mini2 .rar{display:none}.card.mini2 .cc{width:24px;height:24px;font-size:13px;top:-7px;left:-7px}
+/* tela inicial: continuar em destaque, modos como cartões */
+#screen.title #card{width:min(580px,100%)}
+#card .bigc{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 14px;font-size:22px}.bigc small{font:600 13px var(--ui);color:#e8f6d8;text-shadow:none}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mode{display:grid;grid-template-columns:52px 1fr;grid-template-rows:auto auto;column-gap:10px;align-items:center;justify-items:start;text-align:left;padding:10px 12px;min-height:78px}
+.mode .mi{grid-row:1/3;display:grid;place-items:center;width:52px;height:52px;border-radius:12px;border:3px solid var(--cont);box-shadow:inset 0 2px 0 rgba(255,255,255,.3),0 3px 0 var(--cont)}
+.mode .mi .ico{width:28px;height:28px;margin:0}.mode b{font:400 17px/1.1 var(--jogo);align-self:end}.mode small{font:600 12px/1.2 var(--ui);color:var(--sepia);align-self:start}
+.m1 .mi{background:linear-gradient(#62c47a,#2c7c40)}.m2 .mi{background:linear-gradient(#a0653a,#5e331d)}.m3 .mi{background:linear-gradient(#e0604c,#8e2219)}.m4 .mi{background:linear-gradient(#ffe08a,#c8952f)}
+.tlinks{flex-wrap:wrap;gap:6px}.tlinks button{font-size:14px;padding:6px 12px}
+/* escolha de líder: quadro de madeira, faixa da região embaixo, dificuldade no canto */
+.pgrid button{position:relative;background:linear-gradient(180deg,#81492a,#5e331d);border:3px solid var(--cont);border-radius:12px;color:#ffeec2;box-shadow:inset 0 -7px 0 var(--rc,#8d8576),0 3px 0 var(--cont);padding:6px 4px 12px}
+.pgrid button:hover:not(.on){background:linear-gradient(180deg,#8f5532,#6a3b21)}
+.pgrid button.on{box-shadow:inset 0 -7px 0 var(--rc,#8d8576),0 0 0 3px #ffd23f,0 3px 0 var(--cont)}
+.pgrid button img{border:3px solid var(--cont);border-radius:9px}.pgrid button span{font:400 15px var(--jogo);color:#ffeec2;text-shadow:var(--ol1)}
+.pgrid .dif{position:absolute;top:5px;right:5px;display:flex;gap:2px}.pgrid .dif u{width:7px;height:7px;border-radius:2px;background:rgba(0,0,0,.35);border:1px solid var(--cont)}.pgrid .dif u.on{background:#ff8a6e}
+/* maquete do campo dentro de uma lente de vidro */
+.b3d{border:0;border-radius:0;box-shadow:none;overflow:visible;max-width:470px;width:100%;margin:6px auto 0;background:none}
+.b3d canvas{box-sizing:border-box;width:100%;height:auto;aspect-ratio:1;border-radius:50%;border:10px solid #6b3d24;box-shadow:0 0 0 3px var(--cont),0 0 0 7px var(--latao),0 0 0 10px var(--cont),0 9px 0 10px rgba(20,10,5,.4)}
+.b3d::after{content:"";position:absolute;left:10px;top:10px;width:calc(100% - 20px);aspect-ratio:1;border-radius:50%;pointer-events:none;background:radial-gradient(ellipse 26% 14% at 32% 18%,rgba(255,255,255,.5),transparent 70%),radial-gradient(circle,transparent 58%,rgba(0,0,0,.38))}
+.b3d .b3l{position:static;margin-top:18px;justify-content:center;color:var(--tinta)}.b3d .b3l em{color:var(--sepia)}
+/* mensageiro dos rivais */
+.evh .hero.sm{width:72px;height:72px;flex:none;border-radius:12px;border:3px solid var(--cont);box-shadow:0 0 0 2px var(--latao)}
+@media (prefers-reduced-motion:reduce){.card.r-l::after,.crw{animation:none}}
