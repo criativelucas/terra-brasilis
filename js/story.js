@@ -5,7 +5,7 @@ const LN=i=>LORE[S[i]?.[4]]||{};
 let talkQ=[],talkCur=null;
 function talk(lines,then){ /* lines: [[índice do líder ou -1 para narrador, texto]] */
   if(talkCur){talkQ.push([lines,then]);return}
-  talkCur={lines,k:0,then,c:0,full:''};$('talk').hidden=false;$('tut').hidden=true;$('tutPtr').hidden=true;closeCmd();talkShow()}
+  talkCur={lines,k:0,then,c:0,full:''};$('talk').hidden=false;document.body.classList.add('talking'); /* a ficha some durante a fala */$('tut').hidden=true;$('tutPtr').hidden=true;closeCmd();talkShow()}
 function talkShow(){const T=talkCur,[f,txt]=T.lines[T.k],el=$('talk'),side=f<0?'nar':T.k%2?'r':'l';
   el.innerHTML=`<div class="tbox ${side}">${f>=0?`<img class="tp" src="${face[f]}" alt=""><b class="tn">${S[f][4]}</b>`:''}<p class="tt"></p><i class="tc">▼</i></div><small class="tskip">Clique ou Enter para seguir · Esc pula</small>`;
   const p=el.querySelector('.tt');T.full=txt;T.c=0;clearInterval(T.iv);sfx.page();
@@ -14,7 +14,7 @@ function talkShow(){const T=talkCur,[f,txt]=T.lines[T.k],el=$('talk'),side=f<0?'
 function talkNext(skip){const T=talkCur;if(!T)return;
   if(!skip&&T.c<T.full.length){T.c=T.full.length;clearInterval(T.iv);$('talk').querySelector('.tt').textContent=T.full;return}
   if(!skip&&++T.k<T.lines.length)return talkShow();
-  clearInterval(T.iv);talkCur=null;$('talk').hidden=true;sfx.tick();T.then?.();const q=talkQ.shift();if(q)talk(...q)}
+  clearInterval(T.iv);talkCur=null;$('talk').hidden=true;document.body.classList.remove('talking');sfx.tick();T.then?.();const q=talkQ.shift();if(q)talk(...q)}
 $('talk').addEventListener('click',()=>talkNext());
 document.addEventListener('keydown',e=>{if(!talkCur)return;
   if(e.key=='Enter'||e.key==' '){e.preventDefault();e.stopImmediatePropagation();talkNext()}
@@ -31,12 +31,12 @@ function storyAlly(f){talk([[me,`${S[f][4]}, juntos ninguém nos para.`],[f,`Ali
 onStory=(k,f)=>{if(k=='betray')talk([[f,`Traição! ${S[me][4]} rompeu o nosso pacto. ${S[f][1]} não vai esquecer.`],[me,'Acordos valem enquanto servem à causa.']])};
 
 // ---------- enciclopédia ----------
-function showEnc(i){i=(i%N+N)%N;const L=LN(i),E=ELITE[S[i][0]];
-  scr(`<h2>Enciclopédia</h2><div class="enc"><img class="hero" src="${face[i]}" alt=""><div><h3>${S[i][4]}</h3><p><b>${L.d||'—'}</b> · ${S[i][1]}</p><p>${L.b||`Líder de ${S[i][1]} nesta campanha.`}</p></div></div>
-    <p><b>No jogo:</b> ${S[i][7]}: ${traitTxt(i)}${E?`. Tropa de elite: ${E[0]}`:''}. Terreno de batalha: ${BIO[BOF[i]].nome}.</p>
-    ${L.a?`<p class="quote"><i>Fala no jogo:</i> ${L.a}</p>`:''}
-    <div class="encg">${S.map((s,j)=>`<button data-s="enc-${j}" class="${j==i?'on':''}" title="${s[4]} · ${s[1]}" data-help="${s[4]} · ${s[1]}">${img(j,s[4])}</button>`).join('')}</div>
-    <div class="row c"><button data-s="enc-${i-1}">${I('back')}Anterior</button><button data-s="enc-${i+1}">Próximo${I('fwd')}</button></div><button data-s="close" class="end">Fechar</button>`)}
+function showEnc(i){i=(i%N+N)%N;const L=LN(i),E=ELITE[S[i][0]]; /* enciclopédia como livro: índice à esquerda, ficha do líder à direita */
+  scr(`<h2>Enciclopédia</h2>${bookTabs('enc')}<div class="pages"><div class="pg"><h3>Índice dos líderes</h3><div class="encg">${S.map((s,j)=>`<button data-s="enc-${j}" class="${j==i?'on':''}" title="${s[4]} · ${s[1]}" data-help="${s[4]} · ${s[1]}">${img(j,s[4])}</button>`).join('')}</div><span class="pn">${2*i+1}</span></div>
+    <div class="pg"><div class="enc"><img class="hero" src="${face[i]}" alt=""><div><h3>${S[i][4]}</h3><p><b>${L.d||'—'}</b> · ${S[i][1]}</p></div></div><p>${L.b||`Líder de ${S[i][1]} nesta campanha.`}</p>
+      <p><b>No jogo:</b> ${S[i][7]}: ${traitTxt(i)}${E?`. Tropa de elite: ${E[0]}`:''}. Terreno de batalha: ${BIO[BOF[i]].nome}.</p>${L.a?`<p class="quote"><i>Fala no jogo:</i> ${L.a}</p>`:''}<span class="pn">${2*i+2}</span></div></div>
+    <div class="pnav"><button data-s="enc-${i-1}" aria-label="Líder anterior">${I('back')}</button><span>${i+1} de ${N}</span><button data-s="enc-${i+1}" aria-label="Próximo líder">${I('fwd')}</button></div>
+    ${me<0?'<button data-s="setup" class="end">Voltar à escolha</button>':'<button data-s="close" class="end">Fechar o livro</button>'}`);$('card').classList.add('book','wide')}
 
 // ---------- final por líder ----------
 function endText(){const L=LN(me),full=owner.every(o=>o==me);
@@ -95,4 +95,4 @@ function histOpts(i,title,n,mine){const f=owner[i],X=S[i][1],rev=REVOLTA.test(ti
   return[['Mandar uma embaixada',`−3 ouro, pacto de 4 turnos com ${S[f][4]}`,3,()=>{troops[i]+=n;pact[f]=Math.max(pact[f]||0,turn+4)}],['Ficar de fora',`${X} ganha +${n} tropas`,0,()=>troops[i]+=n]]}
 function showHist(title,txt,i,ch){window.HEV={ch,title,i};const fx=t=>t.split(/,\s*/).map(q=>`<span class="${/[−-]|perde|hostil/.test(q)?'bad':'good'}">${q}</span>`).join('');
   scr(`<h2>${title}</h2><div class="evh"><span class="medal1">${I('scroll')}</span><div><p>${txt}</p><small>${S[i][1]}, ${owner[i]==me?'sob o seu governo':'sob '+S[owner[i]][4]}. Ouro em caixa: ${gold[me]}</small></div></div><div class="evo">`+
-    ch.map(([nm,ef,c],k)=>`<button data-s="hev-${k}" class="${gold[me]<c?'off':''}" ${gold[me]<c?'disabled':''}><b>${nm}</b><span class="fx">${fx(ef)}</span>${gold[me]<c?`<small>faltam ${c-gold[me]} ouro</small>`:''}</button>`).join('')+'</div>')}
+    ch.map(([nm,ef,c],k)=>`<button data-s="hev-${k}" class="${gold[me]<c?'off':''}" ${gold[me]<c?'disabled':''}><b>${nm}</b><span class="fx">${fx(ef)}</span>${gold[me]<c?`<small>faltam ${c-gold[me]} ouro</small>`:''}</button>`).join('')+'</div>');$('card').classList.add('scroll')}

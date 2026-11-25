@@ -22,7 +22,9 @@ CFG.q=2;CFG.big=0;CFG.cb=0;CFG.confirm=1;CFG.calm=matchMedia('(prefers-reduced-m
 try{Object.assign(CFG,JSON.parse(localStorage.getItem('tb-cfg')||'{}'))}catch{}
 const applyCfg=()=>{document.body.classList.toggle('big',!!CFG.big);document.documentElement.style.setProperty('--uiz',[.9,1,1.15,1.3][CFG.uiz??1])};applyCfg(); // --uiz: tamanho da interface
 // ícones em pixel 10x10 (no lugar dos emojis): O contorno, W branco, Y/y ouro, R vermelho, B/b madeira, G/g metal, U azul, S sol, K preto
-const PXI={scroll:['..OOOOOO..','.OWWWWWWO.','.OWbbbbWO.','..OWWWWO..','..OWbbWO..','..OWWWWO..','..OWbbWO..','.OWWWWWWO.','.OWWWWWWO.','..OOOOOO..'],
+const PXI={spk:['..........','....OO....','...OWO..O.','OOOWWO...O','OWWWWO.O.O','OWWWWO.O.O','OOOWWO...O','...OWO..O.','....OO....','..........'],
+  note:['...OOOOOOO','...OYYYYYO','...OYOOOYO','...OYO.OYO','...OYO.OYO','.OOOYO.OYO','OYYYYOOOYO','OYYYYOYYYO','.OOOOOYYYO','......OOO.'],
+  scroll:['..OOOOOO..','.OWWWWWWO.','.OWbbbbWO.','..OWWWWO..','..OWbbWO..','..OWWWWO..','..OWbbWO..','.OWWWWWWO.','.OWWWWWWO.','..OOOOOO..'],
   swords:['O........O','OGO....OGO','.OGO..OGO.','..OGOOGO..','...OGGO...','...OGGO...','..OYOOYO..','.OYO..OYO.','OBO....OBO','OO......OO'],
   flag:['.OOOOOO...','.ORRRRRO..','.ORRRRRRO.','.ORRRRRO..','.OOOOOO...','.Ob.......','.Ob.......','.Ob.......','.Ob.......','OOOO......'],
   back:['..........','....OO....','...OYO....','..OYYOOOO.','.OYYYYYYYO','.OYYYYYYYO','..OYYOOOO.','...OYO....','....OO....','..........'],
@@ -111,6 +113,8 @@ function toast(t){const box=$('toasts'),d=document.createElement('div'),k=/Trai�
 
 // ---------- som com padrão: passar o mouse, clicar e errar soam igual em todos os botões ----------
 {const s0=sfx.sel;let t0=0;sfx.sel=()=>{const n=performance.now();if(n-t0<90)return;t0=n;s0()}} // clique repetido no mesmo instante toca uma vez
+sfx.stamp=()=>{beep(70,.2,'sine');noise(.12,240,1,'lowpass',.35)};sfx.coin=(k=0)=>beep(1320+k*90,.05,'triangle'); // selo de cera e moedas
+const toggleSnd=v=>{if(CFG[v]){CFG[v+'0']=CFG[v];CFG[v]=0}else CFG[v]=CFG[v+'0']||.7;saveCfg()}; // liga e desliga som ou música, lembrando o volume
 sfx.hover=()=>{if(!CFG.vol)return;try{AC=AC||new AudioContext;const o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime;o.type='triangle';o.frequency.value=1700;
   g.gain.setValueAtTime(CFG.vol*.035,t);g.gain.exponentialRampToValueAtTime(.0005,t+.03);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+.035)}catch{}};
 sfx.err=()=>{beep(190,.08,'square');beep(150,.08,'square',.06)};

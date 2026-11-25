@@ -1,7 +1,7 @@
 // batalha tática: turno, IA de campo, cena de combate, desenho
 
 function nextRaid(){
-  const r=raids.shift();if(!r){closeTurn();return ui()}
+  const r=raids.shift();if(!r){closeTurn();ui();return turnStart()}
   if(over||owner[r.to]!=me||owner[r.from]!=r.f||troops[r.from]<2)return nextRaid(); // situação mudou desde a ordem
   tactical(r.from,r.to,troops[r.from]-1,1);ui()}
 tactical=(from,to,n,ps=0)=>zoomTo(from,to,()=>capTalk(from,to,()=>{startBattle(from,to,n,ps);ui()})); // ataque a capital abre com diálogo // câmera fecha no alvo, depois abre o campo
@@ -233,9 +233,10 @@ function bFinish(){tutEv('bdone');closeCmd();const stg=$('stage');stg.classList.
   const loss=sd=>Math.max(0,B.units.filter(u=>u.side==sd).reduce((s,u)=>s+u.hp0,0)-total(sd)),lvUp=[],
     best=B.units.filter(u=>u.side==ps&&u.hits).sort((p,q)=>q.hits-p.hits)[0],vg=vgTot(ps),
     R={perks:[],to,kind,e,win:wonP,l0:loss(ps),l1:loss(1-ps),vg,lv:lvUp,best:best&&`${nmOf(best)}${best.ld?' (comandante)':''}, ${best.hits} golpe${best.hits>1?'s':''}`};
+  {const h0=B.units.filter(u=>u.side==ps).reduce((s,u)=>s+u.hp0,0);R.stars=wonP?1+(R.l0<=h0*.35)+(B.round<=Math.ceil(MAXR*.6)):0;stats.stars=(stats.stars||0)+R.stars;if(R.stars==3)stats.perf=(stats.perf||0)+1} // estrelas: vencer, perder pouco, vencer rápido
   troops[from]-=n;
   // experiência: regimento que sobreviveu ganha 1, mais 1 se acertou golpes, mais 1 se o lado venceu
-  for(const sd of[0,1]){const st=sd?to:from,win=sd?!won:won;B.units.filter(u=>u.side==sd&&u.j>=0).forEach(u=>{if(u.hp>0){xp[st][u.j]=(xp[st][u.j]||0)+1+(u.hits>0)+win;if(sd==ps&&lvl(xp[st][u.j])>u.lv){lvUp.push(`${nmOf(u)} nível ${lvl(xp[st][u.j])}`);R.perks.push({st:sd==0&&won?to:st,j:u.j,n:nmOf(u)})}}})}
+  for(const sd of[0,1]){const st=sd?to:from,win=sd?!won:won;B.units.filter(u=>u.side==sd&&u.j>=0).forEach(u=>{if(u.hp>0){xp[st][u.j]=(xp[st][u.j]||0)+1+(u.hits>0)+win;if(sd==ps&&lvl(xp[st][u.j])>u.lv){lvUp.push(`${nmOf(u)} nível ${lvl(xp[st][u.j])}`);R.perks.push({st:sd==0&&won?to:st,j:u.j,n:nmOf(u),type:u.type})}}})}
   gold[me]+=vg;bCap=null;
   if(wonP&&!ld(1-ps)){gold[me]+=10;bCap=e;R.cap=1} // general inimigo preso: resgate
   if(!ld(ps)){R.paid=Math.min(gold[me],8);gold[me]-=R.paid}
@@ -247,15 +248,20 @@ function bFinish(){tutEv('bdone');closeCmd();const stg=$('stage');stg.classList.
   setTimeout(()=>{if(!over&&!B&&$('screen').hidden)showBRes(R)},1300); // depois do painel de confronto
   ps?nextRaid():ui()}
 let lastRes=null;
-function showBRes(R){lastRes=R; /* resultado: placar você x inimigo, destaques e melhorias em cartões */
-  scr(`<h2 class="big">${R.win?'VITÓRIA':'DERROTA'}</h2><p class="c">${KIND[R.kind][0]} de ${S[R.to][1]}</p>
+function showBRes(R){lastRes=R; /* resultado: estrelas e placar à esquerda; melhorias dos regimentos à direita, como ficha de evolução */
+  const st=R.stars||0,PIC={mov:'boot',def:'shield',rev:'swords'},why=R.win?['','vitória','boa vitória: poucas perdas ou rapidez','vitória perfeita: poucas perdas e rapidez'][st]:'derrota não dá estrelas';
+  const L_=`<div class="brl">${starsH(st,!R.seen)}<p class="c">${KIND[R.kind][0]} de ${S[R.to][1]} · ${why}</p>
     <div class="vsr"><figure class="me"><img src="${face[me]}" alt=""><b>Você</b><span>−${R.l0}</span><small>suas perdas</small></figure><em>×</em>
       <figure class="them"><img src="${face[R.e]}" alt=""><b>${S[R.e][4]}</b><span>−${R.l1}</span><small>perdas dele</small></figure></div>
     <div class="chips c">${R.vg?`<span>${I('coin')}Vilas tomadas +${R.vg} ouro</span>`:''}${R.best?`<span>${I('star')}Destaque: ${R.best}</span>`:''}${R.lv.map(l=>`<span>${I('up')}${l}</span>`).join('')}</div>
-    ${R.perks.length?`<div class="box perks"><b>${I('star')}Escolha uma melhoria para cada regimento</b>${R.perks.map((p,k)=>`<div class="pk"><span>${p.n}</span><div class="pkb">${PERKS.map(([id,nm,d])=>{const on=perk[p.st+'-'+p.j]?.includes(id);return`<button data-s="perk-${k}-${id}" class="${on?'on':''}" data-help="${d}" ${on?'disabled':''}>${nm}<small>${d}</small></button>`}).join('')}</div></div>`).join('')}</div>`:''}
     ${R.cap?`<div class="box safe"><b>${I('check')}${S[R.e][4]} foi capturado</b><p>Resgate de 10 ouro recebido.</p><button data-s="bfree">Libertar sem resgate: devolve os 10 ouro e firma pacto de 4 turnos</button></div>`:''}
     ${R.paid!=null?`<div class="box threat"><b>${I('warn')}Seu comandante foi capturado</b><p>Resgate pago: ${R.paid} ouro.</p></div>`:''}
-    <button data-s="close" class="end">Continuar</button>`)}
+    <button data-s="close" class="end">Continuar</button></div>`,
+    R_=R.perks.length?`<div class="brr"><h3>Melhoria de regimento</h3><p class="hint">Escolha uma melhoria para cada regimento que subiu de nível.</p>${R.perks.map((p,k)=>{const lv=lvl(xp[p.st]?.[p.j]||0);
+      return`<div class="upg"><figure><img src="${icon(p.type||'inf',me,true,false)}" alt=""><figcaption>${p.n}</figcaption><span class="lvp" aria-label="nível ${lv}">${[1,2,3].map(q=>`<i class="${q<=lv?'on':''}"></i>`).join('')}</span></figure>
+        <div class="upo">${PERKS.map(([id,nm,d])=>{const on=perk[p.st+'-'+p.j]?.includes(id);return`<button data-s="perk-${k}-${id}" class="${on?'on':''}" ${on?'disabled':''} data-help="${d}"><span class="sq">${I(PIC[id])}</span><b>${nm}</b><small>${d}</small></button>`}).join('')}</div></div>`}).join('')}</div>`:'';
+  scr(`<h2 class="big${R.win?'':' lost'}">${R.win?'VITÓRIA':'DERROTA'}</h2><div class="bres${R_?' two':''}">${L_}${R_}</div>`);if(R_)$('card').classList.add('wide');
+  if(!R.seen&&!CFG.calm)for(let k=0;k<st;k++)setTimeout(()=>sfx.coin(k*3),380+k*220);R.seen=1}
 function playBattleCard(id,t){noSnap();const c=CARDS[id];cmd-=c[2];hand.splice(hand.indexOf(id),1);banner(`Carta: ${c[0]}.`,'#3f8fb0');sfx.win(); // cartas de batalha
   if(id=='embosc')B.amb=B.round;
   if(id=='carga')B.chg=B.round;
@@ -265,6 +271,7 @@ function playBattleCard(id,t){noSnap();const c=CARDS[id];cmd-=c[2];hand.splice(h
     if(bOver()){B.busy=true;setTimeout(()=>B&&bFinish(),900)}}}
 function hudAt(e){const[px,py]=bPt(e);return(B.hud||[]).find(a=>px>=a.x&&py>=a.y&&px<a.x+a.w&&py<a.y+a.h)}
 function hudAct(h,e){ /* fichas do placar, botões de velocidade e minimapa */
+  if(h.snd){toggleSnd('vol');sfx.tick();return}
   if(h.spd){bFast=h.spd;try{localStorage.setItem('tb-fast',bFast)}catch{}sfx.tick();return}
   if(h.skip){if(B.busy){B.skip=true;B.clash=null;sfx.tick()}return}
   if(h.mini){const[px,py]=bPt(e);camTo((px-h.x)/h.w*GW-.5,(py-h.y)/h.h*GH-.5);return}
@@ -421,8 +428,8 @@ function drawBattle(){
   x.restore(); /* fim do mundo; daqui para baixo, na tela */
   B.pops=B.pops.filter(p=>p.until>now);x.textAlign='center';x.lineJoin='round'; // números de dano grandes, com contorno e um pulo ao surgir
   B.pops.forEach(p=>{const age=now-p.until+(p.txt.length>4?1100:800),[sx,sy0]=toScreen(p.x*CS+CS/2,p.y*CS+14),sy=sy0-age/22,dmg=p.txt[0]=='-',heal=p.txt[0]=='+',
-    sc=age<140?1.6-.6*age/140:1;if(!inView(sx,sy0))return;x.save();x.translate(sx,sy);x.scale(sc,sc);x.font=FONT(p.big?17:dmg?14:heal?11:9);
-    x.lineWidth=p.big?7:5;x.strokeStyle='#1a1220';x.strokeText(p.txt,0,0);x.fillStyle=p.big?'#ff6a3c':dmg?'#ffd23f':heal?'#8fe88a':'#fff3c0';x.fillText(p.txt,0,0);x.restore()});
+    sc=age<140?1.6-.6*age/140:1;if(!inView(sx,sy0))return;x.save();x.translate(sx,sy);x.scale(sc,sc);x.font=`400 ${Math.round((p.big?17:dmg?14:heal?11:9)*1.85)}px "Lilita One","Alegreya Sans",sans-serif`; /* letra gorda do tema, com sombra escura embaixo */
+    x.lineWidth=p.big?8:6;x.strokeStyle='#2a160d';x.strokeText(p.txt,0,3);x.strokeText(p.txt,0,0);x.fillStyle=p.big?'#ff6a3c':dmg?'#ffd23f':heal?'#8fe88a':'#fff3c0';x.fillText(p.txt,0,0);x.restore()});
   const hx=VX||16;teamBar(0,hx,now);teamBar(1,cw-hx-262,now); // placar dos dois lados: líder e uma ficha por unidade
   lac(x,cw/2-118,8,236,94,12);scriptT(x,`Rodada ${Math.min(B.round,MAXR)}`,cw/2-14,11,26,'center');
   x.textAlign='left';x.font=FONT(8);x.fillStyle='#d9c8a8';x.fillText('/'+MAXR,cw/2+38,24); // placa central da rodada, no estilo da placa de turno
@@ -495,13 +502,20 @@ function foreChip(s,t){ /* prévia colada no alvo: quanto tira, vida antes → d
   x.font=FONT(8);x.fillStyle='#f3e7cf';x.fillText(`${nmOf(t)}  ${t.hp} → `,bx+56,by+30,w-90);const lw=Math.min(w-90,x.measureText(`${nmOf(t)}  ${t.hp} → `).width);x.fillStyle=kill?'#ff6a3c':'#ffb3a6';x.fillText(''+left,bx+56+lw,by+30);
   if(d1){x.fillStyle='rgba(255,255,255,.15)';x.fillRect(bx+8,by+52,w-16,1);x.drawImage(sprite(s,fs,s.side==B.ps,0),bx+8,by+54,22,20);
     x.font=FONT(7.5);x.fillStyle='#d9c8a8';x.fillText(`Revide −${d1}: você ${s.hp} → `,bx+34,by+57,w-60);const rw=Math.min(w-60,x.measureText(`Revide −${d1}: você ${s.hp} → `).width);x.fillStyle=s.hp-d1<=0?'#ff6a3c':'#ffb3a6';x.fillText(''+(s.hp-d1),bx+34+rw,by+57)}}
-function speedBtns(){ /* velocidade do turno inimigo e "pular": valem durante a fase do inimigo */
-  const items=[['×1',{spd:1}],['×2',{spd:2}],['×4',{spd:4}],...(B.busy&&!B.auto?[['Pular ▸▸',{skip:1}]]:[])];x.font=FONT(7.5);const tw=items.reduce((a,[t])=>a+Math.ceil(x.measureText(t).width)+20,0);
-  let X=cv.width/2+(tw+86)/2;const Y=110;x.textAlign='center'; // embaixo da placa da rodada, centralizado
-  for(let i=items.length-1;i>=0;i--){const[t,a]=items[i],w=Math.ceil(x.measureText(t).width)+16,on=a.spd==bFast;X-=w;
-    x.fillStyle='rgba(20,12,14,.88)';rr(x,X,Y,w,26,6);x.fill();x.strokeStyle=on||a.skip?(a.skip?'#ff8a1e':'#ffd23f'):'rgba(226,168,60,.45)';x.lineWidth=on||a.skip?2:1;rr(x,X+.5,Y+.5,w-1,25,6);x.stroke();
-    x.fillStyle=on?'#ffd23f':'#f3e7cf';x.fillText(t,X+w/2,Y+5);B.hud.push({x:X,y:Y,w,h:26,...a});X-=4}
-  x.textAlign='right';x.font=FONT(6.5);x.lineWidth=4;x.strokeStyle='#1a1220';x.strokeText('Turno inimigo',X-4,Y+7);x.fillStyle='#f3e7cf';x.fillText('Turno inimigo',X-4,Y+7)}
+const SNDI=new Image();
+function speedBtns(){ /* velocidade do turno inimigo, pular e som: botões em relevo como o resto da interface */
+  const items=[[1,{spd:1}],[2,{spd:2}],[3,{spd:4}],...(B.busy&&!B.auto?[['Pular',{skip:1}]]:[]),['snd',{snd:1}]],H=30,Y=106,wOf=t=>t=='snd'?36:typeof t=='number'?22+t*9:62,
+    tw=items.reduce((a,[t])=>a+wOf(t)+6,0)-6;let X=Math.round(cv.width/2-tw/2+52);const X0=X;
+  x.save();x.textAlign='center';x.textBaseline='middle';x.imageSmoothingEnabled=false;if(!SNDI.src)SNDI.src=pxIcon('spk');
+  for(const[t,a]of items){const w=wOf(t),on=a.spd==bFast,mute=a.snd&&!CFG.vol,top=a.skip?['#e0604c','#8e2219']:on?['#62c47a','#2c7c40']:['#7a4628','#4a2a16'];
+    x.fillStyle='#2a160d';rr(x,X,Y+3,w,H,8);x.fill();rr(x,X,Y,w,H,8);x.fill(); /* contorno e base em relevo */
+    const g=x.createLinearGradient(0,Y,0,Y+H);g.addColorStop(0,top[0]);g.addColorStop(1,top[1]);x.fillStyle=g;rr(x,X+2,Y+2,w-4,H-4,6);x.fill();x.fillStyle='rgba(255,255,255,.22)';x.fillRect(X+6,Y+3,w-12,2);
+    x.fillStyle=on||a.skip?'#fff6d8':'#f3dcae';
+    if(typeof t=='number')for(let k=0;k<t;k++){const tx=X+w/2-t*4.5+k*9;x.beginPath();x.moveTo(tx,Y+9);x.lineTo(tx+9,Y+15);x.lineTo(tx,Y+21);x.closePath();x.fill()} /* setas de avanço: x1, x2, x4 */
+    else if(t=='snd'){if(SNDI.complete)x.drawImage(SNDI,X+w/2-10,Y+5,20,20);if(mute){x.strokeStyle='#ff3b30';x.lineWidth=3;x.beginPath();x.moveTo(X+8,Y+H-8);x.lineTo(X+w-8,Y+8);x.stroke()}}
+    else{x.font='400 15px "Lilita One",sans-serif';x.fillText(t,X+w/2,Y+H/2+1)}
+    B.hud.push({x:X,y:Y,w,h:H,...a});X+=w+6}
+  x.textAlign='right';x.font='400 14px "Lilita One","Alegreya Sans",sans-serif';x.lineJoin='round';x.lineWidth=4;x.strokeStyle='#2a160d';x.strokeText('Turno inimigo',X0-8,Y+H/2);x.fillStyle='#fff3cf';x.fillText('Turno inimigo',X0-8,Y+H/2);x.restore()}
 let miniOn=true;
 function miniDraw(){const mm=B.bg.mini,k=Math.min(150/GW,96/GH),w=GW*k,h=GH*k,X=VX+VW-w-(VX?8:20),Y=VY+VH-h-(VX?8:20),c=B.cam; /* minimapa: terreno, unidades, objetivos e o quadro da câmera */
   x.fillStyle='rgba(20,12,14,.85)';x.fillRect(X-4,Y-4,w+8,h+8);x.imageSmoothingEnabled=false;x.globalAlpha=.9;x.drawImage(mm,X,Y,w,h);x.globalAlpha=1;

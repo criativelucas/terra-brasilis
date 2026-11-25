@@ -124,7 +124,7 @@ function draw(){
   const LB=labelOffsets();
   S.map((_,i)=>i).sort((a,b)=>S[b][3]-S[a][3]).forEach(i=>{
     if(intro&&revealAt[i]>now-intro)return;
-    const mv=CFG.mv||'trp',r=resOf(i),TS=CFG.big?12:10,[fx_,fy]=proj(...px(i)),t=S[i][0]+(mv=='trp'?troops[i]:mv=='eco'?' +'+inc(i):''),dg_=owner[i]==me&&danger(i),ext=(fort[i]?fort[i]*9+3:0)+(dg_?15:0),w=(x.font=FONT(TS),Math.ceil(x.measureText(t).width)+20+ext),bx=Math.round(fx_),by0=Math.round(fy)-30-(TS-10),by=by0+LB[i],
+    const mv=CFG.mv||'trp',r=resOf(i),TS=CFG.big?12:10,[fx_,fy]=proj(...px(i)),t=S[i][0]+(mv=='trp'?troops[i]:mv=='eco'?' +'+inc(i):''),dg_=owner[i]==me&&danger(i),ext=(fort[i]?fort[i]*9+3:0)+(dg_?15:0),w=(x.font=LBF(TS),Math.ceil(x.measureText(t).width)+26+ext),bx=Math.round(fx_),by0=Math.round(fy)-30-(TS-10),by=by0+LB[i],
       left=LEFT.has(S[i][0]),rx=left?bx-w-1:bx+1,f=owner[i];
     if(lastOwner[i]!==f){if(lastOwner[i]!=null)flagT[i]=now;lastOwner[i]=f} // bandeira desce e sobe na cor nova
     const fp=flagT[i]?(now-flagT[i])/900:1,fb=by+(fp<1?(fp<.45?fp/.45:1-(fp-.45)/.55)*20:0);
@@ -137,12 +137,16 @@ function draw(){
     if(zr_<1.15){x.fillStyle='#22140c';x.beginPath();x.arc(bx,by0+26,3.5,0,7);x.fill();x.fillStyle='#f6ecc4';x.beginPath();x.arc(bx,by0+26,2,0,7);x.fill()} // capital: um ponto; de perto a vila em 3D toma o lugar
     if(port[i]){const ax=bx+11,ay=by0+16;x.fillStyle='#22140c';x.fillRect(ax-5,ay-2,11,13);x.fillStyle='#9fd0ff';x.fillRect(ax,ay,1,9);x.fillRect(ax-2,ay+1,5,1);x.fillRect(ax-3,ay+7,7,1);x.fillRect(ax-3,ay+6,1,1);x.fillRect(ax+3,ay+6,1,1)} // âncora
     if(by<by0-4){x.fillStyle='rgba(18,10,28,.55)';x.fillRect(bx,by+10,1,by0+24-by-10)} // fio só quando a plaquinha foi afastada para não sobrepor
-    const LH=Math.round(TS*1.45)+6,mineT=owner[i]==me;x.fillStyle='rgba(30,18,12,.85)';x.beginPath();x.roundRect(rx-1,fb-1,w+2,LH+2,6);x.fill();x.fillStyle=mineT?'#1f4a36':'#ebe4cf';x.beginPath();x.roundRect(rx,fb,w,LH,5);x.fill(); // plaquinha: pergaminho, ou laca se for sua
-    x.fillStyle=`hsl(${hue(owner[i])},70%,${CFG.cb?40:55}%)`;x.beginPath();x.roundRect(left?rx+w-11:rx,fb,11,LH,left?[0,5,5,0]:[5,0,0,5]);x.fill();emblem(x,(left?rx+w-11:rx)+2,fb+(LH-7)/2|0,owner[i],'#fff'); // faixa com emblema da facção
-    if(i==sel||i==hov){x.strokeStyle='#f08a3a';x.lineWidth=2;x.beginPath();x.roundRect(rx-1,fb-1,w+2,LH+2,6);x.stroke()}
-    x.font=FONT(TS);x.fillStyle=mineT?(moved.has(i)?'#a89880':'#f3e7cf'):'#3a2a1f';x.fillText(t,rx+(left?4:14),fb+2);
+    const LH=Math.round(TS*1.5)+8,mineT=owner[i]==me,hu=hue(owner[i]),ol='#2a160d'; /* estandarte: cor da facção, contorno escuro e número gordo; o seu leva aro de latão */
+    x.fillStyle=ol;x.beginPath();x.roundRect(rx-2,fb-2,w+4,LH+4,7);x.fill();
+    if(by>=by0-4){const pq=left?rx+w-9:rx+9;x.beginPath();x.moveTo(pq-6,fb+LH+1);x.lineTo(pq+6,fb+LH+1);x.lineTo(pq,fb+LH+8);x.fill()} // ponta do estandarte aponta a capital
+    const bg=x.createLinearGradient(0,fb,0,fb+LH);bg.addColorStop(0,`hsl(${hu},60%,${CFG.cb?40:50}%)`);bg.addColorStop(1,`hsl(${hu},66%,${CFG.cb?24:32}%)`);x.fillStyle=bg;x.beginPath();x.roundRect(rx,fb,w,LH,5);x.fill();
+    x.fillStyle='rgba(255,255,255,.3)';x.fillRect(rx+5,fb+2,w-10,2);if(mineT){x.strokeStyle='#f2cd63';x.lineWidth=2;x.beginPath();x.roundRect(rx+1.5,fb+1.5,w-3,LH-3,4);x.stroke()}
+    x.fillStyle='rgba(0,0,0,.28)';x.beginPath();x.roundRect(left?rx+w-16:rx+4,fb+4,12,LH-8,3);x.fill();emblem(x,left?rx+w-14:rx+6,fb+(LH-7)/2|0,owner[i],'#fff'); // emblema da facção
+    if(i==sel||i==hov){x.strokeStyle='#ffd23f';x.lineWidth=3;x.beginPath();x.roundRect(rx-4,fb-4,w+8,LH+8,9);x.stroke()}
+    x.font=LBF(TS);x.lineJoin='round';x.lineWidth=4;x.strokeStyle=ol;x.strokeText(t,rx+(left?5:20),fb+3);x.fillStyle=mineT&&moved.has(i)?'#d9cfba':'#fff8e6';x.fillText(t,rx+(left?5:20),fb+3);
     if(mv=='eco'&&r){const im=RIM[r]||(RIM[r]=Object.assign(new Image(),{src:pxIcon('r_'+r)}));if(im.complete){x.imageSmoothingEnabled=false;x.drawImage(im,left?rx-17:rx+w+2,fb,LH,LH)}} // modo economia: ícone do recurso
-    const ix0=rx+(left?4:14)+Math.ceil(x.measureText(t).width)+4; // fortes e perigo dentro da plaquinha, depois do número
+    const ix0=rx+(left?5:20)+Math.ceil(x.measureText(t).width)+4; // fortes e perigo dentro da plaquinha, depois do número
     for(let k=0;k<fort[i];k++){const fx2=ix0+k*9,fy2=fb+(LH-8)/2;x.fillStyle='#22140c';x.fillRect(fx2,fy2,8,8);x.fillStyle='#ffd23f';x.fillRect(fx2+1,fy2+3,6,4);x.fillRect(fx2+1,fy2+1,2,2);x.fillRect(fx2+5,fy2+1,2,2)}
     if(dg_){const ax=ix0+(fort[i]?fort[i]*9+2:0),ay=fb+(LH-14)/2,on=CFG.calm||Math.floor(now/400)%2;x.fillStyle='#22140c';x.beginPath();x.moveTo(ax+6,ay-2);x.lineTo(ax+14,ay+14);x.lineTo(ax-2,ay+14);x.fill(); // em perigo
       x.fillStyle=on?'#ff3b30':'#b3312a';x.beginPath();x.moveTo(ax+6,ay+1);x.lineTo(ax+12,ay+12);x.lineTo(ax,ay+12);x.fill();x.fillStyle='#fff';x.fillRect(ax+5,ay+4,2,5);x.fillRect(ax+5,ay+10,2,2)}
@@ -176,9 +180,10 @@ function pick(e){const r=cv.getBoundingClientRect(),mx=(e.clientX-r.left)*cv.wid
   return cx>=0&&cx<W&&cy>=0&&cy<H?Math.max(-1,cell[cy*W+cx]):-1}
 
 
+const LBF=TS=>`400 ${Math.round(TS*1.75)}px "Lilita One","Alegreya Sans",sans-serif`; // letra dos estandartes
 function labelOffsets(){ /* bandeirinhas que se tocam sobem (mastro mais alto) até não se sobreporem */
-  const TS=CFG.big?12:10,LH=Math.round(TS*1.45)+6;x.font=FONT(TS);
-  const L=S.map((_,i)=>{const[fx_,fy]=proj(...px(i)),w=Math.ceil(x.measureText(S[i][0]+troops[i]).width)+20,bx=Math.round(fx_);return{x:LEFT.has(S[i][0])?bx-w-1:bx+1,y:Math.round(fy)-30-(TS-10),w,dy:0}});
+  const TS=CFG.big?12:10,LH=Math.round(TS*1.5)+12;x.font=LBF(TS); /* mesma medida dos estandartes, com a ponta */
+  const L=S.map((_,i)=>{const[fx_,fy]=proj(...px(i)),w=Math.ceil(x.measureText(S[i][0]+troops[i]).width)+28,bx=Math.round(fx_);return{x:LEFT.has(S[i][0])?bx-w-1:bx+1,y:Math.round(fy)-30-(TS-10),w,dy:0}});
   for(let it=0;it<12;it++){let moved_=false;
     for(let a=0;a<L.length;a++)for(let b=a+1;b<L.length;b++){const A=L[a],Q=L[b];if(A.x>=Q.x+Q.w+2||Q.x>=A.x+A.w+2)continue;
       const ay=A.y+A.dy,qy=Q.y+Q.dy,ov=Math.min(ay,qy)+LH+2-Math.max(ay,qy);if(ov<=0)continue;

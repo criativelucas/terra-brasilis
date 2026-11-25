@@ -2,11 +2,11 @@
 let vsT;
 let regDone=new Set;
 function regionCheck(silent){REG.forEach(([n,st,b],k)=>{const full=st.every(i=>owner[i]==me); // domínio de região: fanfarra e aviso
-  if(full&&!regDone.has(k)){regDone.add(k);if(!silent){note(`Região ${n} dominada! +${b} ouro por turno`);sfx.fanfare()}}if(!full)regDone.delete(k)})}
+  if(full&&!regDone.has(k)){regDone.add(k);if(!silent){note(`Região ${n} dominada! +${b} ouro por turno`);sfx.fanfare();seal('REGIÃO',n)}}if(!full)regDone.delete(k)})}
 onNote=toast;
 onFight=(a,d,st,won)=>{
   fx={s:st,until:Date.now()+700};const wf=won?a:d,lf=won?d:a,until=Date.now()+9000;mood[wf]={m:'smile',until};mood[lf]={m:'angry',until};
-  if((a==me)==won){sfx.win();stats.won++;if(a==me){stats.taken++;cele={i:st,start:Date.now(),dur:1900,n:70};note(`${S[st][1]} conquistado!`)}}
+  if((a==me)==won){sfx.win();stats.won++;if(a==me){stats.taken++;cele={i:st,start:Date.now(),dur:1900,n:70};note(`${S[st][1]} conquistado!`);seal('CONQUISTADO',S[st][1])}}
   else{sfx.lose();stats.lost++;if(d==me&&won)note(`${S[a][4]} tomou ${S[st][1]}!`)}
   regionCheck();
   if(CFG.shake&&!CFG.calm){$('stage').classList.remove('shake');void $('stage').offsetWidth;$('stage').classList.add('shake')}
@@ -24,17 +24,17 @@ let confirmNew=false,menuTab='jogo';
 const MTABS={jogo:['Jogo',['tac','speed','diff','confirm']],som:['Som',[]],tela:['Tela',['clash','shake','q','calm']],acess:['Acessibilidade',['uiz','big','cb']]};
 function drawMenu(focus){
   const opt=k=>`<div class="opt"><span>${OPT[k][0]}</span><button data-c="${k}">‹ ${OPT[k][1][CFG[k]]} ›</button></div>`;
-  $('menuBox').innerHTML=`<h2>Pausa</h2><div class="tabs" role="tablist">${Object.entries(MTABS).map(([k,[n]])=>`<button role="tab" aria-selected="${menuTab==k}" data-c="tab-${k}" class="${menuTab==k?'on':''}">${n}</button>`).join('')}</div><div class="mtab">`+
+  $('menuBox').innerHTML=`<button class="xclose" data-c="close" aria-label="Fechar (Esc)" data-help="Fechar (Esc)">${I('close')}</button><h2>Pausa</h2><div class="tabs" role="tablist">${Object.entries(MTABS).map(([k,[n]])=>`<button role="tab" aria-selected="${menuTab==k}" data-c="tab-${k}" class="${menuTab==k?'on':''}">${n}</button>`).join('')}</div><div class="mtab">`+
     (menuTab=='som'?`<label class="opt" for="mus"><span>Música</span><input type="range" id="mus" min="0" max="1" step="0.1" value="${CFG.mus}"></label>
       <label class="opt" for="vol"><span>Efeitos sonoros</span><input type="range" id="vol" min="0" max="1" step="0.1" value="${CFG.vol}"></label>`:'')+
     MTABS[menuTab][1].map(opt).join('')+
     (menuTab=='acess'?`<button data-c="keys">${I('menu')}Todos os atalhos do teclado (?)</button><p class="keys"><b>Teclado</b><br><kbd>E</kbd> fim do turno · <kbd>M</kbd> marchar · <kbd>R</kbd> recrutar · <kbd>F</kbd> fortificar · <kbd>Q</kbd> quartel · <kbd>Z</kbd> desfazer · <kbd>N</kbd> próximo · <kbd>Esc</kbd> pausa ou cancelar · setas e <kbd>Enter</kbd> no mapa e nos menus de comando</p>`:'')+
     (menuTab=='jogo'?`${me>=0?'<button data-c="saves">Salvamentos</button>':''}<button data-c="enc">Enciclopédia</button><button data-c="title">Salvar e sair ao título</button><button data-c="new" class="danger">${confirmNew?'Confirmar: apagar partida':'Nova partida'}</button>`:'')+
     `</div><button data-c="close" class="end">Continuar</button>`;
-  $('menuBox').querySelector(`[data-c="${focus||'close'}"]`)?.focus()}
+  $('menuBox').querySelector(`[data-c="${focus||'close'}"]:not(.xclose)`)?.focus()}
 function menu(open){confirmNew=false;if(open&&$('menu').hidden)sfx.page();$('menu').hidden=!open;if(open)drawMenu()}
 $('menuBtn').addEventListener('click',()=>menu(true));
-document.addEventListener('keydown',e=>{if(e.key!='Escape')return;if(marching&&$('menu').hidden&&$('screen').hidden){marching=false;return ui()}menu($('menu').hidden)});
+document.addEventListener('keydown',e=>{if(e.key!='Escape')return;if($('menu').hidden&&!$('screen').hidden){$('card').querySelector('.xclose')?.click();return} /* janela aberta: Esc fecha, se ela tem X */if(marching&&$('menu').hidden&&$('screen').hidden){marching=false;return ui()}menu($('menu').hidden)});
 $('menu').addEventListener('click',e=>{if(e.target.id=='menu')return menu(false);
   const k=e.target.closest('button')?.dataset.c;if(!k)return;sfx.sel();
   if(k=='close')return menu(false);
@@ -50,7 +50,7 @@ $('menu').addEventListener('input',e=>{if(e.target.id=='mus'){CFG.mus=+e.target.
 
 // ---------- salvar ----------
 const SAVE='tb-save'+(TKEY=='brasil'?'':'-'+TKEY),saveOf=k=>{try{return JSON.parse(localStorage.getItem('tb-save'+(k=='brasil'?'':'-'+k)))}catch{return null}};
-const snap=()=>({hist,price,priceOld,perk,tld,hand,cmd,posts,boost,scn,owner,troops,gold,me,turn,logs,fort,stats,hq,xp,port,pact,ally,trib,angry,betray,moved:[...moved]});
+const snap=()=>({hist,price,priceOld,perk,tld,hand,cmd,posts,boost,scn,owner,troops,gold,me,turn,logs,fort,stats,hq,xp,port,pact,ally,trib,angry,betray,moved:[...moved],duo,daily});
 function save(){if(me<0||B||raids.length)return;try{over?localStorage.removeItem(SAVE):localStorage.setItem(SAVE,JSON.stringify(snap()))}catch{}}
 // salvamentos com nome: 3 espaços por modo de jogo, além do salvamento automático
 const mapThumb=()=>{if(B||HQ)return null;const[c,g]=mk(176,132);g.drawImage(cv,0,0,cv.width,cv.height,0,0,176,132);return c.toDataURL('image/jpeg',.72)};
@@ -87,10 +87,13 @@ function showCouncil(){const c=councilNow(),postOf=i=>Object.keys(posts).find(k=
       <div class="attrs">${[['Liderança',G[0]],['Astúcia',G[1]],['Política',G[2]]].map(([n,v])=>`<div class="at ${n.toLowerCase().startsWith(o.attr.slice(0,3))?'hi':''}"><span>${n}</span><i><u style="width:${v}%"></u></i><em>${v}</em></div>`).join('')}</div>
       <div class="prop"><b>${o.nome}</b><small>${o.txt}</small></div>${c.done?'<span class="st">Conselho já seguido</span>':gold[me]<o.custo?`<span class="st no">Faltam ${o.custo-gold[me]} ouro<small>custa ${o.custo}</small></span>`:`<button data-s="cs-${k}" class="buy wide">Seguir<small>${o.custo?o.custo+' ouro':'grátis'}</small></button>`}</div></div>`}).join('')+
     `</div><div class="opt"><span>Delegar ao conselho</span><button data-s="deleg">‹ ${CFG.deleg?'Sim: escolhe sozinho':'Não'} ›</button></div><button data-s="close" class="end">Voltar ao mapa</button>`);$('card').classList.add('wide')}
-function showLog(){const nw=Math.max(0,logs.length-logSeen);logSeen=logs.length; /* crônica como linha do tempo; o que é novo vem marcado */
-  scr(`<h2>Crônica</h2><p class="c">${logs.length} registro${logs.length==1?'':'s'}${nw?` · ${nw} novo${nw>1?'s':''}`:''}</p><div class="tline">${logs.map((l,k)=>`<p class="${k<nw?'nw':''}"><i></i><span>${esc(l)}</span>${k<nw?'<em>novo</em>':''}</p>`).join('')||'<p><span>Nada aconteceu ainda.</span></p>'}</div><button data-s="close" class="end">Voltar</button>`)}
+function showLog(pg=0){const nw=Math.max(0,logs.length-logSeen);logSeen=logs.length;const PP=11,ns=Math.max(1,Math.ceil(logs.length/PP/2)),sp=Math.max(0,Math.min(pg,ns-1)); /* crônica como livro: duas páginas por vez; o que é novo vem marcado */
+  const page=q=>`<div class="pg"><div class="tline">${logs.slice(q*PP,q*PP+PP).map((l,k)=>{const n=q*PP+k;return`<p class="${n<nw?'nw':''}"><i></i><span>${esc(l)}</span>${n<nw?'<em>novo</em>':''}</p>`}).join('')||(q?'':'<p class="hint">Nada aconteceu ainda.</p>')}</div><span class="pn">${q+1}</span></div>`;
+  scr(`<h2>Crônica</h2>${bookTabs('log')}<div class="pages">${page(sp*2)}${page(sp*2+1)}</div>${ns>1?`<div class="pnav">${sp>0?`<button data-s="logp-${sp-1}" aria-label="Páginas anteriores">${I('back')}</button>`:''}${Array.from({length:ns},(_,k)=>`<button data-s="logp-${k}" class="${k==sp?'on':''}">${k+1}</button>`).join('')}${sp<ns-1?`<button data-s="logp-${sp+1}" aria-label="Próximas páginas">${I('fwd')}</button>`:''}</div>`:''}
+    <button data-s="close" class="end">Fechar o livro</button>`);$('card').classList.add('book','wide')}
+const bookTabs=a=>`<div class="btabs">${me>=0?`<button data-s="logp-0" class="${a=='log'?'on':''}">${I('scroll')}Crônica</button>`:''}<button data-s="enc-${me>=0?me:0}" class="${a=='enc'?'on':''}">${I('eye')}Enciclopédia</button></div>`; // marcadores do livro
 function load(){try{const d=JSON.parse(localStorage.getItem(SAVE));undoS=[];summ=null;if(!d||d.owner.length!=N)return false;
-  reset(d.scn||0);({owner,troops,gold,me,turn,logs,fort,stats}=d);setGoal();moved=new Set(d.moved);sel=me;if(d.hq)hq=d.hq;hq.tech.art??=0;if(d.xp)xp=d.xp;if(d.hand){hand=d.hand;cmd=d.cmd;posts=d.posts;boost=d.boost}council=null;if(d.port)port=d.port;pact=d.pact||{};ally=d.ally||{};trib=d.trib||{};angry=d.angry||{};betray=d.betray||0;perk=d.perk||{};tld=d.tld||[];hist=d.hist||[];if(d.price){price=d.price;priceOld=d.priceOld||{...price}}linkPorts();return true}catch{return false}}
+  reset(d.scn||0);({owner,troops,gold,me,turn,logs,fort,stats}=d);duo=d.duo||null;daily=d.daily||null;Math.random=RND0;setGoal();moved=new Set(d.moved);sel=me;if(d.hq)hq=d.hq;hq.tech.art??=0;if(d.xp)xp=d.xp;if(d.hand){hand=d.hand;cmd=d.cmd;posts=d.posts;boost=d.boost}council=null;if(d.port)port=d.port;pact=d.pact||{};ally=d.ally||{};trib=d.trib||{};angry=d.angry||{};betray=d.betray||0;perk=d.perk||{};tld=d.tld||[];hist=d.hist||[];if(d.price){price=d.price;priceOld=d.priceOld||{...price}}linkPorts();return true}catch{return false}}
 const wipe=()=>{try{localStorage.removeItem(SAVE)}catch{}};
 const savedInfo=()=>{try{const d=JSON.parse(localStorage.getItem(SAVE));return d&&`${SCN[d.scn||0].n} · ${S[d.me][4]} · turno ${d.turn} · ${d.owner.filter(o=>o==d.me).length}/${N} ${TW}`}catch{return''}};
 
@@ -117,13 +120,17 @@ function dipHTML(f,where){ // cartão de diplomacia com um líder rival; where='
     bt('pact',`Pacto de não agressão (${dipCost('pact',f)} ouro, 5 turnos)`)+bt('ally',`Aliança (${dipCost('ally',f)} ouro, 8 turnos)`)+bt('trib','Exigir tributo')+
     (pact[f]>turn?'<p><i>Atacar agora é traição: rompe todos os pactos e enfurece os vizinhos.</i></p>':'')}
 const traitTxt=i=>({atk:`+${S[i][6]*100}% ataque`,def:`+${S[i][6]*100}% defesa`,gold:`+${S[i][6]} ouro por turno`,rec:'recrutamento pela metade'})[S[i][5]];
-const scr=h=>{if(h&&$('screen').hidden)sfx.page();$('screen').hidden=!h;$('screen').classList.remove('title');$('card').classList.remove('wide');if(h){$('card').innerHTML=h;$('card').scrollTop=0;$('card').querySelector('button.end,button')?.focus()}};
+const scr=h=>{if(h&&$('screen').hidden)sfx.page();$('screen').hidden=!h;$('screen').classList.remove('title');$('card').className='';if(h){$('card').innerHTML=h;$('card').scrollTop=0;
+  const xt=$('card').querySelector('[data-x],[data-s=close],[data-s=title]'); /* janela que dá para fechar ganha o X vermelho; Esc faz o mesmo */
+  if(xt)$('card').insertAdjacentHTML('afterbegin',`<button class="xclose" data-s="${xt.dataset.s}" aria-label="Fechar (Esc)" data-help="Fechar (Esc)">${I('close')}</button>`);
+  ($('card').querySelector('button.end')||$('card').querySelector('button:not(.xclose)'))?.focus()}};
 let pickI=ix.RJ,scnI=0,EVT=null;
 const goalTxt=(sc,f)=>{const g=SCN[sc].play?.[f];return g?`Domine ${g.map(i=>S[i][0]).join(', ')}`:`Unifique os ${N} ${TW}`};
 function showTitle(){const sv=savedInfo(),camp=TKEY!='brasil';
   scr(`<img class="logo" src="assets/logo.png" alt="Terra Brasilis" width="880" height="579">${camp?`<h2>${TH.nome} · ${TH.ano}</h2>`:''}<p class="c">${TH.title}</p>
     ${sv?`<button data-s="cont" class="end">Continuar</button><p class="c">${sv}</p>`:''}
     <button data-s="setup" ${sv?'':'class="end"'}>${camp?'Nova partida desta campanha':'Dominação do Brasil: nova partida'}</button>
+    ${camp?'':`<button data-s="duo">Jogo a dois (mesmo computador)</button><button data-s="daily">Desafio do dia${dBest(dayKey())?` · recorde ${dBest(dayKey())}`:''}</button>`}
     <button data-s="camps">${camp?'Outras campanhas históricas':'Campanhas históricas'}</button>${[1,2,3].some(k=>slotOf(k))?'<button data-s="saves">Carregar partida salva</button>':''}
     ${camp?'<button data-s="th-brasil">Voltar à Dominação do Brasil</button>':''}<button data-s="help">Como jogar</button>`);$('screen').classList.add('title')}
 function showCamps(){ // cada campanha abre num mapa próprio, só da região daquela guerra
@@ -136,9 +143,9 @@ function showCamps(){ // cada campanha abre num mapa próprio, só da região da
 $('armyBtn').addEventListener('click',()=>{if(me>=0&&!B&&!HQ)showArmy()});
 $('councilBtn').addEventListener('click',()=>{if(me>=0&&!B&&!HQ&&!over)showCouncil()});
 addEventListener('hashchange',()=>location.reload()); // trocar de teatro recarrega o jogo com o mapa novo
-function showSetup(){const SC=SCN[scnI],pl=SC.play?Object.keys(SC.play).map(Number):S.map((_,j)=>j);if(!pl.includes(pickI))pickI=pl[0];
+function showSetup(){const SC=SCN[scnI],pl=(SC.play?Object.keys(SC.play).map(Number):S.map((_,j)=>j)).filter(j=>!(duoPick==2&&j==duoP1));if(!pl.includes(pickI))pickI=pl[0];
   reset(scnI);sel=pickI;const i=pickI,s=S[i],reg=REG.find(r=>r[1].includes(i)),own=owner.filter(o=>o==i).length;
-  scr(`<h2>${TKEY=='brasil'?'Escolha seu líder':TH.nome}</h2><p class="c">${SC.d}</p>
+  scr(`<h2>${duoPick?`Jogador ${duoPick}: escolha seu líder`:TKEY=='brasil'?'Escolha seu líder':TH.nome}</h2><p class="c">${SC.d}</p>
     <div class="pick"><div class="pgrid" role="listbox" aria-label="Líderes">${pl.map(j=>`<button data-s="pick-${j}" class="${j==i?'on':''}" role="option" aria-selected="${j==i}" data-help="${esc(S[j][4]+' · '+S[j][1])}">${img(j,S[j][4])}<span>${S[j][0]}</span></button>`).join('')}</div>
     <div class="pinfo"><div class="phead"><img class="hero" src="${face[i]}" alt="${s[4]}"><div><h3>${s[4]}</h3><p>${s[1]}${reg?' · '+reg[0]:''}${own>1?` · começa com ${own} ${TW}`:''}</p><button data-s="enc-${i}" class="mini">Ficha histórica</button></div></div>
       <img class="rmap" src="${regionMap(i)}" alt="Mapa com ${s[1]} em destaque">
@@ -146,7 +153,7 @@ function showSetup(){const SC=SCN[scnI],pl=SC.play?Object.keys(SC.play).map(Numb
       <p>${s[7]}: ${traitTxt(i)}<br>Terreno de batalha: ${BIO[BOF[i]].nome}${resOf(i)?' · Recurso: '+RESN[resOf(i)][0]:''}<br>Fronteiras: ${adj[i].map(j=>S[j][0]).join(', ')}${reg?`<br>Região completa rende +${reg[2]} ouro por turno`:''}</p>
       ${SCN.length>1?`<div class="opt"><span>Cenário</span><button data-s="scn">‹ ${SC.n} (${SC.y}) ›</button></div>`:''}
       <div class="opt"><span>Dificuldade</span><button data-s="diff">‹ ${OPT.diff[1][CFG.diff]} ›</button></div>
-      <div class="row"><button data-s="go" class="end">Iniciar</button><button data-s="rand">Sortear</button><button data-s="title">Voltar</button></div></div></div>`);
+      <div class="row"><button data-s="go" class="end">${duoPick==1?'Escolher o Jogador 2':'Iniciar'}</button><button data-s="rand">Sortear</button><button data-s="title">Voltar</button></div></div></div>`);
   $('card').classList.add('wide');$('card').querySelector('.pgrid .on')?.scrollIntoView({block:'nearest'});ui()}
 const RMAP={};
 function regionMap(i){const k=TKEY+i+'-'+scnI;if(RMAP[k])return RMAP[k]; /* mapa plano: o líder em destaque, vizinhos em tom claro */
@@ -174,17 +181,19 @@ function showCampaign(){coach('camp','Cada medalha sobe de bronze a ouro; a gló
   [['swords','Vitórias em batalha',stats.won,[3,10,25]],['star',`${TW[0].toUpperCase()+TW.slice(1)} conquistados`,stats.taken,[3,8,15]],['coin','Renda por turno',income(me),[10,20,35]]].forEach(([ic,t,v,T])=>{const lv=tier(v,T);M.push([ic,t,v,T[Math.min(2,lv)],lv>2?'nível máximo':`próximo: ${T[lv]}`,lv])});
   const glory=M.reduce((a,m)=>a+m[5],0),TN=['','bronze','prata','ouro'];
   scr(`<div class="camp"><div class="cl"><img src="${face[me]}" alt=""><b>${S[me][4]}</b><small>${SCN[scn].n} · ${SCN[scn].y}</small>
-      <div class="glory" data-help="Glória: soma dos níveis das medalhas">★ ${glory}<span>glória</span></div><p class="hint">${goalTxt(scn,me)}</p>
+      <div class="glory" data-help="Glória: soma dos níveis das medalhas">★ ${glory}<span>glória</span></div><div class="glory st" data-help="Estrelas ganhas nas batalhas: vencer, perder pouco e vencer rápido">★ ${stats.stars||0}<span>estrelas em batalha</span></div><p class="hint">${goalTxt(scn,me)}</p>
       <p class="hint">Turno ${turn} · ${stats.won} vitórias · ${stats.lost} derrotas</p></div>
     <div class="cr"><h2>Campanha</h2><div class="medals">${M.map(([ic,t,v,mx,rw,lv])=>`<div class="medal t${lv}" data-help="${esc(`${t}: ${v}/${mx}${lv?` · ${TN[lv]}`:''}`)}"><div class="hx">${I(ic)}${lv?`<i>${'★'.repeat(lv)}</i>`:''}</div><b>${t}</b>
         <div class="pb"><i style="width:${Math.min(100,v/Math.max(1,mx)*100)}%"></i></div><small>${v}/${mx} · ${rw}</small></div>`).join('')}</div>
+      <h3>Conquistas</h3><div class="achs">${(g=>ACH.map(([id,n,d])=>`<div class="ach${g[id]?' on':''}" data-help="${esc(d+(g[id]?' · conquistada em '+g[id]:''))}"><span class="sq">${I(g[id]?'star':'shield')}</span><b>${n}</b><small>${d}</small></div>`).join(''))(achGot())}</div>
       <h3>Como o mapa mudou</h3>${histHTML()}
       <h3>Potências</h3><div class="pows">${pw.slice(0,6).map(([f,n,t],k)=>`<div class="${f==me?'me':''}"><em>${k+1}º</em>${img(f)}<span><b>${f==me?'Você':S[f][4]}</b><small>${n} ${n==1?TW1:TW} · ${t} tropas</small></span></div>`).join('')}</div>
       <div class="row c"><button data-s="close" class="end">Voltar ao mapa</button><button data-s="help">Como jogar</button></div></div></div>`);$('card').classList.add('wide');histDraw()}
 function showEnd(){const win=victory;win?sfx.fanfare():sfx.lose();if(win){cele={i:me,start:Date.now(),dur:6000,n:180};mood[me]={m:'smile',until:Date.now()+6e4}}
-  scr(`<h2 class="big">${win?(goal&&!owner.every(o=>o==me)?'OBJETIVO CUMPRIDO':'BRASIL UNIFICADO'):'FIM DA CAMPANHA'}</h2>${win?`<img class="ending" src="${endCard()}" alt="">`:`<div class="row c"><img class="hero" src="${face[me]}" alt=""></div>`}
+  const dl=daily&&!daily.done?(()=>{const sc=dScore(),r=dSave(sc);daily.done=true;Math.random=RND0;return`<p class="c"><b>Desafio do dia:</b> ${sc} pontos${r?' · novo recorde!':''}</p>`})():'';
+  scr(`<h2 class="big${win?'':' lost'}">${win?(goal&&!owner.every(o=>o==me)?'OBJETIVO CUMPRIDO':'BRASIL UNIFICADO'):'FIM DA CAMPANHA'}</h2>${win?`<img class="ending" src="${endCard()}" alt="">`:`<div class="row c"><img class="hero" src="${face[me]}" alt=""></div>`}
     <p class="c">${win?(goal&&!owner.every(o=>o==me)?`${S[me][4]} vence a ${SCN[scn].n}.`:`${S[me][4]} reúne ${TKEY=='brasil'?'as 27 províncias':'todos os '+TW} sob uma só bandeira.`):`O domínio de ${S[me][4]} caiu.`}</p>
-    ${win?`<p class="c endtxt">${endText()}</p>`:''}<p class="c">${turn} turnos · ${stats.won} vitórias · ${stats.lost} derrotas · ${stats.taken} ${TW} tomados</p>
+    ${win?`<p class="c endtxt">${endText()}</p>`:''}<p class="c">${turn} turnos · ${stats.won} vitórias · ${stats.lost} derrotas · ${stats.taken} ${TW} tomados · ★ ${stats.stars||0}</p>${dl}
     <h3>Como o mapa mudou</h3>${histHTML()}
     <button data-s="setup" class="end">Nova partida</button><button data-s="camps">Campanhas históricas</button><button data-s="enc-${me}">Ficha de ${S[me][4]}</button><button data-s="close">Ver o mapa</button>`);$('card').classList.add('wide');histDraw()}
 function showEvent(){ // escolha de início de turno: [título, texto, [[opção, custo em ouro, efeito]]]
@@ -199,8 +208,8 @@ function showEvent(){ // escolha de início de turno: [título, texto, [[opção
   const fx=t=>t.split(/,\s*/).map(q=>`<span class="${/[−-]|perde/.test(q)?'bad':'good'}">${q}</span>`).join('');
   scr(`<h2>${EVT[0]}</h2><div class="evh"><span class="medal1">${I(EIC[EVT[0]]||'scroll')}</span><div><p>${EVT[1]}</p><small>${S[st][1]} · ${troops[st]} tropas · ouro em caixa ${gold[me]}</small></div></div><div class="evo">`+
     EVT[2].map(([l,c],k)=>{const m=l.match(/^(.*?)\s*\((.*)\)$/),nm=m?m[1]:l,ef=m?m[2]:'';
-      return`<button data-s="ev${k}" class="${gold[me]<c?'off':''}" ${gold[me]<c?'disabled':''}><b>${nm}</b><span class="fx">${ef?fx(ef):'<span>nada muda</span>'}</span>${gold[me]<c?`<small>faltam ${c-gold[me]} ouro</small>`:''}</button>`}).join('')+'</div>')}
-onTurn=()=>{if(storyTurn())return;if(Math.random()<.35){if(aiShow)evtDue=true;else showEvent()}}; // durante a reencenação da IA, o evento espera
+      return`<button data-s="ev${k}" class="${gold[me]<c?'off':''}" ${gold[me]<c?'disabled':''}><b>${nm}</b><span class="fx">${ef?fx(ef):'<span>nada muda</span>'}</span>${gold[me]<c?`<small>faltam ${c-gold[me]} ouro</small>`:''}</button>`}).join('')+'</div>');$('card').classList.add('scroll')}
+onTurn=()=>{if(daily&&!daily.done&&turn>daily.lim)return showDailyEnd();if(storyTurn())return;if(Math.random()<.35){if(aiShow)evtDue=true;else showEvent()}}; // durante a reencenação da IA, o evento espera
 $('campBtn').addEventListener('click',()=>{if(me>=0&&!B)showCampaign()});
 const onScr=e=>{const k=e.target.closest('button')?.dataset.s;if(!k)return;sfx.sel();
   if(k=='cont'){if(load()){regionCheck(true);scr();ui()}else showSetup()}
@@ -208,12 +217,17 @@ const onScr=e=>{const k=e.target.closest('button')?.dataset.s;if(!k)return;sfx.s
   else if(k=='help')showHelp();
   else if(k=='camps')showCamps();
   else if(k.startsWith('th-')){const t=k.slice(3);if(t==TKEY)showTitle();else location.hash=t=='brasil'?'':t}
-  else if(k=='title'){sel=-1;ui();showTitle()}
+  else if(k=='title'){sel=-1;duoPick=0;ui();showTitle()}
+  else if(k=='duo'){duoPick=1;reset();showSetup()}
+  else if(k=='daily')startDaily();
+  else if(k=='duogo'){scr();sel=owner[sel]==me?sel:owner.indexOf(me);mapSee(sel,true,1.6);ui();if(duo?.ev){duo.ev=false;showEvent()}}
+  else if(k.startsWith('logp-'))showLog(+k.slice(5));
   else if(k=='prev'||k=='next'){const pl=SCN[scnI].play?Object.keys(SCN[scnI].play).map(Number):S.map((_,j)=>j),p=pl.indexOf(pickI);pickI=pl[(p+(k=='next'?1:pl.length-1))%pl.length];showSetup()}
   else if(k=='rand'){const pl=SCN[scnI].play?Object.keys(SCN[scnI].play).map(Number):S.map((_,j)=>j);pickI=pl[Math.random()*pl.length|0];showSetup()}
   else if(k=='scn'){scnI=(scnI+1)%SCN.length;showSetup()}
   else if(k=='diff'){CFG.diff=(CFG.diff+1)%3;saveCfg();showSetup()}
-  else if(k=='go'){reset(scnI);startAs(pickI);sel=me;regionCheck(true);setTimeout(storyIntro,400);say(`${SCN[scnI].y}: ${S[me][4]} ergue a bandeira em ${S[me][1]}`);scr();tutStart();ui()}
+  else if(k=='go'){if(duoPick==1){duoP1=pickI;duoPick=2;return showSetup()}reset(scnI);daily=null;Math.random=RND0;
+    if(duoPick==2){duo={p:[duoP1,pickI],ctx:{}};startAs(pickI);ctxSave();freshHuman();council=null;startAs(duoP1);duoPick=0}else startAs(pickI);sel=me;regionCheck(true);setTimeout(storyIntro,400);say(`${SCN[scnI].y}: ${S[me][4]} ergue a bandeira em ${S[me][1]}`);scr();tutStart();ui()}
   else if(k=='close')scr();
   else if(k.startsWith('enc-'))showEnc(+k.slice(4));
   else if(k.startsWith('pick-')){pickI=+k.slice(5);showSetup()}
@@ -244,6 +258,52 @@ const onScr=e=>{const k=e.target.closest('button')?.dataset.s;if(!k)return;sfx.s
     sfx.win();save();renderHQ();showRoom(HQ.room);ui()} // a cena reflete a compra: estandarte, soldado novo
   else if(k.startsWith('hev-')){const H=window.HEV,[nm,,c,fn]=H.ch[+k.slice(4)];gold[me]-=c;fn();note(`${H.title}: ${nm.toLowerCase()}`);sfx.win();scr();ui()}
   else if(k.startsWith('ev')){const[l,c,fn]=EVT[2][+k[2]];gold[me]-=c;fn();note(`${EVT[0]}: ${l.split(' (')[0].toLowerCase()}`);scr();ui()}};
+// ---------- selo de cera: carimba conquistas, tratados, regiões e recordes ----------
+let sealQ=[],sealOn=false;
+function seal(t,sub=''){if(me<0)return;sealQ.push([t,sub]);if(!sealOn)sealNext()}
+function sealNext(){const s=sealQ.shift();if(!s){sealOn=false;return}sealOn=true;const[t,sub]=s,el=document.createElement('div');el.className='seal';el.setAttribute('aria-hidden','true');
+  el.innerHTML=`<div class="wax"><b>${t}</b>${sub?`<small>${esc(sub)}</small>`:''}</div>`;document.body.appendChild(el);setTimeout(()=>sfx.stamp(),CFG.calm?0:240);
+  setTimeout(()=>el.classList.add('out'),1500);setTimeout(()=>{el.remove();sealNext()},1850)}
+onDip=(k,f)=>seal(k=='ally'?'ALIANÇA':'PACTO',S[f][4]);
+// ---------- moedas do começo do turno voam até o ouro ----------
+let incPend=0;onIncome=g=>incPend=g;
+function coinFly(g){const t=[...$('bar').children].find(s=>/Ouro/.test(s.textContent));if(!t||CFG.calm||g<=0)return;const r=t.getBoundingClientRect(),tx=r.left+24,ty=r.top+r.height/2,n=Math.min(12,2+(g/2|0));
+  for(let k=0;k<n;k++){const c=document.createElement('i');c.className='coinf';c.innerHTML=I('coin');const sx=innerWidth/2+(Math.random()-.5)*260,sy=innerHeight/2+(Math.random()-.5)*140;c.style.left=sx+'px';c.style.top=sy+'px';document.body.appendChild(c);
+    const a=c.animate([{transform:'translate(-50%,-50%) scale(.3)',opacity:0},{transform:'translate(-50%,-50%) scale(1.25)',opacity:1,offset:.22},{transform:`translate(${tx-sx}px,${ty-sy}px) translate(-50%,-50%) scale(.6)`,opacity:1}],{duration:850+k*40,delay:k*70,easing:'cubic-bezier(.5,0,.85,.6)',fill:'forwards'});
+    a.onfinish=()=>{c.remove();sfx.coin(k%5);t.classList.remove('bump');void t.offsetWidth;t.classList.add('bump')}}}
+function turnStart(){if(incPend&&!over){coinFly(incPend);incPend=0}if(duo&&duo.p.length>1&&!over){duo.ev=duo.ev||evtDue;evtDue=false;duoScreen()}} // começo do turno: moedas e, no jogo a dois, a vez de quem joga
+// ---------- jogo a dois no mesmo computador ----------
+let duoPick=0,duoP1=-1;
+function ctxSave(){duo.ctx[me]={hand,cmd,posts,stats,hq,pact,ally,trib,angry,betray,moved:[...moved],sel,cdone:!!(council&&council.turn==turn&&council.done)}}
+function ctxLoad(f){const c=duo.ctx[f];delete duo.ctx[f];me=f;({hand,cmd,posts,stats,hq,pact,ally,trib,angry,betray}=c);moved=new Set(c.moved);sel=c.sel>=0&&owner[c.sel]==f?c.sel:owner.indexOf(f);
+  council=null;if(c.cdone){council=makeCouncil();council.done=true}undoS=[];marching=false;aim=null;setGoal();regDone=new Set;regionCheck(true)}
+function duoPass(){duo.own0=owner.map(o=>o==duo.p[0]);ctxSave();ctxLoad(duo.p[1]);duo.ev=Math.random()<.35;ui();duoScreen()}
+function duoScreen(){if(!duo)return;if(!$('screen').hidden&&$('card').querySelector('[data-s^=ev]'))duo.ev=true;const k=duo.p.indexOf(me)+1,n=nOwn(me);
+  scr(`<h2>Vez do Jogador ${k}</h2><div class="duo"><img class="hero" src="${face[me]}" alt=""><div><h3>${S[me][4]}</h3><p>${S[me][1]} · ${n} ${n==1?TW1:TW} · ${gold[me]} ouro · turno ${turn}</p><p class="hint">Passe o lugar para o Jogador ${k}. O outro jogador espera a próxima vez.</p></div></div><button data-s="duogo" class="end">Começar a vez de ${S[me][4]}</button>`);sfx.fanfare()}
+onDuoUpkeep=()=>{duo.p=duo.p.filter(f=>owner.includes(f)); /* quem perdeu tudo sai do revezamento */
+  if(duo.p.length<2){const f=duo.p[0];if(f!=null&&f!=me)ctxLoad(f);duo=null;upkeep();if(f!=null)note(`${S[f][4]} segue sozinho: o outro jogador perdeu todos os ${TW}`);return}
+  upkeep();ctxSave();ctxLoad(duo.p[0]);upkeep()};
+// ---------- desafio do dia: mesmo sorteio para todos naquele dia ----------
+let daily=null;const RND0=Math.random;
+const mulb=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+const dayKey=()=>{const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
+const dBest=k=>{try{return JSON.parse(localStorage.getItem('tb-daily')||'{}')[k]||0}catch{return 0}},dScore=()=>nOwn(me)*10+stats.won*3;
+const dSave=sc=>{const b=dBest(daily.d);if(sc<=b)return false;try{const o=JSON.parse(localStorage.getItem('tb-daily')||'{}');o[daily.d]=sc;localStorage.setItem('tb-daily',JSON.stringify(o))}catch{}return true};
+function startDaily(){const k=dayKey(),sd=strSeed('terra'+k);Math.random=mulb(sd);reset(0);daily={d:k,lim:15};startAs(sd%N);sel=me;regionCheck(true);scr();tutStart();ui();
+  note(`Desafio do dia: ${S[me][4]} em ${S[me][1]}. ${daily.lim} turnos; 10 pontos por ${TW1} e 3 por vitória.`)}
+function showDailyEnd(){const sc=dScore(),b=dBest(daily.d),rec=dSave(sc),st=sc>=200?3:sc>=120?2:sc>=60?1:0;daily.done=true;Math.random=RND0;
+  scr(`<h2 class="big">DESAFIO DO DIA</h2>${starsH(st,true)}<p class="c">${daily.d} · ${S[me][4]} · ${daily.lim} turnos</p>
+    <div class="kpis k4"><div class="kpi"><b>${nOwn(me)}</b><span>${TW}</span></div><div class="kpi"><b>${stats.won}</b><span>vitórias</span></div><div class="kpi"><b>${sc}</b><span>pontos</span></div><div class="kpi"><b>${Math.max(b,sc)}</b><span>recorde de hoje</span></div></div>
+    <p class="c">${rec?'Novo recorde de hoje!':`Seu recorde de hoje continua em ${b} pontos.`} Amanhã sai outro sorteio.</p>
+    <div class="row c"><button data-s="close" class="end">Continuar jogando</button><button data-s="title">Voltar ao título</button></div>`);if(rec)seal('RECORDE',sc+' pontos');sfx.fanfare()}
+// ---------- conquistas: valem entre partidas, neste navegador ----------
+const ACH=[['v1','Primeira vitória','Vença uma batalha',()=>stats.won>=1],['v10','Veterano','Vença 10 batalhas',()=>stats.won>=10],
+  ['s3','Vitória perfeita','Três estrelas numa batalha',()=>(stats.perf||0)>=1],['s20','Constelação','Junte 20 estrelas numa partida',()=>(stats.stars||0)>=20],
+  ['reg','Senhor da região','Domine uma região inteira',()=>REG.some(([,st])=>st.every(i=>owner[i]==me))],['t10','Meio caminho','Tenha 10 territórios ao mesmo tempo',()=>nOwn(me)>=10],
+  ['dip','Diplomata','Firme 3 tratados numa partida',()=>(stats.dip||0)>=3],['rich','Tesouro cheio','Junte 60 de ouro em caixa',()=>gold[me]>=60],['uni','Unificador','Vença uma partida',()=>victory]];
+const achGot=()=>{try{return JSON.parse(localStorage.getItem('tb-ach')||'{}')}catch{return{}}};
+function achCheck(){if(me<0||B)return;const g=achGot();let nw=0;ACH.forEach(([id,n,,ok])=>{if(!g[id]&&ok()){g[id]=dayKey();nw=1;note(`Conquista: ${n}`);seal('CONQUISTA',n)}});if(nw)try{localStorage.setItem('tb-ach',JSON.stringify(g))}catch{}}
+const starsH=(n,anim)=>`<div class="stars3${anim&&!CFG.calm?'':' quiet'}" role="img" aria-label="${n} de 3 estrelas">${[0,1,2].map(k=>`<i class="${k<n?'on':''}" style="--d:${.25+k*.22}s"></i>`).join('')}</div>`;
 $('screen').addEventListener('click',onScr);$('room').addEventListener('click',onScr);
 document.addEventListener('keydown',e=>{ // atalhos: clicam o botão correspondente do painel, se existir e estiver ativo
   if(e.key=='?'&&$('menu').hidden&&!e.target.closest?.('input,select,textarea')){e.preventDefault();return $('screen').hidden?showKeys():scr()}

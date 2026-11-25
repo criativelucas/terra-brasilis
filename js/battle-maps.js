@@ -48,7 +48,7 @@ function showBrief(){if(!B||B.auto)return;const ps=B.ps,me_=ps?B.was:B.af,en=ps?
     <div class="binfo"><div class="vsr">${side(me_,mine,'me',ps?'defende':'ataca')}<em>×</em>${side(en,foe,'them',ps?'ataca':'defende')}</div>
       <div class="box"><b>${I('flag')}Objetivo</b><p>${briefObj()}</p></div>
       <div class="box"><b>${I('eye')}${B.mapName||B.bio.nome}</b><ul class="fxl">${fx}${wx}<li>${I('scroll')}<span><b>${KIND[B.kind][0]}</b> · ${KIND[B.kind][1]}</span></li></ul><p class="hint">Limite: ${MAXR} rodadas</p></div>
-      <div class="bact"><button data-s="bgo" class="end">Posicionar tropas${I('play')}</button><button data-s="bauto2">Batalha automática</button>${!ps?'<button data-s="bback">Recuar</button>':''}</div></div></div>`);
+      <div class="bact"><button data-s="bgo" class="end" data-x>Posicionar tropas${I('play')}</button><button data-s="bauto2">Batalha automática</button>${!ps?'<button data-s="bback">Recuar</button>':''}</div></div></div>`);
   $('card').classList.add('wide');
   const cvb=$('b3d');let yaw=-.45,drag=null,auto=true;
   cvb.onpointerdown=e=>{drag={x:e.clientX,y:yaw};auto=false;cvb.setPointerCapture(e.pointerId)};

@@ -87,12 +87,12 @@ function ui(){
   if(aim)h=`<div class="summ"><b>${CARDS[aim][0]}</b><p>${CARDS[aim][4]}</p><p><i>Clique num ${TW1} válido (destacado no mapa). Esc cancela.</i></p><button data-a="aimx">Cancelar carta</button></div>`+h;
   if(ui.ls!==sel){ui.ls=sel;if(sel>=0&&!B&&!HQ)mapSee(sel);const pn=$('panel');pn.classList.remove('swap');void pn.offsetWidth;pn.classList.add('swap')} // troca suave ao escolher outro estado
   $('panel').innerHTML=h;$('act').innerHTML=act;$('act').hidden=!act;$('hud').innerHTML=hud;
-  $('bar').innerHTML=me<0?`<span>${TH.nome} · ${TH.ano}</span>`:`${fl?`<span class="crest" data-help="${esc(S[me][7]+': '+traitTxt(me))}">${img(me,S[me][4])}<span class="cn"><b>${S[me][4]}</b><small>${S[me][1]}</small></span></span>`:''}<span>${I(turn%4==3?'moon':'sun')}Turno ${turn} · ${TOD[turn%4][0]}</span><span data-help="Ouro em caixa e a renda por turno">${I('coin')}Ouro ${cnt('gold',gold[me])} (+${income(me)})</span><span data-help="Comando: gasto para jogar cartas; volta todo turno">${I('star')}Comando ${cmdTxt()}</span>${SCN[scn].sub?.[me]?`<span>${gl('sub','Corte +'+SCN[scn].sub[me])}</span>`:''}<span>${I('flag')}${TW[0].toUpperCase()+TW.slice(1)} ${cnt('terr',owner.filter(o=>o==me).length)}/${N}</span><button data-a="market" class="mini mkt" data-help="Preços dos recursos e o que seus territórios produzem">${I('r_caf')}Mercado</button>`;
+  $('bar').innerHTML=me<0?`<span>${TH.nome} · ${TH.ano}</span>`:`${fl?`<span class="crest" data-help="${esc(S[me][7]+': '+traitTxt(me))}">${img(me,S[me][4])}<span class="cn"><b>${S[me][4]}</b><small>${duo?`Jogador ${duo.p.indexOf(me)+1} · `:daily&&!daily.done?'Desafio do dia · ':''}${S[me][1]}</small></span></span>`:''}<span>${I(turn%4==3?'moon':'sun')}Turno ${turn}${daily&&!daily.done?'/'+daily.lim:''} · ${TOD[turn%4][0]}</span><span data-help="Ouro em caixa e a renda por turno">${I('coin')}Ouro ${cnt('gold',gold[me])} (+${income(me)})</span><span data-help="Comando: gasto para jogar cartas; volta todo turno">${I('star')}Comando ${cmdTxt()}</span>${SCN[scn].sub?.[me]?`<span>${gl('sub','Corte +'+SCN[scn].sub[me])}</span>`:''}<span>${I('flag')}${TW[0].toUpperCase()+TW.slice(1)} ${cnt('terr',owner.filter(o=>o==me).length)}/${N}</span><button data-a="market" class="mini mkt" data-help="Preços dos recursos e o que seus territórios produzem">${I('r_caf')}Mercado</button>`;
   {const nw=Math.max(0,logs.length-logSeen);$('log').innerHTML=fl?'':logs.length?`<button data-a="log" class="mini" data-help="${esc('Último: '+logs[0])}">${I('scroll')}Crônica${nw?` <i class="badge">${nw}</i>`:''}</button>`:''} // crônica num botão; o número mostra o que é novo
   $('roster').innerHTML=S.map((s,i)=>{const n=owner.filter(o=>o==i).length;
     return`<button data-i="${i}" class="${i==me?'me ':''}${i==sel?'sel ':''}${n?'':'dead'}" title="${s[4]} (${s[1]})">${img(i,s[4])}<span>${s[0]} ${n}</span></button>`}).join('');
   if(marching&&sel>=0){const n=+($('n')?.value||troops[sel]-1);oddsC={};adj[sel].forEach(j=>{if(owner[j]!=me)oddsC[j]=odds(sel,j,n)})}else oddsC={};
-  $('roster').hidden=true;handUI();draw();save();help();
+  $('roster').hidden=true;handUI();draw();save();help();$('sndBtn').classList.toggle('muted',!CFG.vol);$('musBtn').classList.toggle('muted',!CFG.mus);achCheck();
   if(over&&!endShown){endShown=true;showEnd()}}
 function handUI(){ // mão de cartas: abaixo do mapa; cartas de mapa no mapa; na batalha, só as de batalha, em leque sobre o campo
   const el=$('hand'),st=$('stage');el.hidden=me<0||!!HQ||!!over||(turn<2&&tut>=0); /* no primeiro turno do tutorial, sem cartas */
@@ -173,10 +173,10 @@ const onPanel=e=>{const b=e.target.closest('button');if(!b||cam||aiShow)return;c
   if(a=='march'){marching=!marching;if(marching){tutEv('march');coach('march','O número em cada rota é a chance de vitória. O controle na ficha escolhe quantas tropas vão.')}}
   if(a=='end'){const idle=owner.reduce((s,o,j)=>s+(o==me&&!moved.has(j)&&troops[j]>1),0);
     if(idle&&CFG.confirm&&!(endArm>Date.now())){endArm=Date.now()+4000;setTimeout(()=>{if(!(endArm>Date.now()))ui()},4100);return ui()} // segundo clique confirma
-    endArm=0;tutEv('end');undoS=[];marching=false;aim=null;const own0=owner.map(o=>o==me);endTurn();ui();plaque('ai');
+    endArm=0;tutEv('end');undoS=[];marching=false;aim=null;if(duo&&me==duo.p[0]&&owner.includes(duo.p[1]))return duoPass(); /* jogo a dois: passa a vez antes da IA */const own0=duo?.own0||owner.map(o=>o==me);endTurn();ui();plaque('ai');
     return playAI(()=>{const done=()=>{summ={turn,inc:income(me),lost:owner.map((o,j)=>own0[j]&&o!=me?j:-1).filter(j=>j>=0),atk:evts.filter(e=>e.was==me).length,danger:owner.reduce((s,o,j)=>s+danger(j),0),ev:evts.slice(0,8).map(e=>[e.f,e.a,e.b,e.won,e.was==me])}; // resumo do turno, com os ataques dos rivais
       if(CFG.deleg){const c=councilNow(),k=c.list.findIndex(o=>gold[me]>=o.custo);if(k>=0)followCouncil(k)} // conselho delegado
-      ui();plaque('me');if(evtDue){evtDue=false;showEvent()}};if(raids.length){nextRaid();summ=null}else done()})}
+      ui();plaque('me');turnStart();if(evtDue){evtDue=false;showEvent()}};if(raids.length){nextRaid();summ=null}else done()})}
   if(a=='new'){reset();return showSetup()}
   ui()};
 $('panel').addEventListener('click',onPanel);$('hqBar').addEventListener('click',onPanel);$('act').addEventListener('click',onPanel);$('hud').addEventListener('click',onPanel);$('log').addEventListener('click',onPanel);
@@ -286,8 +286,9 @@ function plaque(kind){const el=$('plaque');if(!el||me<0)return; /* placa de turn
       <p>${summ.lost.length?'Perdeu '+summ.lost.map(i=>S[i][0]).join(', ')+'. ':''}${summ.atk?`${summ.atk} ataque${summ.atk>1?'s':''} contra você. `:''}${summ.danger?`Em perigo: um vizinho tem tropas para tomar o ${TW1}. `:''}<small>Clique para continuar</small></p>${summ.ev?.length?`<div class="rivs">${summ.ev.slice(0,5).map(([f,i,j,w,vs])=>`<button data-j="${j}" class="${vs?'hot':''}">${img(f)}<span>${S[i][0]} → ${S[j][0]}</span><em>${w?'tomou':'repelido'}</em></button>`).join('')}</div>`:''}`:'');
   el.hidden=false;el.style.animation='none';void el.offsetWidth;el.style.animation='';clearTimeout(plaque.t);plaque.t=setTimeout(()=>el.hidden=true,kind=='ai'?1300:sm?7000:2300)}
 $('plaque').addEventListener('click',e=>{const b=e.target.closest('[data-j]');if(b){const j=+b.dataset.j;mapSee(j,true,1.8);hov=j;draw()}$('plaque').hidden=true});
-[['councilBtn','scroll','Conselho','Conselho: conselheiros sugerem ações para este turno (V)'],['armyBtn','swords','Exército','Visão geral de todos os seus territórios (X)'],['campBtn','flag','Campanha','Objetivos e andamento da campanha (C)'],['menuBtn','menu','Menu','Pausa, opções e salvamentos (Esc)']]
-  .forEach(([id,ic,t,h])=>{$(id).innerHTML=I(ic)+'<span>'+t+'</span>';$(id).dataset.help=h});
+[['councilBtn','scroll','Conselho','Conselho: conselheiros sugerem ações para este turno (V)'],['armyBtn','swords','Exército','Visão geral de todos os seus territórios (X)'],['campBtn','flag','Campanha','Objetivos e andamento da campanha (C)'],['sndBtn','spk','Som','Liga e desliga os efeitos sonoros'],['musBtn','note','Música','Liga e desliga a música'],['menuBtn','menu','Menu','Pausa, opções e salvamentos (Esc)']]
+  .forEach(([id,ic,t,h])=>{$(id).innerHTML=I(ic)+'<span>'+t+'</span>';$(id).dataset.help=h;$(id).setAttribute('aria-label',t)});
+$('sndBtn').addEventListener('click',()=>{toggleSnd('vol');sfx.sel();ui()});$('musBtn').addEventListener('click',()=>{toggleSnd('mus');ui()});
 // toque: segurar o dedo mostra a informação (como passar o mouse) sem agir
 let lpT=null,lpOn=false;
 cv.addEventListener('touchstart',e=>{const t=e.touches[0];lpOn=false;clearTimeout(lpT);lpT=setTimeout(()=>{lpOn=true;cv.dispatchEvent(new MouseEvent('mousemove',{clientX:t.clientX,clientY:t.clientY}))},450)},{passive:true});
