@@ -1363,3 +1363,95 @@ body.talking aside{visibility:hidden}
 @keyframes curL{from{transform:translateX(-100%)}}@keyframes curR{from{transform:translateX(100%)}}
 @keyframes curLo{to{transform:translateX(-100%)}}@keyframes curRo{to{transform:translateX(100%)}}
 body.full header{flex-wrap:nowrap}body.full #bar{min-width:0;flex-shrink:1}
+/* =====================================================================================
+   RODADA DO LIVRO: papel envelhecido, moldura de couro com filigrana dourada, paleta vinho e ouro (sem verde),
+   diário em livro de couro com marcadores, controles no tema, fitas em três tons, carimbo e molduras de item.
+   ===================================================================================== */
+:root{--jogo:var(--tf,"Cinzel"),"Lilita One","Alegreya Sans",system-ui,sans-serif;
+  --vinho:#8e2219;--vinho2:#5a140f;--vinho1:#b8402e;--bronze:#e0a83a;--bronze2:#a8701c;--bronze1:#ffe08a;
+  --papel-img:radial-gradient(ellipse at 50% 45%,transparent 55%,rgba(122,70,20,.30) 100%),url(../assets/ui/paper.png) 0 0/256px 256px;
+  --frame-img:url(../assets/ui/frame.png);--book-img:url(../assets/ui/book.png);
+  --ribbon-brown:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='56' viewBox='0 0 120 56' shape-rendering='crispEdges'><path d='M0 16h32v38H0l9-19z' fill='%232a160d'/><path d='M4 19h25v32H4l8-16z' fill='%233e2214'/><path d='M120 16H88v38h32l-9-19z' fill='%232a160d'/><path d='M116 19H91v32h25l-8-16z' fill='%233e2214'/><path d='M18 40h16v14z' fill='%232a160d'/><path d='M102 40H86v14z' fill='%232a160d'/><rect x='18' y='2' width='84' height='42' fill='%232a160d'/><rect x='21' y='5' width='78' height='36' fill='%236b3a20'/><rect x='21' y='5' width='78' height='4' fill='%238a5232'/><rect x='21' y='36' width='78' height='5' fill='%234a2614'/><rect x='21' y='10' width='78' height='1' fill='%23c8952f'/><rect x='21' y='34' width='78' height='1' fill='%23c8952f'/></svg>");
+  --ribbon-scroll:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='48' viewBox='0 0 120 48' shape-rendering='crispEdges'><rect x='10' y='6' width='100' height='36' fill='%232a160d'/><rect x='13' y='9' width='94' height='30' fill='%23f3dfae'/><rect x='13' y='9' width='94' height='3' fill='%23fff3cf'/><rect x='13' y='35' width='94' height='4' fill='%23d4ad6c'/><rect x='0' y='3' width='14' height='42' fill='%232a160d'/><rect x='3' y='6' width='8' height='36' fill='%23c9a46a'/><rect x='3' y='6' width='3' height='36' fill='%23e8cd94'/><rect x='106' y='3' width='14' height='42' fill='%232a160d'/><rect x='109' y='6' width='8' height='36' fill='%23c9a46a'/><rect x='109' y='6' width='3' height='36' fill='%23e8cd94'/></svg>")}
+/* papel envelhecido e moldura de couro com filigrana em todas as janelas */
+aside,#card,#menuBox,#room,body.full aside,#cmd,.tbox{border-image:var(--frame-img) 24 stretch;background:var(--papel-img);background-clip:padding-box;image-rendering:pixelated;
+  box-shadow:inset 0 0 0 2px rgba(110,60,20,.25),inset 0 0 34px rgba(130,70,15,.32),0 6px 0 rgba(20,10,5,.5),0 18px 40px rgba(0,0,0,.45)}
+body.full aside{background:var(--papel-img);background-clip:padding-box}
+aside .grp:has(.acts4){background:var(--papel-img)}
+#card .card,#card .card *{image-rendering:auto}#card .card img{image-rendering:pixelated}
+/* paleta: ação principal em bronze dourado; destaques e abas em vinho; nada de verde nos botões */
+button.end,button.buy,#card .end{background:linear-gradient(180deg,var(--bronze1),var(--bronze) 52%,var(--bronze2));border-color:#4a2a0e;color:#3b2416;text-shadow:0 1px 0 rgba(255,245,200,.6);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.55),inset 0 -4px 0 rgba(120,60,0,.28),0 4px 0 #4a2a0e}
+button.end:hover:not(:disabled),button.buy:hover:not(:disabled){background:linear-gradient(180deg,#fff0b0,#f0bb48 52%,#b8801f);color:#2a160d}
+button.buy small,#card .bigc small{color:#5e3a1e;text-shadow:none}
+body.full header>button,#hqBar>button,.dock .rb{background:linear-gradient(180deg,var(--vinho1),var(--vinho) 60%,var(--vinho2));border-color:var(--cont);color:#ffe9c4;
+  box-shadow:inset 0 0 0 2px var(--latao),inset 0 3px 0 rgba(255,200,160,.25),0 4px 0 var(--cont),0 8px 16px rgba(0,0,0,.3)}
+body.full header>button:hover,#hqBar>button:hover,.dock .rb:hover:not(.off){background:linear-gradient(180deg,#c85038,#a02a1f 60%,#6a1a12);border-color:var(--cont)}
+.dock .rb.on{background:linear-gradient(180deg,var(--bronze1),var(--bronze2));color:var(--cont)}
+.dock .rb .ico{filter:drop-shadow(0 2px 0 rgba(42,22,13,.85))}
+.pb i{background:linear-gradient(180deg,#ffe08a,#c8952f)}
+/* fitas: vinho para o título, couro marrom para títulos de página, pergaminho enrolado para subtítulos */
+#card h3,.pg h3,.brr h3{display:block;width:fit-content;max-width:100%;margin:6px auto 8px;padding:6px 14px 15px;border-style:solid;border-width:0 30px;border-image:var(--ribbon-brown) 0 34 fill stretch;
+  font:400 17px/22px var(--jogo);color:#ffe9c4;-webkit-text-fill-color:#ffe9c4;text-shadow:var(--ol1);text-align:center;background:none}
+#room .cat{display:block;width:fit-content;margin:8px auto 4px;padding:5px 18px;border-style:solid;border-width:0 14px;border-image:var(--ribbon-scroll) 0 14 fill stretch;
+  font:400 15px/20px var(--jogo);color:var(--tinta);text-align:center;background:none}
+/* livro de couro: páginas com costura, pilha de folhas, virada de página */
+#card.book{border-image:var(--book-img) 24 stretch;border-width:24px;
+  background:linear-gradient(90deg,rgba(90,50,15,.18),transparent 5%,transparent 45%,rgba(90,50,15,.22) 49.2%,rgba(60,30,10,.5) 50%,rgba(90,50,15,.22) 50.8%,transparent 55%,transparent 95%,rgba(90,50,15,.18)),var(--papel-img);background-clip:padding-box;
+  box-shadow:inset 0 0 30px rgba(130,70,15,.3),0 3px 0 #ead6a6,0 5px 0 #b89062,0 7px 0 #ead6a6,0 9px 0 #a07a4c,0 11px 0 #e2c995,0 15px 0 var(--vinho2),0 22px 40px rgba(0,0,0,.55)}
+#card.book.one{background:var(--papel-img);background-clip:padding-box}
+#card.book.turn{animation:none}
+#card.book.turn>*{animation:pageIn .42s ease-out both}
+@keyframes pageIn{0%{opacity:0;transform:perspective(900px) rotateY(-24deg) translateX(-30px);transform-origin:0 50%}100%{opacity:1;transform:none}}
+/* marcadores do diário: abas de couro saindo da lateral esquerda do livro */
+#bmk{position:fixed;z-index:16;display:flex;flex-direction:column;gap:6px;width:46px;pointer-events:none}
+#bmk button{pointer-events:auto;width:46px;height:44px;padding:0 0 0 4px;display:grid;place-items:center;border:3px solid var(--cont);border-right:0;border-radius:10px 0 0 10px;
+  background:linear-gradient(90deg,#5a140f,var(--vinho) 60%,var(--vinho1));box-shadow:inset 0 0 0 2px var(--latao),0 3px 0 var(--cont);transform:translateX(6px)}
+#bmk button:hover{transform:translateX(0)}#bmk button.on{transform:translateX(-6px);background:linear-gradient(90deg,var(--bronze2),var(--bronze) 60%,var(--bronze1));width:52px}
+#bmk button .ico{width:26px;height:26px;margin:0;filter:drop-shadow(0 2px 0 rgba(42,22,13,.8))}
+#bmk .fita{position:absolute;bottom:-70px;left:62px;width:16px;height:96px;background:linear-gradient(90deg,var(--vinho2),var(--vinho1) 50%,var(--vinho2));border:2px solid var(--cont);border-top:0;
+  clip-path:polygon(0 0,100% 0,100% 100%,50% 86%,0 100%)}
+/* abas do alto: marcadores de couro presos na página */
+#card.book .tabs,#menuBox .tabs{gap:4px;border-bottom:3px solid var(--vinho2);padding:0 6px}
+#card.book .tabs button,#menuBox .tabs button{border-radius:8px 8px 0 0;border:2px solid var(--cont);border-bottom:0;background:linear-gradient(180deg,#7c2a1e,#4a1610);color:#f3dcae;box-shadow:inset 0 2px 0 rgba(255,200,160,.18);margin-bottom:-1px}
+#card.book .tabs button.on,#menuBox .tabs button.on{background:linear-gradient(180deg,#c8473a,var(--vinho));color:#fff0d0;padding-bottom:6px;transform:translateY(-3px)}
+/* paginação e X: quadrados vinho com borda dourada */
+.pnav button{background:linear-gradient(180deg,#7c2a1e,var(--vinho2));color:#ffe9c4;border:3px solid var(--cont);border-radius:6px;box-shadow:inset 0 0 0 2px var(--latao),0 3px 0 var(--cont);min-width:40px;height:40px;font:400 17px var(--jogo)}
+.pnav button.on{background:linear-gradient(180deg,var(--bronze1),var(--bronze2));color:var(--cont)}
+.xclose,#card .xclose,#menuBox .xclose{border-radius:8px;background:linear-gradient(180deg,#d9483a,var(--vinho) 60%,var(--vinho2));box-shadow:inset 0 0 0 2px var(--latao),inset 0 2px 0 rgba(255,220,200,.35),0 3px 0 var(--cont)}
+/* carimbo de tinta: objetivo cumprido e conquista ganha */
+.stamp{position:absolute;right:6px;top:4px;z-index:2;display:grid;place-items:center;width:62px;height:62px;border-radius:50%;border:3px double rgba(168,34,22,.85);color:rgba(168,34,22,.9);
+  font:400 9px/1 var(--jogo);letter-spacing:.5px;text-align:center;transform:rotate(-14deg);mix-blend-mode:multiply;pointer-events:none;background:radial-gradient(circle,transparent 58%,rgba(168,34,22,.08) 60%)}
+.stamp::before{content:"";position:absolute;inset:5px;border:1px solid rgba(168,34,22,.6);border-radius:50%}
+.stamp b{font-size:13px;display:block}.medal,.ach{position:relative}.ach .stamp{width:48px;height:48px;right:2px;top:2px;font-size:7px}
+/* molduras de item: ouro com tachas */
+.cmini,.ach .sq,.upo .sq,.islot{border:8px solid transparent!important;border-image:url(../assets/ui/slot.png) 10 stretch!important;border-radius:0!important;background:#3a2218!important;box-shadow:0 3px 0 rgba(42,22,13,.5)!important;image-rendering:pixelated}
+.cmini{height:62px;padding:2px}.ach .sq{width:46px;height:46px}.upo .sq{width:46px;height:46px}
+.islots{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0}.islot{position:relative;width:58px;height:58px;display:grid;place-items:center}.islot .ico{width:30px;height:30px}
+.islot em{position:absolute;right:-6px;bottom:-8px;min-width:22px;padding:0 4px;font:400 13px/18px var(--jogo);font-style:normal;color:#fff3cf;text-shadow:var(--ol1);background:var(--vinho);border:2px solid var(--cont);border-radius:6px;text-align:center}
+/* controles no tema */
+input[type=range]{-webkit-appearance:none;appearance:none;height:26px;background:none;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:12px;border:3px solid var(--cont);border-radius:8px;background:linear-gradient(180deg,#3a2218,#6b3a20);box-shadow:0 0 0 2px var(--latao),inset 0 2px 0 rgba(0,0,0,.4)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:26px;margin-top:-10px;border:3px solid var(--cont);border-radius:6px;background:linear-gradient(180deg,var(--bronze1),var(--bronze) 55%,var(--bronze2));box-shadow:inset 0 2px 0 rgba(255,255,255,.5),0 3px 0 var(--cont)}
+input[type=range]::-moz-range-track{height:12px;border:3px solid var(--cont);border-radius:8px;background:linear-gradient(180deg,#3a2218,#6b3a20)}
+input[type=range]::-moz-range-thumb{width:16px;height:22px;border:3px solid var(--cont);border-radius:6px;background:linear-gradient(180deg,var(--bronze1),var(--bronze2))}
+select{-webkit-appearance:none;appearance:none;padding:6px 34px 6px 10px;font:700 14px var(--ui);color:var(--tinta);border:3px solid var(--cont);border-radius:9px;cursor:pointer;
+  background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='10' shape-rendering='crispEdges'><path d='M0 0h14L7 9z' fill='%232a160d'/><path d='M3 1h8L7 6z' fill='%23c8952f'/></svg>") right 10px center/14px 10px no-repeat,linear-gradient(180deg,#fcebc0,#ecc77f);
+  box-shadow:inset 0 0 0 2px var(--latao),0 3px 0 var(--cont)}
+input[type=text],input:not([type]),#svname{padding:8px 12px;font:700 15px var(--ui);color:var(--tinta);border:3px solid var(--cont);border-radius:9px;background:#fbf0d2;box-shadow:inset 0 0 0 2px var(--latao),inset 0 3px 6px rgba(120,70,20,.25)}
+.tog{display:flex;align-items:center;gap:8px;padding:4px 10px 4px 4px}
+.tog i{position:relative;width:46px;height:24px;border:3px solid var(--cont);border-radius:999px;background:#5a3a2a;box-shadow:inset 0 2px 0 rgba(0,0,0,.35);flex:none}
+.tog i::after{content:"";position:absolute;top:1px;left:2px;width:16px;height:16px;border:2px solid var(--cont);border-radius:50%;background:linear-gradient(180deg,#f3e0b4,#c9a46a);transition:left .15s}
+.tog.on i{background:linear-gradient(180deg,#c8473a,var(--vinho))}.tog.on i::after{left:22px;background:linear-gradient(180deg,var(--bronze1),var(--bronze2))}
+/* fundo das janelas: mapa desfocado com tom quente; tela inicial na biblioteca */
+#screen{background:radial-gradient(ellipse,rgba(60,32,14,.35),rgba(20,10,5,.78));backdrop-filter:blur(4px) sepia(.35) brightness(.85);-webkit-backdrop-filter:blur(4px) sepia(.35) brightness(.85)}
+#screen.title{background:radial-gradient(ellipse at center,rgba(20,10,5,0) 35%,rgba(10,5,2,.7)),url(../assets/ui/biblioteca.png) center/cover no-repeat;image-rendering:pixelated;backdrop-filter:none;-webkit-backdrop-filter:none}
+#screen.title #card{background:var(--papel-img);background-clip:padding-box}
+@media (prefers-reduced-motion:reduce){#card.book.turn>*{animation:none}}
+.ach{grid-template-columns:58px 1fr;column-gap:10px}.ach .sq{width:58px!important;height:58px!important;box-sizing:border-box}
+.camp .cl{align-self:start}
+/* letras: a escolhida (Cinzel, Almendra ou Lilita) só nos títulos; botões e números em Almendra, que tem minúsculas */
+:root{--jogo:var(--tb,"Almendra"),"Lilita One","Alegreya Sans",system-ui,sans-serif;--tit:var(--tf,"Cinzel"),"Almendra",serif}
+#card h2,#menuBox h2,#card h3,.pg h3,.brr h3,#room .rhd h2,aside h2,.who.sm h2,#plaque em,#plaque .pl b,.endr b,#room .cat,.tn,.crw em,.wax b,#help>b,.box>b,.grp>.lbl{font-family:var(--tit)}
+button,.kpi b,.chips>span{font-weight:700}
+.ach .stamp,.medal .stamp{top:auto;bottom:-6px;right:-6px;width:46px;height:46px;font-size:7px;opacity:.85}.medal .stamp{bottom:auto;top:-4px}

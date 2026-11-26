@@ -378,7 +378,7 @@ function showDip(f){coach('dip','Pacto evita ataques; aliança também manda ref
       <div class="tabs">${[['rel','Relações'],['tra','Tratados'],['tri','Tributo']].map(([t,n])=>`<button data-s="dipt-${t}" class="${tab==t?'on':''}">${n}</button>`).join('')}</div>
       <div class="dbody">${body}</div></div>${fig(f,'them')}</div>
     ${fs.length>1?`<div class="row c"><button data-s="dipf-${fs[(k-1+fs.length)%fs.length]}" class="mini">${I('back')}${S[fs[(k-1+fs.length)%fs.length]][4]}</button><span class="hint">${k+1} de ${fs.length} vizinhos</span><button data-s="dipf-${fs[(k+1)%fs.length]}" class="mini">${S[fs[(k+1)%fs.length]][4]}${I('fwd')}</button></div>`:''}
-    <button data-s="close" class="end">Voltar ao mapa</button>`);$('card').classList.add('wide')}
+    <button data-s="close" class="end">Voltar ao mapa</button>`);diary('dip',1)}
 
 // ---------- batalha: arrastar a câmera, zoom pela roda ou com dois dedos, setas do teclado ----------
 let drag=null,dragEat=0,pinch=null,cardEat=0;const ptrs=new Map;

@@ -41,7 +41,7 @@ function showEnc(i){i=(i%N+N)%N;const L=LN(i),E=ELITE[S[i][0]]; /* enciclopédia
       <p><b>No jogo:</b> ${S[i][7]}: ${traitTxt(i)}${E?`. Tropa de elite: ${E[0]}`:''}. Terreno de batalha: ${BIO[BOF[i]].nome}.</p>${L.a?`<p class="quote"><i>Fala no jogo:</i> ${L.a}</p>`:''}<span class="pn">${2*i+2}</span></div></div>
     <div class="pnav"><button data-s="enc-${i-1}" aria-label="Líder anterior">${I('back')}</button><span>${i+1} de ${N}</span><button data-s="enc-${i+1}" aria-label="Próximo líder">${I('fwd')}</button></div>
     ${me<0?'<button data-s="setup" class="end">Voltar à escolha</button>':'<button data-s="close" class="end">Fechar o livro</button>'}`);
-      $('card').classList.add('book','wide')}
+      diary('enc',0)}
 
 // ---------- final por líder ----------
 function endText(){const L=LN(me),full=owner.every(o=>o==me);

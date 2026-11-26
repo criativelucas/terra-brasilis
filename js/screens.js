@@ -25,14 +25,14 @@ $('vs').addEventListener('click',()=>$('vs').hidden=true);
 const OPT={tac:['Batalhas',['Sempre táticas','Só nos ataques','Automáticas']],speed:['Ritmo da IA',['Lento','Normal','Rápido']],
   diff:['Dificuldade',['Fácil','Normal','Difícil']],clash:['Cenas de combate',['Desligadas','Ligadas']],shake:['Tremor de tela',['Desligado','Ligado']],
   q:['Qualidade dos efeitos',['Baixa','Média','Alta']],calm:['Efeitos fortes (clarão, confete)',['Ligados','Reduzidos']],big:['Texto grande',['Não','Sim']],
-  cb:['Modo daltônico',['Desligado','Ligado']],uiz:['Tamanho da interface',['90%','100%','115%','130%']],confirm:['Confirmar fim do turno',['Não','Sim']]};
+  cb:['Modo daltônico',['Desligado','Ligado']],tf:['Letra dos títulos',['Cinzel','Almendra','Lilita']],uiz:['Tamanho da interface',['90%','100%','115%','130%']],confirm:['Confirmar fim do turno',['Não','Sim']]};
 const setLang=()=>{CFG.lang=CFG.lang=='en'?'pt':'en';saveCfg();save();location.reload()}; // troca de idioma: a página recarrega com a partida salva
 let confirmNew=false,menuTab='jogo',instEv=null; // instEv: o navegador oferece instalar o jogo como aplicativo
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();instEv=e});
 if('serviceWorker' in navigator&&location.protocol!='file:')addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
-const MTABS={jogo:['Jogo',['tac','speed','diff','confirm']],som:['Som',[]],tela:['Tela',['clash','shake','q','calm']],acess:['Acessibilidade',['uiz','big','cb']]};
+const MTABS={jogo:['Jogo',['tac','speed','diff','confirm']],som:['Som',[]],tela:['Tela',['tf','clash','shake','q','calm']],acess:['Acessibilidade',['uiz','big','cb']]};
 function drawMenu(focus){
-  const opt=k=>`<div class="opt"><span>${OPT[k][0]}</span><button data-c="${k}">‹ ${OPT[k][1][CFG[k]]} ›</button></div>`;
+  const opt=k=>`<div class="opt"><span>${OPT[k][0]}</span>${OPT[k][1].length==2&&/ligad|^Sim$|^Não$/i.test(OPT[k][1].join(' '))?`<button data-c="${k}" class="tog ${/^(Ligad|Sim)/.test(OPT[k][1][CFG[k]])?'on':''}" role="switch" aria-checked="${/^(Ligad|Sim)/.test(OPT[k][1][CFG[k]])}"><i></i>${OPT[k][1][CFG[k]]}</button>`:`<button data-c="${k}">‹ ${OPT[k][1][CFG[k]??0]} ›</button>`}</div>`; // opções de liga/desliga viram interruptor
   $('menuBox').innerHTML=`<button class="xclose" data-c="close" aria-label="Fechar (Esc)" data-help="Fechar (Esc)">${I('close')}</button><h2>Pausa</h2><div class="tabs" role="tablist">${Object.entries(MTABS).map(([k,[n]])=>`<button role="tab" aria-selected="${menuTab==k}" data-c="tab-${k}" class="${menuTab==k?'on':''}">${n}</button>`).join('')}</div><div class="mtab">`+
     (menuTab=='som'?`<label class="opt" for="mus"><span>Música</span><input type="range" id="mus" min="0" max="1" step="0.1" value="${CFG.mus}"></label>
       <label class="opt" for="vol"><span>Efeitos sonoros</span><input type="range" id="vol" min="0" max="1" step="0.1" value="${CFG.vol}"></label>`:'')+
@@ -79,7 +79,7 @@ function showArmy(){const own=owner.map((o,i)=>o==me?i:-1).filter(i=>i>=0).sort(
   scr(`<h2>Exército</h2><div class="kpis k4"><div class="kpi"><b>${own.length}</b><span>${TW}</span></div><div class="kpi"><b>${own.reduce((a,i)=>a+troops[i],0)}</b><span>tropas</span></div><div class="kpi"><b>${can}</b><span>podem marchar</span></div><div class="kpi ${dg?'hot':''}"><b>${dg}</b><span>em perigo</span></div></div>
     <div class="sgrid">${own.map(i=>{const st=danger(i)?['no','Em perigo']:moved.has(i)?['','Já marchou']:troops[i]>1?['ok','Pode marchar']:['','Guarnição mínima'];
       return`<button class="scard ${danger(i)?'hot':''}" data-s="go-${i}" data-help="Vai até ${esc(S[i][1])} no mapa">${img(i,S[i][4])}<span class="tb"><b>${S[i][1]}</b><small>${S[i][4]}</small><span class="tst">${fort[i]?`<span>Forte ${fort[i]}</span>`:''}${port[i]?'<span>Porto</span>':''}${resOf(i)?`<span>${RESN[resOf(i)][0]}</span>`:''}</span></span><span class="sn"><b>${troops[i]}</b><small>tropas</small></span><em class="st ${st[0]}">${st[1]}</em></button>`}).join('')}</div>
-    <button data-s="close" class="end">Voltar ao mapa</button>`);$('card').classList.add('wide')}
+    <button data-s="close" class="end">Voltar ao mapa</button>`);diary('army',1)}
 // conselho (como o "Seek Advice" de Samurai Warriors Empires): a cada turno, até 3 generais propõem uma ação; você segue uma
 let council=null;
 function makeCouncil(){const own=owner.map((o,i)=>o==me?i:-1).filter(i=>i>=0).sort((a,b)=>hash(a,turn)%97-hash(b,turn)%97).slice(0,3),
@@ -101,13 +101,13 @@ function showCouncil(){const c=councilNow(),postOf=i=>Object.keys(posts).find(k=
       <div class="attrs">${[['Liderança',G[0]],['Astúcia',G[1]],['Política',G[2]]].map(([n,v])=>`<div class="at ${n.toLowerCase().startsWith(o.attr.slice(0,3))?'hi':''}"><span>${n}</span><i><u style="width:${v}%"></u></i><em>${v}</em></div>`).join('')}</div>
       <div class="prop"><b>${o.nome}</b><small>${o.txt}</small></div>${c.done?'<span class="st">Conselho já seguido</span>':gold[me]<o.custo?`<span class="st no">Faltam ${o.custo-gold[me]} ouro<small>custa ${o.custo}</small></span>`:`<button data-s="cs-${k}" class="buy wide">Seguir<small>${o.custo?o.custo+' ouro':'grátis'}</small></button>`}</div></div>`}).join('')+
     `</div><div class="opt"><span>Delegar ao conselho</span><button data-s="deleg">‹ ${CFG.deleg?'Sim: escolhe sozinho':'Não'} ›</button></div><button data-s="close" class="end">Voltar ao mapa</button>`);
-      $('card').classList.add('wide')}
+      diary('cou',1)}
 function showLog(pg=0){const nw=Math.max(0,logs.length-logSeen);logSeen=logs.length;const PP=11,ns=Math.max(1,Math.ceil(logs.length/PP/2)),sp=Math.max(0,Math.min(pg,ns-1));
   /* crônica como livro: duas páginas por vez; o que é novo vem marcado */
   const page=q=>`<div class="pg"><div class="tline">${logs.slice(q*PP,q*PP+PP).map((l,k)=>{const n=q*PP+k;return`<p class="${n<nw?'nw':''}"><i></i><span>${esc(l)}</span>${n<nw?'<em>novo</em>':''}</p>`}).join('')||(q?'':'<p class="hint">Nada aconteceu ainda.</p>')}</div><span class="pn">${q+1}</span></div>`;
   scr(`<h2>Crônica</h2>${bookTabs('log')}<div class="pages">${page(sp*2)}${page(sp*2+1)}</div>${ns>1?`<div class="pnav">${sp>0?`<button data-s="logp-${sp-1}" aria-label="Páginas anteriores">${I('back')}</button>`:''}${Array.from({length:ns},(_,k)=>`<button data-s="logp-${k}" class="${k==sp?'on':''}">${k+1}</button>`).join('')}${sp<ns-1?`<button data-s="logp-${sp+1}" aria-label="Próximas páginas">${I('fwd')}</button>`:''}</div>`:''}
-    <button data-s="close" class="end">Fechar o livro</button>`);$('card').classList.add('book','wide')}
-const bookTabs=a=>`<div class="btabs">${me>=0?`<button data-s="logp-0" class="${a=='log'?'on':''}">${I('scroll')}Crônica</button>`:''}<button data-s="enc-${me>=0?me:0}" class="${a=='enc'?'on':''}">${I('eye')}Enciclopédia</button><button data-s="cards" class="${a=='cards'?'on':''}">${I('star')}Cartas</button></div>`; // marcadores do livro
+    <button data-s="close" class="end">Fechar o livro</button>`);diary('log',0)}
+const bookTabs=()=>''; // os marcadores do diário ficam na lateral do livro (diary)
 function load(){try{const d=JSON.parse(localStorage.getItem(SAVE));undoS=[];summ=null;if(!d||d.owner.length!=N)return false;
   reset(d.scn||0);({owner,troops,gold,me,turn,logs,fort,stats}=d);duo=d.duo||null;daily=d.daily||null;
     loy=d.loy||{};aides=d.aides||[];cardUse=d.cardUse||{};lastRival=d.lastRival??-9;Math.random=RND0;setGoal();
@@ -141,12 +141,12 @@ function dipHTML(f,where){ // cartão de diplomacia com um líder rival; where='
     bt('pact',`Pacto de não agressão (${dipCost('pact',f)} ouro, 5 turnos)`)+bt('ally',`Aliança (${dipCost('ally',f)} ouro, 8 turnos)`)+bt('trib','Exigir tributo')+
     (pact[f]>turn?'<p><i>Atacar agora é traição: rompe todos os pactos e enfurece os vizinhos.</i></p>':'')}
 const traitTxt=i=>({atk:`+${S[i][6]*100}% ataque`,def:`+${S[i][6]*100}% defesa`,gold:`+${S[i][6]} ouro por turno`,rec:'recrutamento pela metade'})[S[i][5]];
-const scr=h=>{if(!h&&resQ&&!B&&!over){const r=resQ;resQ=null;return showBRes(r)} /* resultado de batalha que esperava a vez */if(h&&$('screen').hidden)sfx.page();
+const scr=h=>{setTimeout(bmkPos,0); /* marcadores só acompanham o diário */if(!h&&resQ&&!B&&!over){const r=resQ;resQ=null;return showBRes(r)} /* resultado de batalha que esperava a vez */if(h&&$('screen').hidden)sfx.page();
   $('screen').hidden=!h;$('screen').classList.remove('title');$('card').className='';if(h){$('card').innerHTML=h;
   $('card').scrollTop=0;
   const xt=$('card').querySelector('[data-x],[data-s=close],[data-s=title]'); /* janela que dá para fechar ganha o X vermelho; Esc faz o mesmo */
   if(xt)$('card').insertAdjacentHTML('afterbegin',`<button class="xclose" data-s="${xt.dataset.s}" aria-label="Fechar (Esc)" data-help="Fechar (Esc)">${I('close')}</button>`);
-  ($('card').querySelector('button.end')||$('card').querySelector('button:not(.xclose)'))?.focus()}};
+  ($('card').querySelector('button.end')||$('card').querySelector('button:not(.xclose)'))?.focus({preventScroll:true})}}; // foco sem rolar a janela até o fim
 let pickI=ix.RJ,scnI=0,EVT=null;
 const goalTxt=(sc,f)=>{const g=SCN[sc].play?.[f];return g?`Domine ${g.map(i=>S[i][0]).join(', ')}`:`Unifique os ${N} ${TW}`};
 const N0=27,RCOL=['#3f9e57','#e0873a','#d9b53a','#3a7fd0','#9b59c4'],difOf=j=>adj[j].length<=3?1:adj[j].length<=5?2:3,DIFN=['','Fácil','Média','Difícil']; // cor da região e dificuldade de começar
@@ -214,13 +214,13 @@ function showCampaign(){coach('camp','Cada medalha sobe de bronze a ouro; a gló
   scr(`<div class="camp"><div class="cl"><img src="${face[me]}" alt=""><b>${S[me][4]}</b><small>${SCN[scn].n} · ${SCN[scn].y}</small>
       <div class="glory" data-help="Glória: soma dos níveis das medalhas">★ ${glory}<span>glória</span></div><div class="glory st" data-help="Estrelas ganhas nas batalhas: vencer, perder pouco e vencer rápido">★ ${stats.stars||0}<span>estrelas em batalha</span></div><p class="hint">${goalTxt(scn,me)}</p>
       <p class="hint">Turno ${turn} · ${stats.won} vitórias · ${stats.lost} derrotas</p></div>
-    <div class="cr"><h2>Campanha</h2><div class="medals">${M.map(([ic,t,v,mx,rw,lv])=>`<div class="medal t${lv}" data-help="${esc(`${t}: ${v}/${mx}${lv?` · ${TN[lv]}`:''}`)}"><div class="hx">${I(ic)}${lv?`<i>${'★'.repeat(lv)}</i>`:''}</div><b>${t}</b>
+    <div class="cr"><h2>Campanha</h2><div class="medals">${M.map(([ic,t,v,mx,rw,lv])=>`<div class="medal t${lv}" data-help="${esc(`${t}: ${v}/${mx}${lv?` · ${TN[lv]}`:''}`)}"><div class="hx">${I(ic)}${lv?`<i>${'★'.repeat(lv)}</i>`:''}</div><b>${t}</b>${lv==3?'<i class="stamp"><b>✓</b>CUMPRIDO</i>':''}
         <div class="pb"><i style="width:${Math.min(100,v/Math.max(1,mx)*100)}%"></i></div><small>${v}/${mx} · ${rw}</small></div>`).join('')}</div>
-      <h3>Conquistas</h3><div class="achs">${(g=>ACH.map(([id,n,d])=>`<div class="ach${g[id]?' on':''}" data-help="${esc(d+(g[id]?' · conquistada em '+g[id]:''))}"><span class="sq">${I(g[id]?'star':'shield')}</span><b>${n}</b><small>${d}</small></div>`).join(''))(achGot())}</div>
+      <h3>Conquistas</h3><div class="achs">${(g=>ACH.map(([id,n,d])=>`<div class="ach${g[id]?' on':''}" data-help="${esc(d+(g[id]?' · conquistada em '+g[id]:''))}"><span class="sq">${I(g[id]?'crown':'shield')}</span><b>${n}</b><small>${d}</small>${g[id]?'<i class="stamp">CONQUISTA</i>':''}</div>`).join(''))(achGot())}</div>
       <h3>Como o mapa mudou</h3>${histHTML()}
       <h3>Potências</h3><div class="pows">${pw.slice(0,6).map(([f,n,t],k)=>`<div class="${f==me?'me':''}"><em>${k+1}º</em>${img(f)}<span><b>${f==me?'Você':S[f][4]}</b><small>${n} ${n==1?TW1:TW} · ${t} tropas</small></span></div>`).join('')}</div>
       <div class="row c"><button data-s="close" class="end">Voltar ao mapa</button><button data-s="help">Como jogar</button></div></div></div>`);
-        $('card').classList.add('wide');histDraw()}
+        diary('camp',1);histDraw()}
 function endStats(){const H=[...hist,owner],chg=S.map((_,i)=>{let c=0;for(let k=1;k<H.length;k++)if(H[k][i]!=H[k-1][i])c++;return c}),dis=chg.indexOf(Math.max(...chg)),hero=Object.entries(stats.heroes||{}).sort((a,b)=>b[1]-a[1])[0];
   /* números da campanha */
   return`<h3>Números da campanha</h3><div class="kpis k4"><div class="kpi"><b>${stats.won+stats.lost}</b><span>batalhas</span></div><div class="kpi"><b>${stats.stars||0}</b><span>estrelas</span></div><div class="kpi"><b>${stats.cards||0}</b><span>cartas usadas</span></div><div class="kpi"><b>${stats.dip||0}</b><span>tratados</span></div></div>
@@ -433,7 +433,7 @@ function showCards(sel){const g=colGot(),ids=Object.keys(CARDS),cur=CARDS[sel]?s
   scr(`<h2>Cartas</h2>${bookTabs('cards')}<div class="pages"><div class="pg"><h3>Coleção: ${n} de ${ids.length}</h3>${['l','r','c'].map(r=>`<p class="hint">${RARN[r]}s</p><div class="cgridc">${cardsOf(r).map(mini).join('')}</div>`).join('')}<span class="pn">1</span></div>
     <div class="pg"><div class="cview">${got?cardHTML(cur,'big'):`<div class="card big lockc r-${rarOf(cur)}"><b>?</b><small>Ainda não encontrada</small></div>`}</div><h3>Como conseguir</h3><ul class="srcl">${srcOf(cur).map(s=>`<li>${esc(s)}</li>`).join('')}</ul>${me>=0&&got?`<p class="hint">Na sua mão: ${hand.filter(h=>h==cur).length}</p>`:''}<span class="pn">2</span></div></div>
     ${me<0?'<button data-s="title" class="end">Voltar ao título</button>':'<button data-s="close" class="end">Fechar o livro</button>'}`);
-      $('card').classList.add('book','wide')}
+      diary('cards',0)}
 // ---------- rivais tomam iniciativa: mensageiros propõem, exigem ou vendem ----------
 function rivalOffer(){if(me<0||over||B)return false;lastRival=turn;sfx.msg();coach('rival','Rivais mandam mensageiros: pactos, alianças, tributos e cartas à venda. Recusar um belicoso o deixa hostil.');
   const own=owner.map((o,i)=>o==me?i:-1).filter(i=>i>=0),nb=[...new Set(own.flatMap(i=>adj[i]).map(j=>owner[j]))].filter(f=>f!=me&&!(duo&&duo.p.includes(f)));
@@ -460,8 +460,22 @@ function leaderMoments(){if(me<0||over)return false;const n=nOwn(me),foes=new Se
   if(foes.size>=3&&(stats.allv??-9)<turn-6){stats.allv=turn;talk([[me,`${foes.size} rivais nos atacaram de uma vez. Todos contra nós? Que venham!`]])}return false}
 // mural de conquistas: o que você já ganhou neste navegador
 function showAchs(){const g=achGot(),n=ACH.filter(a=>g[a[0]]).length;
-  scr(`<h2>Conquistas</h2><p class="c">${n} de ${ACH.length} conquistadas neste navegador</p><div class="achs">${ACH.map(([id,nm,d])=>`<div class="ach${g[id]?' on':''}" data-help="${esc(d+(g[id]?' · conquistada em '+g[id]:''))}"><span class="sq">${I(g[id]?'star':'shield')}</span><b>${nm}</b><small>${d}</small></div>`).join('')}</div>
-    <button data-s="${me<0?'title':'close'}" class="end">Voltar</button>`);$('card').classList.add('wide')}
+  scr(`<h2>Conquistas</h2><p class="c">${n} de ${ACH.length} conquistadas neste navegador</p><div class="achs">${ACH.map(([id,nm,d])=>`<div class="ach${g[id]?' on':''}" data-help="${esc(d+(g[id]?' · conquistada em '+g[id]:''))}"><span class="sq">${I(g[id]?'crown':'shield')}</span><b>${nm}</b><small>${d}</small>${g[id]?'<i class="stamp">CONQUISTA</i>':''}</div>`).join('')}</div>
+    <button data-s="${me<0?'title':'close'}" class="end">Voltar</button>`);diary('achs',1)}
+// ---------- diário de campanha: um só livro de couro com marcadores na lateral ----------
+const DIARY=[['camp','flag','Campanha',()=>showCampaign()],['army','swords','Exército',()=>showArmy()],['cou','house','Conselho',()=>showCouncil()],['dip','shield','Diplomacia',()=>showDip(window.dipF??-1)],
+  ['log','quill','Crônica',()=>showLog()],['enc','book','Enciclopédia',()=>showEnc(me>=0?me:0)],['cards','star','Cartas',()=>showCards()],['achs','crown','Conquistas',()=>showAchs()]];
+let diaryKey=null;
+function diary(key,one){const c=$('card');c.classList.add('book','wide');c.classList.toggle('one',!!one); /* one: página única (sem a costura no meio) */
+  if(diaryKey&&diaryKey!=key&&!CFG.calm){c.classList.remove('turn');void c.offsetWidth;c.classList.add('turn');sfx.page()}diaryKey=key; // troca de seção: a página vira
+  let n=$('bmk');if(!n){n=document.createElement('nav');n.id='bmk';n.setAttribute('aria-label','Seções do diário');document.body.appendChild(n);
+    n.addEventListener('click',e=>{const b=e.target.closest('[data-d]');if(b){sfx.sel();DIARY.find(d=>d[0]==b.dataset.d)[3]()}})}
+  const ok=d=>me>=0&&!B&&!HQ||['enc','cards','achs'].includes(d[0]);
+  n.innerHTML=DIARY.filter(ok).map(([k,ic,t])=>`<button data-d="${k}" class="${k==key?'on':''}" data-help="${t}" aria-label="${t}">${I(ic)}</button>`).join('')+'<i class="fita"></i>';
+  n.hidden=false;bmkPos();setTimeout(bmkPos,380)}
+function bmkPos(){const n=$('bmk');if(!n)return;const c=$('card');if($('screen').hidden||!c.classList.contains('book')){n.hidden=true;return}
+  const r=c.getBoundingClientRect();n.hidden=false;n.style.left=Math.round(r.left-44)+'px';n.style.top=Math.round(r.top+44)+'px';n.style.height=Math.round(r.height-60)+'px'}
+addEventListener('resize',bmkPos);
 $('screen').addEventListener('click',onScr);$('room').addEventListener('click',onScr);
 document.addEventListener('keydown',e=>{ // atalhos: clicam o botão correspondente do painel, se existir e estiver ativo
   if(e.key=='?'&&$('menu').hidden&&!e.target.closest?.('input,select,textarea')){e.preventDefault();return $('screen').hidden?showKeys():scr()}

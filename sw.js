@@ -1,6 +1,6 @@
 // Funciona sem internet: a página vem da rede quando dá (para pegar versões novas); o resto vem do cache.
 // Os arquivos js e css têm ?v=<data> no nome, então uma versão nova nunca se mistura com a antiga.
-const CACHE='terra-brasilis-v2';
+const CACHE='terra-brasilis-v3';
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['./','assets/logo.png','assets/logo-mini.png','assets/icon-192.png'])))});
 self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));
 self.addEventListener('fetch',e=>{const r=e.request,u=new URL(r.url);if(r.method!='GET')return;
