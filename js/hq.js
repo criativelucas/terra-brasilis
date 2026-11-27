@@ -233,7 +233,7 @@ function drawHQ(){
     for(let t=0;t<hw;t+=45)x.fillRect(dx+t,0,4,ch);x.fillStyle='#2f2f36';x.fillRect(dx,ch*.2,hw,16);x.fillRect(dx,ch*.77,hw,16);
     x.fillStyle='#8a8f98';for(let t=20;t<hw;t+=45){x.fillRect(dx+t,ch*.2+4,6,6);x.fillRect(dx+t,ch*.77+4,6,6)}x.fillStyle='#e0b030';x.fillRect(dx+(k?18:hw-30),ch/2-14,12,28)})}
   lac(x,-6,ch-38,cw+12,44,0);x.textBaseline='top';
-  scriptT(x,'Quartel-general de '+S[me][4],cw/2,ch-32,22)}
+  const rw=$('room')&&!$('room').hidden?($('room').offsetWidth+32)*RS:0;scriptT(x,'Quartel-general de '+S[me][4],(cw-rw)/2,ch-32,22,'center',cw-rw-40)} // centrado na área livre, fora da sala aberta
 const hqSpot=e=>{ // balão clicado, senão sala sob o cursor, torre ou portão
   const r=cv.getBoundingClientRect(),hs=HQ.s||1,mx=((e.clientX-r.left)*cv.width/r.width-cv.width/2)/hs+HCX,my=((e.clientY-r.top)*cv.height/r.height-cv.height/2)/hs+HCY,hb=(HQ.bub||[]).find(q=>mx>=q[1]&&mx<=q[1]+q[3]&&my>=q[2]&&my<=q[2]+q[4]);
   if(hb)return hb[0];

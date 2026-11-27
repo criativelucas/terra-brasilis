@@ -15,3 +15,7 @@ jobs:
         run: CHROME=$(which google-chrome) node tools/test.mjs
       - name: Telas em inglês
         run: EN=1 CHROME=$(which google-chrome) node tools/test.mjs
+      - name: Auditoria de interface (português e inglês)
+        run: |
+          CHROME=$(which google-chrome) node tools/auditoria.mjs
+          EN=1 CHROME=$(which google-chrome) node tools/auditoria.mjs

@@ -315,12 +315,12 @@ function showBRes(R){lastRes=R; /* resultado: estrelas e placar à esquerda; mel
       <figure class="them"><img src="${face[R.e]}" alt=""><b>${S[R.e][4]}</b><span>−${R.l1}</span><small>perdas dele</small></figure></div>
     <div class="chips c">${R.vg?`<span>${I('coin')}Vilas tomadas +${R.vg} ouro</span>`:''}${R.best?`<span>${I('star')}Destaque: ${R.best}</span>`:''}${R.lv.map(l=>`<span>${I('up')}${l}</span>`).join('')}</div>
     ${R.card?`<div class="spoil"><span>Espólio da batalha</span>${cardHTML(R.card,'mini2')}</div>`:''}
-    ${R.cap?`<div class="box safe"><b>${I('check')}${S[R.e][4]} foi capturado</b><p>Resgate de 10 ouro recebido.</p><button data-s="bfree">Libertar sem resgate: devolve os 10 ouro e firma pacto de 4 turnos</button>${R.conv?'':`<button data-s="bconv">Convidar para o seu lado: ~${Math.round(Math.min(.95,Math.max(.05,.3+gs(me)[2]/300-(strength(R.e)>strength(me)?.15:0)))*100)}% de chance de ele trazer um ${TW1} vizinho</button>`}</div>`:''}
-    ${R.paid!=null?`<div class="box threat"><b>${I('warn')}Seu comandante foi capturado</b><p>Resgate pago: ${R.paid} ouro.</p></div>`:''}
     <button data-s="close" class="end">Continuar</button></div>`,
-    R_=R.perks.length?`<div class="brr"><h3>Melhoria de regimento</h3><p class="hint">Escolha uma melhoria para cada regimento que subiu de nível.</p>${R.perks.map((p,k)=>{const lv=lvl(xp[p.st]?.[p.j]||0);
+    CAP=`${R.cap?`<div class="box safe"><b>${I('check')}${S[R.e][4]} foi capturado</b><p>Resgate de 10 ouro recebido.</p><button data-s="bfree">Libertar e firmar pacto<small>devolve os 10 ouro · pacto de 4 turnos</small></button>${R.conv?'':`<button data-s="bconv">Convidar a mudar de lado<small>~${Math.round(Math.min(.95,Math.max(.05,.3+gs(me)[2]/300-(strength(R.e)>strength(me)?.15:0)))*100)}% de chance · traz um ${TW1} vizinho</small></button>`}</div>`:''}
+    ${R.paid!=null?`<div class="box threat"><b>${I('warn')}Seu comandante foi capturado</b><p>Resgate pago: ${R.paid} ouro.</p></div>`:''}`,
+    R_=R.perks.length||R.cap||R.paid!=null?`<div class="brr">${R.perks.length?`<h3>Melhoria de regimento</h3><p class="hint">Escolha uma melhoria para cada regimento que subiu de nível.</p>${R.perks.map((p,k)=>{const lv=lvl(xp[p.st]?.[p.j]||0);
       return`<div class="upg"><figure><img src="${icon(p.type||'inf',me,true,false)}" alt=""><figcaption>${p.n}</figcaption><span class="lvp" aria-label="nível ${lv}">${[1,2,3].map(q=>`<i class="${q<=lv?'on':''}"></i>`).join('')}</span></figure>
-        <div class="upo">${PERKS.map(([id,nm,d])=>{const on=perk[p.st+'-'+p.j]?.includes(id);return`<button data-s="perk-${k}-${id}" class="${on?'on':''}" ${on?'disabled':''} data-help="${d}"><span class="sq">${I(PIC[id])}</span><b>${nm}</b><small>${d}</small></button>`}).join('')}</div></div>`}).join('')}</div>`:'';
+        <div class="upo">${PERKS.map(([id,nm,d])=>{const on=perk[p.st+'-'+p.j]?.includes(id);return`<button data-s="perk-${k}-${id}" class="${on?'on':''}" ${on?'disabled':''} data-help="${d}"><span class="sq">${I(PIC[id])}</span><b>${nm}</b><small>${d}</small></button>`}).join('')}</div></div>`}).join('')}`:''}${CAP}</div>`:'';
   scr(`<h2 class="big${R.win?'':' lost'}">${R.win?'VITÓRIA':'DERROTA'}</h2><div class="bres${R_?' two':''}">${L_}${R_}</div>`);
     if(R_)$('card').classList.add('wide');
   if(!R.seen&&!CFG.calm)for(let k=0;k<st;k++)setTimeout(()=>sfx.coin(k*3),380+k*220);R.seen=1}
@@ -550,8 +550,7 @@ function drawBattle(){
     sc=age<140?1.6-.6*age/140:1;if(!inView(sx,sy0))return;x.save();x.translate(sx,sy);x.scale(sc,sc);x.font=`400 ${Math.round((p.big?17:dmg?14:heal?11:9)*1.85)}px "Lilita One","Alegreya Sans",sans-serif`; /* letra gorda do tema, com sombra escura embaixo */
     x.lineWidth=p.big?8:6;x.strokeStyle='#2a160d';x.strokeText(p.txt,0,3);x.strokeText(p.txt,0,0);x.fillStyle=p.big?'#ff6a3c':dmg?'#ffd23f':heal?'#8fe88a':'#fff3c0';x.fillText(p.txt,0,0);x.restore()});
   const hx=VX||16;teamBar(0,hx,now);teamBar(1,cw-hx-262,now); // placar dos dois lados: líder e uma ficha por unidade
-  lac(x,cw/2-118,8,236,94,12);scriptT(x,`Rodada ${Math.min(B.round,MAXR)}`,cw/2-14,11,26,'center');
-  x.textAlign='left';x.font=FONT(8);x.fillStyle='#d9c8a8';x.fillText('/'+MAXR,cw/2+38,24); // placa central da rodada, no estilo da placa de turno
+  lac(x,cw/2-118,8,236,94,12);scriptT(x,`Rodada ${Math.min(B.round,MAXR)} de ${MAXR}`,cw/2,14,21,'center',214); /* rodada e limite numa linha só: sem número solto que encavala com a letra larga */ // placa central da rodada, no estilo da placa de turno
   const hc=B.hov&&B.T[B.hov[1]]?.[B.hov[0]],hu=hc&&B.units.find(v=>v.hp>0&&v.x==B.hov[0]&&v.y==B.hov[1]&&seen(v));
   x.textAlign='center';x.font=FONT(9);x.fillStyle='#f3e7cf';x.fillText(S[B.to][1],cw/2,48,220);
   x.font=FONT(7.5);x.fillStyle='#d9c8a8';x.fillText(hc?TN[hc]+(hu?` · ${nmOf(hu)} ${hu.hp}`:''):KIND[B.kind][0]+' · '+B.bio.nome+(B.wx=='rain'?' · chuva':B.wx=='dry'?' · seca':''),cw/2,73,222);

@@ -70,10 +70,10 @@ const SLOT=k=>SAVE+'-slot'+k,slotOf=k=>{try{return JSON.parse(localStorage.getIt
 function showSaves(back){const can=me>=0&&!B&&!raids.length&&!over;
   scr(`<h2>Salvamentos</h2><p class="c">O jogo também salva sozinho a cada ação. Aqui você guarda partidas com nome.</p>`+
     (can?`<label class="opt" for="svname"><span>Nome</span><input id="svname" maxlength="30" value="${esc(S[me][4]+' · turno '+turn)}"></label>`:'')+
-    [1,2,3].map(k=>{const d=slotOf(k);return`<div class="slot">${d?.thumb?`<img class="th" src="${d.thumb}" alt="">`:`<div class="th">${d?'Sem imagem':'Vazio'}</div>`}<div class="si"><b>Espaço ${k}${d?': '+esc(d.nome):''}</b>
+    '<div class="slots">'+[1,2,3].map(k=>{const d=slotOf(k);return`<div class="slot">${d?.thumb?`<img class="th" src="${d.thumb}" alt="">`:`<div class="th">${d?'Sem imagem':'Vazio'}</div>`}<div class="si"><b>Espaço ${k}${d?': '+esc(d.nome):''}</b>
       ${d?`<p>${img(d.me)}<span>${S[d.me][4]}<br>Turno ${d.turn} · ${d.owner.filter(o=>o==d.me).length}/${N} ${TW}<br><small>${new Date(d.quando).toLocaleString('pt-BR')}</small></span></p>`:''}
-      <div class="row">${can?`<button data-s="sv-${k}">Salvar aqui</button>`:''}${d?`<button data-s="ld-${k}">Carregar</button>`:''}</div></div></div>`}).join('')+
-    `<button data-s="${back}" class="end">Voltar</button>`)}
+      <div class="row">${can?`<button data-s="sv-${k}">Salvar aqui</button>`:''}${d?`<button data-s="ld-${k}">Carregar</button>`:''}</div></div></div>`}).join('')+'</div>'+
+    `<button data-s="${back}" class="end">Voltar</button>`);$('card').classList.add('wide')}
 // visão geral do império: todos os seus territórios numa lista; clicar leva até ele
 function showArmy(){const own=owner.map((o,i)=>o==me?i:-1).filter(i=>i>=0).sort((a,b)=>danger(b)-danger(a)||troops[b]-troops[a]),can=own.filter(i=>!moved.has(i)&&troops[i]>1).length,dg=own.filter(danger).length;
   scr(`<h2>Exército</h2><div class="kpis k4"><div class="kpi"><b>${own.length}</b><span>${TW}</span></div><div class="kpi"><b>${own.reduce((a,i)=>a+troops[i],0)}</b><span>tropas</span></div><div class="kpi"><b>${can}</b><span>podem marchar</span></div><div class="kpi ${dg?'hot':''}"><b>${dg}</b><span>em perigo</span></div></div>
@@ -102,7 +102,7 @@ function showCouncil(){const c=councilNow(),postOf=i=>Object.keys(posts).find(k=
       <div class="prop"><b>${o.nome}</b><small>${o.txt}</small></div>${c.done?'<span class="st">Conselho já seguido</span>':gold[me]<o.custo?`<span class="st no">Faltam ${o.custo-gold[me]} ouro<small>custa ${o.custo}</small></span>`:`<button data-s="cs-${k}" class="buy wide">Seguir<small>${o.custo?o.custo+' ouro':'grátis'}</small></button>`}</div></div>`}).join('')+
     `</div><div class="opt"><span>Delegar ao conselho</span><button data-s="deleg">‹ ${CFG.deleg?'Sim: escolhe sozinho':'Não'} ›</button></div><button data-s="close" class="end">Voltar ao mapa</button>`);
       diary('cou',1)}
-function showLog(pg=0){const nw=Math.max(0,logs.length-logSeen);logSeen=logs.length;const PP=11,ns=Math.max(1,Math.ceil(logs.length/PP/2)),sp=Math.max(0,Math.min(pg,ns-1));
+function showLog(pg=0){const nw=Math.max(0,logs.length-logSeen);logSeen=logs.length;const PP=Math.max(4,Math.min(12,Math.floor((Math.min(720,innerHeight-40)-250)/54))), /* entradas por página: cabem no livro de altura fixa */ns=Math.max(1,Math.ceil(logs.length/PP/2)),sp=Math.max(0,Math.min(pg,ns-1));
   /* crônica como livro: duas páginas por vez; o que é novo vem marcado */
   const page=q=>`<div class="pg"><div class="tline">${logs.slice(q*PP,q*PP+PP).map((l,k)=>{const n=q*PP+k;return`<p class="${n<nw?'nw':''}"><i></i><span>${esc(l)}</span>${n<nw?'<em>novo</em>':''}</p>`}).join('')||(q?'':'<p class="hint">Nada aconteceu ainda.</p>')}</div><span class="pn">${q+1}</span></div>`;
   scr(`<h2>Crônica</h2>${bookTabs('log')}<div class="pages">${page(sp*2)}${page(sp*2+1)}</div>${ns>1?`<div class="pnav">${sp>0?`<button data-s="logp-${sp-1}" aria-label="Páginas anteriores">${I('back')}</button>`:''}${Array.from({length:ns},(_,k)=>`<button data-s="logp-${k}" class="${k==sp?'on':''}">${k+1}</button>`).join('')}${sp<ns-1?`<button data-s="logp-${sp+1}" aria-label="Próximas páginas">${I('fwd')}</button>`:''}</div>`:''}
@@ -161,12 +161,12 @@ function showTitle(){const sv=savedInfo(),camp=TKEY!='brasil',db=dBest(dayKey())
     <div class="row c tlinks">${[1,2,3].some(k=>slotOf(k))?'<button data-s="saves">Carregar partida</button>':''}<button data-s="help">Como jogar</button><button data-s="cards">Cartas</button><button data-s="achs">Conquistas</button><button data-s="lang">${CFG.lang=='en'?'Português':'English'}</button></div>`);
       $('screen').classList.add('title')}
 function showCamps(){ // cada campanha abre num mapa próprio, só da região daquela guerra
-  scr(`<h2>Campanhas históricas</h2><p class="c">Cada guerra tem mapa próprio, líderes da época e um objetivo para cada lado.</p>`+
+  scr(`<h2>Campanhas históricas</h2><p class="c">Cada guerra tem mapa próprio, líderes da época e um objetivo para cada lado.</p><div class="campg">`+
     Object.entries(THEATERS).filter(([k])=>k!='brasil').map(([k,t])=>{const sv=saveOf(k),sc=t.SCN[0],sides=Object.keys(sc.play).map(c=>t.S.find(s=>s[0]==c)[4]).join(' ou ');
       return`<div class="ucard" style="flex-direction:column;align-items:stretch"><b>${t.nome} · ${t.ano}</b><p>${sc.d}</p>
         <div class="chips"><span>${t.S.length} ${t.word}</span><span>Jogue com ${sides}</span>${sv?`<span>Partida salva: turno ${sv.turn}</span>`:''}</div>
         <button data-s="th-${k}" class="${k==TKEY?'':'end'}">${k==TKEY?'Campanha aberta':'Abrir campanha'}</button></div>`}).join('')+
-    `<button data-s="title">Voltar</button>`)}
+    `</div><button data-s="title">Voltar</button>`);$('card').classList.add('wide')}
 $('armyBtn').addEventListener('click',()=>{if(me>=0&&!B&&!HQ)showArmy()});
 $('councilBtn').addEventListener('click',()=>{if(me>=0&&!B&&!HQ&&!over)showCouncil()});
 addEventListener('hashchange',()=>location.reload()); // trocar de teatro recarrega o jogo com o mapa novo
@@ -214,12 +214,11 @@ function showCampaign(){coach('camp','Cada medalha sobe de bronze a ouro; a gló
   scr(`<div class="camp"><div class="cl"><img src="${face[me]}" alt=""><b>${S[me][4]}</b><small>${SCN[scn].n} · ${SCN[scn].y}</small>
       <div class="glory" data-help="Glória: soma dos níveis das medalhas">★ ${glory}<span>glória</span></div><div class="glory st" data-help="Estrelas ganhas nas batalhas: vencer, perder pouco e vencer rápido">★ ${stats.stars||0}<span>estrelas em batalha</span></div><p class="hint">${goalTxt(scn,me)}</p>
       <p class="hint">Turno ${turn} · ${stats.won} vitórias · ${stats.lost} derrotas</p></div>
-    <div class="cr"><h2>Campanha</h2><div class="medals">${M.map(([ic,t,v,mx,rw,lv])=>`<div class="medal t${lv}" data-help="${esc(`${t}: ${v}/${mx}${lv?` · ${TN[lv]}`:''}`)}"><div class="hx">${I(ic)}${lv?`<i>${'★'.repeat(lv)}</i>`:''}</div><b>${t}</b>${lv==3?'<i class="stamp"><b>✓</b>CUMPRIDO</i>':''}
+    <div class="cr"><h2>Campanha</h2><div class="crg"><div class="crm"><div class="medals">${M.map(([ic,t,v,mx,rw,lv])=>`<div class="medal t${lv}" data-help="${esc(`${t}: ${v}/${mx}${lv?` · ${TN[lv]}`:''}`)}"><div class="hx">${I(ic)}${lv?`<i>${'★'.repeat(lv)}</i>`:''}</div><b>${t}</b>${lv==3?'<i class="stamp"><b>✓</b>CUMPRIDO</i>':''}
         <div class="pb"><i style="width:${Math.min(100,v/Math.max(1,mx)*100)}%"></i></div><small>${v}/${mx} · ${rw}</small></div>`).join('')}</div>
-      <h3>Conquistas</h3><div class="achs">${(g=>ACH.map(([id,n,d])=>`<div class="ach${g[id]?' on':''}" data-help="${esc(d+(g[id]?' · conquistada em '+g[id]:''))}"><span class="sq">${I(g[id]?'crown':'shield')}</span><b>${n}</b><small>${d}</small>${g[id]?'<i class="stamp">CONQUISTA</i>':''}</div>`).join(''))(achGot())}</div>
-      <h3>Como o mapa mudou</h3>${histHTML()}
+      </div><div class="crh"><h3>Como o mapa mudou</h3>${histHTML()}
       <h3>Potências</h3><div class="pows">${pw.slice(0,6).map(([f,n,t],k)=>`<div class="${f==me?'me':''}"><em>${k+1}º</em>${img(f)}<span><b>${f==me?'Você':S[f][4]}</b><small>${n} ${n==1?TW1:TW} · ${t} tropas</small></span></div>`).join('')}</div>
-      <div class="row c"><button data-s="close" class="end">Voltar ao mapa</button><button data-s="help">Como jogar</button></div></div></div>`);
+      </div></div><div class="row c"><button data-s="close" class="end">Voltar ao mapa</button><button data-s="help">Como jogar</button></div></div></div>`);
         diary('camp',1);histDraw()}
 function endStats(){const H=[...hist,owner],chg=S.map((_,i)=>{let c=0;for(let k=1;k<H.length;k++)if(H[k][i]!=H[k-1][i])c++;return c}),dis=chg.indexOf(Math.max(...chg)),hero=Object.entries(stats.heroes||{}).sort((a,b)=>b[1]-a[1])[0];
   /* números da campanha */
@@ -228,12 +227,14 @@ function endStats(){const H=[...hist,owner],chg=S.map((_,i)=>{let c=0;for(let k=
 function showEnd(){const win=victory;win?sfx.fanfare():sfx.lose();if(win){cele={i:me,start:Date.now(),dur:6000,n:180};
   mood[me]={m:'smile',until:Date.now()+6e4}}
   const dl=daily&&!daily.done?(()=>{const sc=dScore(),r=dSave(sc);daily.done=true;Math.random=RND0;return`<p class="c"><b>Desafio do dia:</b> ${sc} pontos${r?' · novo recorde!':''}</p>`})():'';
-  scr(`<h2 class="big${win?'':' lost'}">${win?(goal&&!owner.every(o=>o==me)?'OBJETIVO CUMPRIDO':'BRASIL UNIFICADO'):'FIM DA CAMPANHA'}</h2>${win?`<img class="ending" src="${endCard()}" alt="">`:`<div class="row c"><img class="hero" src="${face[me]}" alt=""></div>`}
-    <p class="c">${win?(goal&&!owner.every(o=>o==me)?`${S[me][4]} vence a ${SCN[scn].n}.`:`${S[me][4]} reúne ${TKEY=='brasil'?'as 27 províncias':'todos os '+TW} sob uma só bandeira.`):`O domínio de ${S[me][4]} caiu.`}</p>
-    ${win?`<p class="c endtxt">${endText()}</p>`:''}<p class="c">${turn} turnos · ${stats.won} vitórias · ${stats.lost} derrotas · ${stats.taken} ${TW} tomados · ★ ${stats.stars||0}</p>${dl}
-    ${endStats()}<h3>Como o mapa mudou</h3>${histHTML()}
-    <button data-s="setup" class="end">Nova partida</button><button data-s="camps">Campanhas históricas</button><button data-s="enc-${me}">Ficha de ${S[me][4]}</button><button data-s="close">Ver o mapa</button>`);
+  scr(`<h2 class="big${win?'':' lost'}">${win?(goal&&!owner.every(o=>o==me)?'OBJETIVO CUMPRIDO':'BRASIL UNIFICADO'):'FIM DA CAMPANHA'}</h2>
+    <div class="endg"><div class="endl">${win?`<img class="ending" src="${endCard()}" alt="">`:`<div class="row c"><img class="hero" src="${face[me]}" alt=""></div>`}
+      <p class="c endh">${win?(goal&&!owner.every(o=>o==me)?`${S[me][4]} vence a ${SCN[scn].n}.`:`${S[me][4]} reúne ${TKEY=='brasil'?'as 27 províncias':'todos os '+TW} sob uma só bandeira.`):`O domínio de ${S[me][4]} caiu.`}</p>
+      ${win?`<p class="c endtxt">${endText()}</p>`:''}<p class="c hint">${turn} turnos · ${stats.won} vitórias · ${stats.lost} derrotas · ${stats.taken} ${TW} tomados · ★ ${stats.stars||0}</p>${dl}</div>
+    <div class="endr2">${endStats()}<h3>Como o mapa mudou</h3>${histHTML()}</div></div>
+    <div class="row c endb"><button data-s="setup" class="end">Nova partida</button><button data-s="camps">Campanhas históricas</button><button data-s="enc-${me}">Ficha de ${S[me][4]}</button><button data-s="close">Ver o mapa</button></div>`);
       $('card').classList.add('wide');histDraw()}
+
 function showEvent(){ // escolha de início de turno: [título, texto, [[opção, custo em ouro, efeito]]]
   const own=owner.map((o,i)=>o==me?i:-1).filter(i=>i>=0),st=own[Math.random()*own.length|0],n=S[st][1],no=()=>{};
   const E=[['Safra de café',`Colheita farta em ${n}.`,[['Vender a safra (+6 ouro)',0,()=>gold[me]+=6],['Alimentar as tropas (+3 tropas)',0,()=>troops[st]+=3]]],

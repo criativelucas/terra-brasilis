@@ -1455,3 +1455,92 @@ input[type=text],input:not([type]),#svname{padding:8px 12px;font:700 15px var(--
 #card h2,#menuBox h2,#card h3,.pg h3,.brr h3,#room .rhd h2,aside h2,.who.sm h2,#plaque em,#plaque .pl b,.endr b,#room .cat,.tn,.crw em,.wax b,#help>b,.box>b,.grp>.lbl{font-family:var(--tit)}
 button,.kpi b,.chips>span{font-weight:700}
 .ach .stamp,.medal .stamp{top:auto;bottom:-6px;right:-6px;width:46px;height:46px;font-size:7px;opacity:.85}.medal .stamp{bottom:auto;top:-4px}
+/* =====================================================================================
+   REVISÃO FINAL DE INTERFACE (tools/auditoria.mjs): nada cortado, nada encavalado, nada escondido embaixo
+   ===================================================================================== */
+/* diário: livro de tamanho fixo; trocar de seção não muda o tamanho do livro, o conteúdo rola dentro da página */
+#card.book{width:min(1080px,calc(100vw - 120px));height:min(720px,calc(100vh - 40px));max-height:none;box-sizing:border-box}
+#card.book .pages{min-height:0}
+.camp .cl{position:sticky;top:0;align-self:start}
+/* títulos que não cabiam na caixa */
+.who.sm h2,aside h2{line-height:1.2}
+body.battle aside h2{font-size:20px;line-height:1.2}
+.wax b{font-size:22px;line-height:1.1}.wax small{font-size:13px}
+#card:not(.wide) h2.big{font-size:28px;line-height:34px;white-space:nowrap;padding-inline:20px}
+#card .enc h3{border:0;background:none;padding:0;margin:0 0 4px;text-shadow:none;font:400 24px/1.15 var(--tit);color:var(--tinta);-webkit-text-fill-color:var(--tinta);text-align:left;width:auto}
+/* fim do turno: o rótulo em duas linhas é proposital; a caixa acompanha a altura do texto */
+.endr b{display:block;line-height:1.02;white-space:normal}
+/* tela inicial: cartões de modo mais largos, título de uma linha */
+#screen.title #card{width:min(660px,100%)}
+.mode b{font-size:16px;white-space:nowrap}.mode{column-gap:8px;padding:10px}.mode .mi{width:46px;height:46px}
+/* escolha de líder: cabe em 1280x720 sem rolar */
+@media (max-height:820px){.pinfo .rmap{max-height:118px}.pgrid{gap:5px}.pgrid button img{width:46px;height:46px}.pinfo p{font-size:13.5px;line-height:1.3}.pinfo{gap:5px}#card .pinfo h3{margin:0 0 4px}}
+/* ações do estado: quatro botões numa linha, rótulo inteiro; a linha de explicação pode quebrar em duas */
+.acts4 button{font-size:13.5px;letter-spacing:0;padding-inline:3px}
+.acts4 button small{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.12;font-size:11.5px}
+.acts4.a2 button small{font-size:12px}
+/* exército: situação do estado numa linha */
+button.scard .st{white-space:nowrap}
+/* conselho: as três propostas lado a lado */
+#card.book .cgrid{grid-template-columns:repeat(3,minmax(0,1fr))}
+/* atalhos: descrição colada à tecla */
+.kr{display:grid;grid-template-columns:minmax(54px,auto) 1fr;align-items:center;column-gap:10px;justify-items:start}.kr em{text-align:left}
+/* salvamentos e campanhas: em grade, sem janela comprida */
+.slots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.slots .slot{flex-direction:column;align-items:stretch;padding:8px;border:2px dashed rgba(122,74,42,.4);border-radius:10px;background:rgba(255,250,230,.35)}
+.slots .slot .th{width:100%;height:110px}.slots .slot .si{align-items:stretch}
+.campg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.campg .ucard p{font-size:14px;line-height:1.35}
+/* conquistas: carimbo sobre o ícone, sem cobrir o texto */
+.ach .stamp{left:-4px;right:auto;top:auto;bottom:-6px;width:44px;height:44px}
+/* placa do turno: centrada no mapa livre, sem passar por baixo da ficha */
+body.full:not(.battle) #plaque{left:calc(50% - 190px)}#plaque p{max-width:520px}
+.rivs em{font:400 13px var(--jogo);font-style:normal}
+/* gaveta de cartas: não entra embaixo da ficha */
+body.full #hand{width:min(816px,calc(100vw - 440px))}#hand.open .cards{overflow-x:auto;overflow-y:hidden}
+/* leque de cartas na batalha: a gema de custo não cobre o nome */
+#hand.fan .card{padding-top:18px}#hand.fan .card .cc{top:-10px;left:-10px}
+/* letras pequenas */
+.stat .mor span{font-size:12px}.loy button small{font-size:11.5px}
+/* quartel: título da sala na própria linha, nunca truncado */
+#room .rhd .rt h2{grid-area:2/1/3/-1;white-space:normal;overflow:visible;text-overflow:clip;font-size:22px;line-height:1.15}
+#room .rhd .rt small{grid-area:3/1/4/-1}#room .rhd .rtabs{grid-row:4}
+/* antes da batalha: a lente encolhe em telas baixas para os botões caberem */
+.b3d{max-width:min(470px,calc(100vh - 300px))}
+/* resultado da batalha: mais compacto */
+.bres .vsr img{width:64px;height:64px}.bres .vsr figure{padding:6px 8px}.bres .vsr figure>span{font-size:26px;line-height:1.1}
+.bres .stars3 i{--s:42px}.bres .stars3 i:nth-child(2){--s:56px}.bres .brl{gap:8px}
+/* diálogo acima da barra de botões */
+body.full #talk{padding-bottom:110px}
+/* barra do topo em 1280-1500: mercado só com ícone, pílulas mais justas */
+@media (min-width:901px) and (max-width:1500px){body.full #bar .mkt{font-size:0;padding:0 10px;gap:0}body.full #bar .mkt .ico{margin:0}
+  body.full #bar>span:not(.crest){padding:0 9px;font-size:13px}body.full #bar .crest .cn b{font-size:17px}}
+/* fim de campanha em duas colunas */
+.endg{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}.endl,.endr2{display:flex;flex-direction:column;gap:8px;min-width:0}
+.endh{font:400 18px var(--tit)}.endb{gap:8px;flex-wrap:wrap}.endb button{flex:1 1 0;min-width:150px}
+/* revelação de carta: só o rodapé tem contorno */
+.crw small{text-shadow:none}.crw>small{font:400 17px var(--jogo);color:#fff3cf;text-shadow:var(--ol1)}
+.crw .card small{color:#3b2416;font:600 13px/1.25 var(--ui)}
+/* campanha em três colunas: líder | medalhas | balanço e potências */
+.crg{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px;align-items:start}
+.crm .medals{grid-template-columns:repeat(2,minmax(0,1fr))}.crh .hist{grid-template-columns:1fr}.crh .hmap{flex-direction:row;align-items:center;flex-wrap:wrap}.crh .hmap img{width:96px}
+.crh .pows{grid-template-columns:1fr}
+/* resultado: placar em linha (retrato ao lado dos números) */
+.bres .vsr figure{display:grid;grid-template-columns:56px 1fr;grid-template-rows:auto auto auto;column-gap:10px;align-items:center;justify-items:start;text-align:left}
+.bres .vsr figure img{grid-row:1/4;width:56px;height:56px}
+.box.safe button small,.box button small{display:block;font:600 12px var(--ui);color:var(--sepia)}
+.brr .box{margin-top:4px}.brr .box button{width:100%;margin-top:6px;display:flex;flex-direction:column;align-items:center}
+/* escolha de líder e campanhas em 720p */
+@media (max-height:760px){.pinfo .rmap{max-height:84px}#card h2{margin-bottom:0}}
+.campg .ucard{padding:8px 10px;gap:6px}.campg .ucard p{font-size:13px;margin:2px 0}
+/* números grandes: caixa da linha do tamanho da letra */
+button.scard .sn b,.vsr figure>span,.mcard .pr,#plaque .pl b,.glory{line-height:1.25}
+.endr b{font-size:22px;line-height:1.2}.wax b{line-height:1.25}
+.brr .box.safe{display:grid;grid-template-columns:1fr 1fr;column-gap:8px}.brr .box.safe>b,.brr .box.safe>p{grid-column:1/-1}.brr .box.safe button{margin-top:4px}
+.b3d{max-width:min(470px,calc(100vh - 340px))}
+#card .pinfo h3,#card .duo h3{border:0;background:none;padding:0;margin:0 0 2px;text-shadow:none;font:400 22px/1.15 var(--tit);color:var(--tinta);-webkit-text-fill-color:var(--tinta);text-align:left;width:auto;display:block}
+@media (max-height:780px){#card.wide h2.big{font-size:34px;line-height:38px;padding-bottom:24px}.bres .stars3 i{--s:34px}.bres .stars3 i:nth-child(2){--s:44px}
+  .upo .sq{width:40px!important;height:40px!important}.upo button{padding:4px 3px 5px}.upg{padding:6px}.brr{gap:6px;padding:10px}
+  .binfo{gap:6px}.binfo .box{padding-top:6px}.fxl li{font-size:12px;padding:3px 6px}.brief .vsr figure{padding:6px}}
+.ach .stamp{font-size:6.5px;letter-spacing:0}
+#card:not(.wide) h2.big{padding-inline:6px}
+.b3d{max-width:min(470px,calc(100vh - 370px))}
