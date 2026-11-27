@@ -1544,3 +1544,4 @@ button.scard .sn b,.vsr figure>span,.mcard .pr,#plaque .pl b,.glory{line-height:
 .ach .stamp{font-size:6.5px;letter-spacing:0}
 #card:not(.wide) h2.big{padding-inline:6px}
 .b3d{max-width:min(470px,calc(100vh - 370px))}
+.grp .row button{white-space:nowrap}.b3d{max-width:min(470px,calc(100vh - 400px))}
