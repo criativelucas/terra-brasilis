@@ -493,7 +493,7 @@ document.addEventListener('keydown',e=>{ // atalhos: clicam o botão corresponde
     if(k=='enter'&&marching&&adj[sel].includes(hov)){e.preventDefault();if(tryAct(hov))hov=-1;return ui()}}
   if(HQ&&/^[1-6]$/.test(k)){const tk=HQTABS[+k-1][0];if(tk=='cam')return showCampaign();HQ.zoom={room:tk,start:Date.now()-500,dir:1};return showRoom(tk)} // atalhos das salas
   if(k=='q')return HQ?closeHQ():openHQ();
-  const a=B?{e:'bend',a:'bauto',z:'bcancel',w:'bwait'}[k]:{e:'end',m:'march',r:'rec',f:'fort',z:'undo',n:'next'}[k];
+  const a=B?{e:B.prep?'bstart':'bend',a:'bauto',z:'bcancel',w:'bwait'}[k]:{e:'end',m:'march',r:'rec',f:'fort',z:'undo',n:'next'}[k];
   if(a)document.querySelector(`#cmd:not([hidden]) [data-a="${a}"]:not(:disabled), aside [data-a="${a}"]:not(:disabled), #hud [data-a="${a}"]:not(.off)`)?.click()});
 
 

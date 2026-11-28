@@ -1551,3 +1551,23 @@ body.clashing aside,body.clashing #help,body.clashing #hand,body.clashing #hud,b
 .binfo{display:flex;flex-direction:column;min-height:0;max-height:calc(100vh - 175px)}
 .binfo>.box:has(.fxl){flex:1 1 auto;min-height:60px;overflow:auto}
 .binfo>.bact{flex:none}
+/* ================= painel da batalha: comandos em duas colunas, rodapé fixo com a ação principal ================= */
+body.battle aside .bcmd{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+body.battle aside .bcmd button{min-width:0;padding-inline:4px;white-space:nowrap;font-size:13px;gap:3px}
+body.battle aside .bfoot{position:sticky;bottom:-10px;z-index:3;margin:auto -10px -10px;padding:10px 10px 10px;display:flex;flex-direction:column;gap:8px;
+  background:var(--papel-img);border-top:2px dashed rgba(122,74,42,.4);box-shadow:0 -10px 14px -8px rgba(90,50,20,.35)}
+body.battle aside .bfoot>.end{width:100%;min-height:44px;font-size:17px}
+body.battle aside .bfoot .minor{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0}
+body.battle aside .bfoot .minor button{min-width:0;white-space:nowrap;justify-content:center}
+body.battle aside{display:flex;flex-direction:column}
+.summ.prep{border:2px dashed rgba(122,74,42,.45);border-left:2px dashed rgba(122,74,42,.45);border-radius:12px;padding:10px 12px;background:rgba(255,250,230,.4);box-shadow:none}
+.summ.prep b{display:block;font:400 19px/1.2 var(--tit);color:var(--tinta);margin:0 0 4px}
+.summ.prep p{font:500 14.5px/1.4 var(--ui);color:var(--tinta);margin:0}
+body.battle aside .objbar p{font:500 15px/1.35 var(--ui)}
+body.battle aside .stat{padding:8px}
+/* tela larga: o minimapa sobe para a faixa do placar e o painel da batalha usa a altura toda */
+@media (min-width:1200px){body.full.battle aside{max-height:calc(100vh - 130px)}}
+body.full.battle aside{gap:8px}
+body.battle aside .ctx .row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+body.battle aside .ctx .row button{min-width:0;white-space:nowrap}
+@media (min-width:1200px) and (max-height:760px){body.full.battle aside{gap:6px;padding-block:10px}body.full.battle aside h2{padding-bottom:5px}body.battle aside .stat{padding:6px 8px}}

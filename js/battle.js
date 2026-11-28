@@ -484,7 +484,7 @@ function drawUnit(u,now){
     x.fillStyle='#ffd23f';x.fillRect(cx_-3,cy_,3,2);x.fillRect(cx_,cy_+1,1,2);x.fillRect(cx_+1,cy_,3,2)}} // divisas de nível
 function drawBattle(){
   const now=Date.now(),s=B.selU,ps=B.ps,cw=cv.width;
-  {const bgr=x.createRadialGradient(cw/2,0,40,cw/2,0,cv.height);bgr.addColorStop(0,'#3d2b31');bgr.addColorStop(1,'#1a1215');
+  {const bgr=x.createRadialGradient(cw/2,cv.height*.4,40,cw/2,cv.height*.4,cv.width*.8);bgr.addColorStop(0,mixc(B.bio.gd,'#0c0a07',.55));bgr.addColorStop(1,mixc(B.bio.gd,'#0c0a07',.82)); /* fora do campo: o chão do bioma escurecido, não preto */
     x.fillStyle=bgr;x.fillRect(0,0,cw,cv.height)}x.textBaseline='top';
   const ent=Math.min(1,(now-B.t0)/550),es=1+.3*Math.pow(1-ent,2); // entrada: o campo cresce e clareia
   x.save();if(es>1){x.translate(cw/2,cv.height/2);x.scale(es,es);x.translate(-cw/2,-cv.height/2)}
@@ -615,7 +615,7 @@ function drawBattle(){
   x.font=FONT(7.5);x.fillStyle='#d9c8a8';x.fillText(hc?TN[hc]+(hu?` · ${nmOf(hu)} ${hu.hp}`:''):KIND[B.kind][0]+' · '+B.bio.nome+(B.wx=='rain'?' · chuva':B.wx=='dry'?' · seca':''),cw/2,73,222);
     /* placar e placa da rodada por cima do campo */
   if(aimT)foreChip(s,aimT);
-  if(!B.prep)speedBtns(now);if(miniOn)miniDraw();
+  if(!B.prep&&B.busy&&!B.auto)speedBtns(now); /* velocidade só aparece no turno do inimigo; a tecla F também troca */if(miniOn)miniDraw();
   if(B.banner){const Tb=now-B.banner.start;if(Tb>1500)B.banner=null;else{ // balão de pergaminho no meio do campo, com a setinha de continuar
     const a=Math.max(0,Math.min(1,Tb/160,(1500-Tb)/220)),t=B.banner.t,hasF=B.banner.f!=null;x.font=FONT(13);
     const w=Math.min(VW-40,Math.max(360,x.measureText(t).width+(hasF?150:96))),h=74,bx=cw/2-w/2,by=VY+VH/2-h/2+(1-a)*10;
@@ -722,9 +722,10 @@ function speedBtns(){ /* velocidade do turno inimigo, pular e som: botões em re
     x.strokeStyle='#2a160d';x.strokeText('Turno inimigo',X0-8,Y+H/2);x.fillStyle='#fff3cf';x.fillText('Turno inimigo',X0-8,Y+H/2);
     x.restore()}
 let miniOn=true;
-function miniDraw(){const mm=B.bg.mini,k=Math.min(150/GW,96/GH),w=GW*k,h=GH*k,X=VX+VW-w-(VX?8:20),Y=VY+VH-h-(VX?8:20),c=B.cam;
+function miniDraw(){const mm=B.bg.mini,c=B.cam,top=!VX&&cv.width/2-130-290>=166, // tela larga: minimapa na faixa do placar, ao lado da sua placa; o painel lateral desce até o pé da tela
+    k=Math.min(150/GW,(top?76:96)/GH),w=GW*k,h=GH*k,X=top?298:VX+VW-w-(VX?8:20),Y=top?8+(94-h)/2:VY+VH-h-(VX?8:20);
   /* minimapa: terreno, unidades, objetivos e o quadro da câmera */
-  x.fillStyle='rgba(20,12,14,.85)';x.fillRect(X-4,Y-4,w+8,h+8);x.imageSmoothingEnabled=false;x.globalAlpha=.9;
+  if(top){lac(x,290,8,w+16,94,12);x.fillStyle='#1a1220';x.fillRect(X-2,Y-2,w+4,h+4)}else{x.fillStyle='rgba(20,12,14,.85)';x.fillRect(X-4,Y-4,w+8,h+8)}x.imageSmoothingEnabled=false;x.globalAlpha=.9;
     x.drawImage(mm,X,Y,w,h);x.globalAlpha=1;
   (B.goals||[]).forEach(([gx,gy])=>{x.fillStyle='#ffd23f';x.fillRect(X+gx*k-1,Y+gy*k-1,k+2,k+2)});
   B.units.forEach(u=>{if(u.hp<=0||!seen(u))return;x.fillStyle='#1a1220';x.fillRect(X+u.x*k+k/2-3,Y+u.y*k+k/2-3,6,6);x.fillStyle=u.side==B.ps?'#6fb0ff':'#ff5a48';x.fillRect(X+u.x*k+k/2-2,Y+u.y*k+k/2-2,4,4)});
