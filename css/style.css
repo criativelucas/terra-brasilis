@@ -1546,3 +1546,4 @@ button.scard .sn b,.vsr figure>span,.mcard .pr,#plaque .pl b,.glory{line-height:
 .b3d{max-width:min(470px,calc(100vh - 370px))}
 .grp .row button{white-space:nowrap}.b3d{max-width:min(470px,calc(100vh - 400px))}
 body.clashing aside,body.clashing #help,body.clashing #hand,body.clashing #hud,body.clashing #bmk,body.clashing #cmd,body.clashing #tipx,body.clashing #toasts{opacity:0!important;visibility:hidden;pointer-events:none;transition:opacity .15s}
+.b3d{max-width:min(470px,calc(100vh - 440px))}
