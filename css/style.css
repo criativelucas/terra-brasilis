@@ -1547,3 +1547,7 @@ button.scard .sn b,.vsr figure>span,.mcard .pr,#plaque .pl b,.glory{line-height:
 .grp .row button{white-space:nowrap}.b3d{max-width:min(470px,calc(100vh - 400px))}
 body.clashing aside,body.clashing #help,body.clashing #hand,body.clashing #hud,body.clashing #bmk,body.clashing #cmd,body.clashing #tipx,body.clashing #toasts{opacity:0!important;visibility:hidden;pointer-events:none;transition:opacity .15s}
 .b3d{max-width:min(470px,calc(100vh - 440px))}
+/* antes da batalha: a coluna de informações nunca passa da tela; a lista do terreno rola por dentro e os botões ficam sempre à vista */
+.binfo{display:flex;flex-direction:column;min-height:0;max-height:calc(100vh - 175px)}
+.binfo>.box:has(.fxl){flex:1 1 auto;min-height:60px;overflow:auto}
+.binfo>.bact{flex:none}
